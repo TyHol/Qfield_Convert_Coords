@@ -401,7 +401,7 @@ TextField {
     font.pixelSize: font_Size.text 
     font.family: "Arial"
     font.italic: true
-    placeholderText: "X,Y or Long (E), Lat (N) ) "
+    placeholderText: "X,Y or Long (E), Lat (N) "
     visible: true
     text: ""
 
