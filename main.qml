@@ -562,16 +562,16 @@ TextField {
              
                     // convert get X,Y from textfield:
                     {var parts = wgs84Box.text.split(',')
-                    var xIN = parts[1] 
-                    var yIN = parts[0]  
+                    var xlat = parts[0] 
+                    var ylon = parts[1]  
                     
-                    updateCoordinates(xIN, yIN, 4326, custom1CRS.text, custom2CRS.text,5)}                                                       
+                    updateCoordinates(ylon, xlat, 4326, custom1CRS.text, custom2CRS.text,5)}                                                       
         }
     }
 }
 
 TextField {
-    id: wgs84DMBox
+    id: wgs84DMBox //6
     Layout.fillWidth: true
     Layout.preferredHeight: 35
     font.pixelSize: font_Size.text 
@@ -581,16 +581,15 @@ TextField {
     visible: true
     text: ""
 
-    // Flag to indicate programmatic updates
     property bool isProgrammaticUpdate: false
     
     onTextChanged: {
-            
         if (isProgrammaticUpdate) {
-        // Skip validation if the text is being updated programmatically
-        isProgrammaticUpdate = false
-        return
+            // Skip validation if the text is being updated programmatically
+            isProgrammaticUpdate = false
+            return
         }
+        
         var cursorPos = cursorPosition // Store cursor position
         var originalText = text
 
@@ -604,7 +603,6 @@ TextField {
             parts = cleanedText.split(',')
         }
 
-        // Process each part (longitude and latitude)
         for (var i = 0; i < parts.length; i++) {
             var coord = parts[i].trim()
 
@@ -614,64 +612,47 @@ TextField {
                 continue
             }
 
-            // Split by degree symbol or space to separate degrees and minutes
             var degMin = coord.split(/°|\s+/).filter(Boolean)
             if (degMin.length === 0) {
                 parts[i] = ''
                 continue
             }
 
-            // Parse degrees
             var degrees = parseInt(degMin[0], 10)
-            if (isNaN(degrees)) {
-                degrees = 0
-            }
-            // Clamp degrees to -90 to 90
+            if (isNaN(degrees)) degrees = 0
             degrees = Math.max(-180, Math.min(180, degrees))
 
-            // Parse minutes if present
             var minutes = 0
             if (degMin.length > 1) {
                 minutes = parseFloat(degMin[1].replace("'", ""))
-                if (isNaN(minutes)) {
-                    minutes = 0
-                }
-                // Clamp minutes to 0 to 60
+                if (isNaN(minutes)) minutes = 0
                 minutes = Math.max(0, Math.min(60, minutes))
             }
 
-            // Format the coordinate with ° and ' symbols
-            parts[i] = degrees + "° " + minutes.toFixed(2) + "'"
+            parts[i] = degrees + "° " + minutes.toFixed(4) + "'"
         }
 
-        // Reconstruct the text
         cleanedText = parts[0] || ''
         if (parts.length > 1) {
             cleanedText += ', ' + (parts[1] || '')
         }
 
-        // Update text only if it changed, and restore cursor
         if (text !== cleanedText) {
             text = cleanedText
             cursorPosition = adjustCursorPosition(cursorPos, originalText, cleanedText)
         }
 
-        // Convert to decimal degrees for updateCoordinates
-        var xIN = ddmToDecimal(parts[0])
-        var yIN = parts.length > 1 ? ddmToDecimal(parts[1]) : ''
+        var xlat = ddmToDecimal(parts[0])
+        var xlon = parts.length > 1 ? ddmToDecimal(parts[1]) : ''
         if (xIN !== '' && yIN !== '') {
-            updateCoordinates(xIN, yIN, 4326, custom1CRS.text, custom2CRS.text, 6)
+            updateCoordinates(xlon, xlat, 4326, custom1CRS.text, custom2CRS.text, 6)
         }
     }
 
-    // Helper function to adjust cursor position
     function adjustCursorPosition(pos, oldText, newText) {
-        // Simple adjustment: return the same position or cap at new length
         return Math.min(pos, newText.length)
     }
-
-
-}     
+}    
                           
 RowLayout{ 
               Label {
@@ -1034,9 +1015,9 @@ function decimalToDDM(decimal) {
         }
 
         if (inputDialog !== 6) {
-        var wgs84Point = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"))        
+        var wgs84dmPoint = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"))        
         wgs84DMBox.isProgrammaticUpdate = true
-        wgs84DMBox.text = decimalToDDM(wgs84Point.y) + ", " + decimalToDDM(wgs84Point.x)
+        wgs84DMBox.text = decimalToDDM(wgs84dmPoint.y) + ", " + decimalToDDM(wgs84dmPoint.x)
         }        
     }
 
