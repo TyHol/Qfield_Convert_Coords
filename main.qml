@@ -877,8 +877,13 @@ RowLayout{
                     
                     var customcrsOUT = CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG);                 
                     var transformedPoint = GeometryUtils.reprojectPoint(GeometryUtils.point(xIN, yIN), customcrsIN, customcrsOUT);                                           
+                    
+                    
                     iface.mapCanvas().mapSettings.center.x = transformedPoint.x;
                     iface.mapCanvas().mapSettings.center.y = transformedPoint.y;
+                    
+
+                    
                     mainWindow.displayToast( transformedPoint.x + ", " + transformedPoint.y)
                     mainDialog.close()  
                     }
