@@ -674,7 +674,7 @@ RowLayout {
         }
       Timer {
         id: latDegClampTimer
-        interval: 500
+        interval: 1000
         running: false
         repeat: false
         onTriggered: {
@@ -721,7 +721,7 @@ RowLayout {
         }
 Timer {
     id: latMinClampTimer
-    interval: 500
+    interval: 1000
     running: false
     repeat: false
     onTriggered: {
@@ -752,7 +752,7 @@ onTextChanged: latMinClampTimer.restart()
         }
 Timer {
     id: lonDegClampTimer
-    interval: 500
+    interval: 1000
     running: false
     repeat: false
     onTriggered: {
@@ -800,7 +800,7 @@ onTextChanged: {lonDegClampTimer.restart()
         }
 Timer {
     id: lonMinClampTimer
-    interval: 500
+    interval: 1000
     running: false
     repeat: false
     onTriggered: {
