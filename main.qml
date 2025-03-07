@@ -87,6 +87,7 @@ RowLayout{
         Label {
             id: label_1
             visible: true
+            font.bold: true
             wrapMode: Text.Wrap
             text: qsTr("Grab:")
             font.pixelSize: font_Size.text
@@ -96,7 +97,8 @@ RowLayout{
 
 Button {
       text: qsTr("Screencenter")
-      //Layout.fillWidth: true
+      font.bold: true
+      Layout.fillWidth: true
       font.pixelSize: font_Size.text 
       font.family: "Arial"
       font.italic: true
@@ -110,7 +112,8 @@ Button {
   
   Button {
       text: qsTr("GPS")
-      //Layout.fillWidth: true
+      font.bold: true
+      Layout.fillWidth: true
       font.pixelSize: font_Size.text 
       Layout.preferredHeight: 35 
       property bool isPositionValid: positionSource.active && positionSource.positionInformation.latitudeValid && positionSource.positionInformation.longitudeValid
@@ -377,7 +380,7 @@ TextField {
             id: custom1CRS
             Layout.fillWidth: true
             Layout.preferredHeight: 35 
-            placeholderText: "CRS"
+            placeholderText: "CRS(EPSG)"
             font.pixelSize: font_Size.text  // Smaller text size
             font.family: "Arial" // Set font family
             font.italic: true // Make text italic
@@ -477,7 +480,7 @@ TextField {
             id: custom2CRS
             Layout.fillWidth: true
             Layout.preferredHeight: 35 
-            placeholderText: "CRS"
+            placeholderText:  "CRS(EPSG)"
             font.pixelSize: font_Size.text
             font.family: "Arial" // Set font family
             font.italic: true // Make text italic
@@ -820,8 +823,11 @@ onTextChanged: lonMinClampTimer.restart()
     // Update Button
     Button {
         text: "← Update"
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        //font.bold: true
         font.pixelSize: font_Size.text
-        Layout.preferredHeight: 35
+        //Layout.preferredHeight: 35
         onClicked:{ 
           var latDeg = parseFloat(latDegrees.text) || 0
           var latMin = parseFloat(latMinutesDecimal.text) || 0
@@ -848,6 +854,7 @@ RowLayout{
               id: label_2
               visible: true
               wrapMode: Text.Wrap
+              font.bold: true
               text: qsTr("Do stuff:")
               font.pixelSize: font_Size.text
               font.family: "Arial" // Set font family
@@ -855,8 +862,10 @@ RowLayout{
                       }  
               
                Button {
+   
                     text: qsTr("Pan")
-                    //Layout.fillWidth: true
+                    font.bold: true
+                    Layout.fillWidth: true
                     font.pixelSize: font_Size.text 
                     Layout.preferredHeight: 35 
                     onClicked: {
@@ -877,7 +886,8 @@ RowLayout{
                 
                 Button {
                     text: qsTr("Create")
-                    //Layout.fillWidth: true
+                    font.bold: true
+                    Layout.fillWidth: true
                     font.pixelSize: font_Size.text 
                     Layout.preferredHeight: 35 
                     onClicked: {
@@ -983,6 +993,7 @@ Label{
             id:decimalsd
             font.pixelSize: 10
             font.family: "Arial"
+
             font.italic: true
             text : "5"
             Layout.preferredWidth: 40 
@@ -991,7 +1002,7 @@ Label{
         } 
                 Button {
                     text: qsTr("Reset")
-                    //Layout.fillWidth: true
+                    Layout.fillWidth: true
                     font.pixelSize: font_Size.text 
                     Layout.preferredHeight: 35 
                     onClicked: {
