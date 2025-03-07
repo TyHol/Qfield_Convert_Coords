@@ -387,9 +387,9 @@ TextField {
             validator: IntValidator {
                 bottom: 0 // Allow any negative number
                 top: 10000000 // Allow any positive number
-            }
+              }  
+    
         }
-       
         }
              
 // custom2
@@ -465,7 +465,8 @@ TextField {
                     // convert get X,Y from textfield:
                     var parts = custom2BoxXY.text.split(',')
                     var xIN = parts[0] 
-                    var yIN = parts[1] 
+                    var yIN = parts[1]
+                     
                     updateCoordinates(xIN, yIN, custom2CRS, custom1CRS.text, custom2CRS.text, 4)              }            
             
         }
@@ -578,7 +579,7 @@ TextField {
     font.family: "Arial"
     font.italic: true
     placeholderText: "Lat(N), Long(E) (e.g., 34° 27.36', 56° 40.2')"
-    visible: true
+    visible: false
     text: ""
 
     property bool isProgrammaticUpdate: false
@@ -653,7 +654,195 @@ TextField {
         return Math.min(pos, newText.length)
     }
 }    
-                          
+
+RowLayout {
+    spacing: 5
+
+    // Latitude Degrees
+    TextField {
+        id: latDegrees
+        Layout.preferredWidth: 50       
+        Layout.preferredHeight: 35
+        font.pixelSize: font_Size.text
+        font.family: "Arial"
+        font.italic: true
+        placeholderText: "Lat °"
+        validator: DoubleValidator {
+            bottom: -90
+            top: 90
+            decimals: 5
+        }
+      Timer {
+        id: latDegClampTimer
+        interval: 500
+        running: false
+        repeat: false
+        onTriggered: {
+            var value = parseFloat(latDegrees.text)
+            if (!isNaN(value)) {
+                value = Math.max(-90, Math.min(90, value))
+                latDegrees.text = value // update to safe value (preserve decimals)
+            }
+        }
+    }
+
+    onTextChanged: {
+        latDegClampTimer.restart()  // each change restarts the timer
+    
+        if (latDegrees.text.indexOf('.') !== -1) {
+            latMinutesDecimal.Layout.preferredWidth = 0
+            latDegrees.Layout.preferredWidth = 110
+            latMinutesDecimal.text = ""
+            lonMinutesDecimal.Layout.preferredWidth = 00
+            lonDegrees.Layout.preferredWidth = 110
+            lonMinutesDecimal.text = ""            
+        } else {
+            latMinutesDecimal.Layout.preferredWidth = 60
+            latDegrees.Layout.preferredWidth = 50  
+            lonMinutesDecimal.Layout.preferredWidth = 60
+            lonDegrees.Layout.preferredWidth = 50                      
+        }
+    }        
+    }
+
+    // Latitude Minutes (decimal)
+    TextField {
+        id: latMinutesDecimal
+        Layout.preferredWidth: 60
+        Layout.preferredHeight: 35
+        font.pixelSize: font_Size.text
+        font.family: "Arial"
+        font.italic: true
+        placeholderText: "Lat '"
+        validator: DoubleValidator {
+            bottom: 0
+            top: +60
+            decimals: 4
+        }
+Timer {
+    id: latMinClampTimer
+    interval: 500
+    running: false
+    repeat: false
+    onTriggered: {
+        var value = parseFloat(latMinutesDecimal.text)
+        if (!isNaN(value)) {
+            value = Math.max(0, Math.min(59.999, value))
+            latMinutesDecimal.text = value
+        }
+    }
+}
+onTextChanged: latMinClampTimer.restart()
+
+    }
+
+    // Longitude Degrees
+    TextField {
+        id: lonDegrees
+        Layout.preferredWidth: 50
+        Layout.preferredHeight: 35
+        font.pixelSize: font_Size.text
+        font.family: "Arial"
+        font.italic: true
+        placeholderText: "Lon °"
+        validator: DoubleValidator {
+            bottom: -180
+            top: 180
+            decimals: 5
+        }
+Timer {
+    id: lonDegClampTimer
+    interval: 500
+    running: false
+    repeat: false
+    onTriggered: {
+        var value = parseFloat(lonDegrees.text)
+        if (!isNaN(value)) {
+            value = Math.max(-180, Math.min(180, value))
+            lonDegrees.text = value
+        }
+    }
+}
+onTextChanged: {lonDegClampTimer.restart()
+
+            
+            
+            
+        if (lonDegrees.text.indexOf('.') !== -1) {
+            latMinutesDecimal.Layout.preferredWidth = 0
+            latDegrees.Layout.preferredWidth = 110
+            latMinutesDecimal.text = ""
+            lonMinutesDecimal.Layout.preferredWidth = 00
+            lonDegrees.Layout.preferredWidth = 110
+            lonMinutesDecimal.text = ""            
+        } else {
+            latMinutesDecimal.Layout.preferredWidth = 60
+            latDegrees.Layout.preferredWidth = 50  
+            lonMinutesDecimal.Layout.preferredWidth = 60
+            lonDegrees.Layout.preferredWidth = 50                      
+        }
+    }
+    }
+
+    // Longitude Minutes (decimal)
+    TextField {
+        id: lonMinutesDecimal
+        Layout.preferredWidth: 60
+        Layout.preferredHeight: 35
+        font.pixelSize: font_Size.text
+        font.family: "Arial"
+        font.italic: true
+        placeholderText: "Lon '"
+        validator: DoubleValidator {
+            bottom: 0
+            top: 60
+            decimals: 4
+        }
+Timer {
+    id: lonMinClampTimer
+    interval: 500
+    running: false
+    repeat: false
+    onTriggered: {
+        var value = parseFloat(lonMinutesDecimal.text)
+        if (!isNaN(value)) {
+            value = Math.max(0, Math.min(59.999, value))
+            lonMinutesDecimal.text = value
+        }
+    }
+}
+onTextChanged: lonMinClampTimer.restart()
+
+    }
+    
+
+
+    // Update Button
+    Button {
+        text: "← Update"
+        font.pixelSize: font_Size.text
+        Layout.preferredHeight: 35
+        onClicked:{ 
+          var latDeg = parseFloat(latDegrees.text) || 0
+          var latMin = parseFloat(latMinutesDecimal.text) || 0
+          var lonDeg = parseFloat(lonDegrees.text) || 0
+          var lonMin = parseFloat(lonMinutesDecimal.text) || 0
+       
+      wgs84Box.text = (latDeg + Math.sign(latDeg) * latMin / 60).toFixed(decimalsd.text) + ", " + (lonDeg + Math.sign(lonDeg) * lonMin / 60).toFixed(decimalsd.text)
+
+                              // convert get X,Y from textfield:
+                              {var parts = wgs84Box.text.split(',')
+                              var xlat = parts[0] 
+                              var ylon = parts[1]  
+                              
+                              updateCoordinates(ylon, xlat, 4326, custom1CRS.text, custom2CRS.text,5)} 
+    }}
+    }
+
+
+    
+    
+                            
 RowLayout{ 
               Label {
               id: label_2
@@ -980,8 +1169,29 @@ function decimalToDDM(decimal) {
     var minutes = (absDecimal - degrees) * 60
     
     return `${sign}${degrees}° ${minutes.toFixed(3)}'`
+
 }
-  
+ 
+
+function decTODeg(decimal) {
+if (typeof decimal !== 'number' || isNaN(decimal)) {
+        return ''
+    }
+    
+    const sign = decimal < 0 ? -1 : 1
+    const absDecimal = Math.abs(decimal)
+    return Math.floor(absDecimal) * sign
+}
+
+function decimalToMinutes(decimal) {
+    if (typeof decimal !== 'number' || isNaN(decimal)) {
+        return ''
+    }
+    
+    const absDecimal = Math.abs(decimal)
+    const degrees = Math.floor(absDecimal)
+    return ((absDecimal - degrees) * 60).toFixed(3)
+}
 
   function updateCoordinates(x, y, sourceEPSG, targetEPSG1, targetEPSG2, inputDialog) {
         var sourceCrs = CoordinateReferenceSystemUtils.fromDescription("EPSG:" + parseFloat(sourceEPSG))
@@ -1018,6 +1228,12 @@ function decimalToDDM(decimal) {
         var wgs84dmPoint = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"))        
         wgs84DMBox.isProgrammaticUpdate = true
         wgs84DMBox.text = decimalToDDM(wgs84dmPoint.y) + ", " + decimalToDDM(wgs84dmPoint.x)
+        latDegrees.text = decTODeg(wgs84dmPoint.y)
+        latMinutesDecimal.text = decimalToMinutes(wgs84dmPoint.y)
+        lonDegrees.text = decTODeg(wgs84dmPoint.x)
+        lonMinutesDecimal.text = decimalToMinutes(wgs84dmPoint.x)        
+        
+        
         }        
     }
 
