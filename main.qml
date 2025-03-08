@@ -1020,48 +1020,6 @@ Label{
         Layout.preferredWidth: 40 
         Layout.preferredHeight: 20                   
         }
-              
-Label{
-    id:decimals1
-    font.pixelSize: 10
-    font.family: "Arial"
-    font.italic: true
-    text : "Decimals (m):"
-    //Layout.preferredWidth: 60 
-    Layout.preferredHeight: 10                   
-    }
-    
-    TextField{
-        id:decimalsm
-        font.pixelSize: 10
-        font.family: "Arial"
-        font.italic: true
-        text : "0"
-        Layout.preferredWidth: 40 
-        Layout.preferredHeight: 20                   
-        }
-               
-    Label{
-        id:decimals2
-        font.pixelSize: 10
-        font.family: "Arial"
-        font.italic: true
-        text : "Decimals (deg):"
-        //Layout.preferredWidth: 65 
-        Layout.preferredHeight: 10                   
-        }
-        
-        TextField{
-            id:decimalsd
-            font.pixelSize: 10
-            font.family: "Arial"
-
-            font.italic: true
-            text : "5"
-            Layout.preferredWidth: 40 
-            Layout.preferredHeight: 20                   
-            }
-            
     Label{
         id:zoomlabel
         font.pixelSize: 10
@@ -1084,6 +1042,51 @@ Label{
             }            
             
         } 
+              
+
+
+RowLayout { 
+Label{
+    id:decimals1
+    font.pixelSize: 10
+    font.family: "Arial"
+    font.italic: true
+    text : "Decimals (m):"
+    //Layout.preferredWidth: 60 
+    Layout.preferredHeight: 10                   
+    }
+    
+    TextField{
+        id:decimalsm
+        font.pixelSize: 10
+        font.family: "Arial"
+        font.italic: true
+        text : "0"
+        Layout.preferredWidth: 40 
+        Layout.preferredHeight: 20                   
+        }
+                       
+    Label{
+        id:decimals2
+        font.pixelSize: 10
+        font.family: "Arial"
+        font.italic: true
+        text : "Decimals (deg):"
+        //Layout.preferredWidth: 65 
+        Layout.preferredHeight: 10                   
+        }
+        
+        TextField{
+            id:decimalsd
+            font.pixelSize: 10
+            font.family: "Arial"
+
+            font.italic: true
+            text : "5"
+            Layout.preferredWidth: 40 
+            Layout.preferredHeight: 20                   
+            }                       
+    }
                 Button {
                     text: qsTr("Reset")
                     Layout.fillWidth: true
@@ -1096,9 +1099,10 @@ Label{
                       decimalsm.text = "0"
                       decimalsd.text = "5"
                       zoom.text = "10"
-                }}             
-    }
-}
+                }} 
+    
+    
+}}
 
    
 
