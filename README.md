@@ -1,4 +1,4 @@
-Qfield Plugin to convert between coordinates: gps, canvas, Irish Grid, Uk Grid, custom1 (default=screen CRS) and custom2(default = WGS84).
+Qfield Plugin to convert between coordinates: gps, canvas, Irish Grid, Uk Grid, custom1 (default=screen CRS) and custom2 (default = WGS84).
 Will show screen centre coordinates, current GPS coordinates or manually inputted coordinates.
 Will create a point at location.
 Will pan or (on long press) zoom.
