@@ -1179,7 +1179,7 @@ Label{
     }
         CheckBox {
         id: showWGS84
-        text: "DDM (WGS84)"
+        text: "WGS84"
         checked: false
         onCheckedChanged: {
             wgs84DMBox.visible = checked
