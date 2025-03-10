@@ -1,6 +1,6 @@
 [general]
 name=CZoomPoCo
-description=add zoom convert navigate to points or coordinates UK Irish Grid
+description=add/zoom/convert/navigate to points/coordinates UK Irish Grid WGS 84 or custom
 author=Tyhol
 icon=icon2.svg
 version=0.01
