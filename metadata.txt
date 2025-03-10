@@ -1,7 +1,7 @@
 [general]
-name=ConversionSingleForm
-description=add points
-author=Tony H
+name=CZoomPoCo
+description=add zoom convert navigate to points or coordinates UK Irish Grid
+author=Tyhol
 icon=icon2.svg
 version=0.01
 homepage=https://github.com/TyHol/Qfield_Convert_Coords.git

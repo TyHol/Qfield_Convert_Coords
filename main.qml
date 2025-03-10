@@ -22,10 +22,9 @@ Item {
 
  Component.onCompleted: {iface.addItemToPluginsToolbar(digitizeButton)}
 
-//chanegable stuff 
-
+//chanegable stuff default values
 property var fsize : "16" // general font size
-property var zoomV : "20" // zoom level (does this work?)
+property var zoomV : "4" // zoom level (does this work?)
 property var decm : "0"  // decimal plaves for meter coordinates
 property var decd : "5"  // decimal plaves for degree coordinates
 property var degwa : "40"  // width of degree input box when no decimals in it
@@ -33,12 +32,14 @@ property var degwb : "110"  // width of degree input box when decimals in it
 property var minwa : "80"  // width of minute input box when no decimals in degree box
 property var minwb : "0" // width of minute input box when no decimals in degree box
 property var ukgvis: false // visibility of UK grid
-property var igvis: false // visibility of Irish grid
+property var igvis: true // visibility of Irish grid
 property var custom1vis: false // visibility of custom1
 property var custom2vis: false // visibility of custom2 
 property var wgs84vis: true // visibility of wgs84
 property var wgs84DMvis: false // visibility of wgs84 DM    
 property var customisationvis: true // visibility of customisation
+
+
  Rectangle{
  parent: iface.mapCanvas()
  color: "transparent"
@@ -61,8 +62,7 @@ property var customisationvis: true // visibility of customisation
  anchors.verticalCenter: parent.verticalCenter
  }
  Rectangle {
- visible: false
- width: 1
+  width: 1
  height: parent.height 
  color: "grey"
  anchors.horizontalCenter: parent.horizontalCenter
@@ -86,22 +86,18 @@ Dialog {
  modal: true
  font: Theme.defaultFont
  Layout.preferredHeight: 35
- //standardButtons: Dialog.Cancel
- //title: qsTr("Title")
+ width: 350
+
 
  x: (mainWindow.width - width) / 2
  y: (mainWindow.height - height) / 2
 
  ColumnLayout {
- 
- 
- 
+ anchors.fill: parent
+ anchors.margins : 1
 
-
-
- 
- 
 RowLayout{
+Layout.fillWidth: true
  Label {
  id: label_1
  visible: true
@@ -170,7 +166,7 @@ TextField {
 
  // Custom validation logic
  onTextChanged: {
-  igInputBox.placeholderText  = "IG"
+   igInputBox.placeholderText  = "IG"
  // Remove any non-alphanumeric characters (except spaces)
  var cleanedText = igInputBox.text.replace(/[^A-Za-z0-9\s]/g, '')
 
@@ -866,7 +862,7 @@ onTextChanged: lonMinClampTimer.restart()
 
  // Update Button
  Button {
- text: "← Update"
+ text: "←" // update from this row...
  Layout.fillWidth: true
  Layout.fillHeight: true
  //font.bold: true
@@ -940,8 +936,11 @@ RowLayout{
  var customcrsOUT = CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG); 
  var transformedPoint = GeometryUtils.reprojectPoint(GeometryUtils.point(xIN, yIN), customcrsIN, customcrsOUT); 
  
- // zoom
-var offset = zoom.text * 100; offset
+ // zoom 
+var offset =  Math.exp( parseFloat(zoom.text) * 1.2);
+if (offset > 1000000) {offset = 1000000}
+if (offset < 1) {offset = 1}
+if(canvasCrs.isGeographic){ offset = offset/111000}
 
 var xMin = transformedPoint.x - offset;
 var xMax = transformedPoint.x + offset;
@@ -1068,7 +1067,11 @@ Frame{
 Layout.fillWidth: true
 visible: false
 Column{
+    anchors.fill: parent
+    anchors.margins: 1
 RowLayout { 
+    Layout.fillWidth: true
+
 Label{
  id:font_Size1
  font.pixelSize: 10
@@ -1104,7 +1107,7 @@ Label{
  font.family: "Arial"
 
  font.italic: true
- text : "10"
+ text : zoomV
  Layout.preferredWidth: 40 
  Layout.preferredHeight: 20 
  } 
@@ -1114,6 +1117,7 @@ Label{
 
 
 RowLayout { 
+    Layout.fillWidth: true
 Label{
  id:decimals1
  font.pixelSize: 10
@@ -1164,6 +1168,7 @@ Label{
     CheckBox {
         id: showUK
         text: "UK Grid"
+        font.pixelSize: font_Size.text
         checked: false
         onCheckedChanged: {
             ukInputBox.visible = checked
@@ -1172,6 +1177,7 @@ Label{
     CheckBox {
         id: showIG
         text: "Irish Grid"
+        font.pixelSize: font_Size.text
         checked: true
         onCheckedChanged: {
             igInputBox.visible = checked
@@ -1180,6 +1186,7 @@ Label{
         CheckBox {
         id: showWGS84
         text: "WGS84"
+        font.pixelSize: font_Size.text
         checked: false
         onCheckedChanged: {
             wgs84DMBox.visible = checked
@@ -1190,6 +1197,7 @@ Label{
     CheckBox {
         id: showCustom1
         text: "Custom1"
+        font.pixelSize: font_Size.text
         checked: false
         onCheckedChanged: {
             custom1BoxXY.visible = checked
@@ -1199,6 +1207,7 @@ Label{
     CheckBox {
         id: showCustom2
         text: "Custom2"
+        font.pixelSize: font_Size.text
         checked: false
         onCheckedChanged: {
             custom2BoxXY.visible = checked
@@ -1224,7 +1233,6 @@ Label{
     custom2BoxXY.visible = false
     custom2CRS.visible = false    
     wgs84DMBox.visible = false
-    showUK.visible  = false  
     customisation.visible = false
     showIG.checked = true
     showUK.checked = false
