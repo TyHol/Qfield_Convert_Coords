@@ -116,6 +116,7 @@ function fetchResults(string, context, parameters) {
     details.description = decimalToDDM(pointGeometry.y) + ", "+ decimalToDDM(pointGeometry.x) ;
       } else {
     details.displayString = string + " is not a valid Irish/UK Grid reference";
+    details.description = " X 00000 00000 or XX 00000 00000 format expected";
   }
 
   prepareResult(details);
