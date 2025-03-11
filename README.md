@@ -4,3 +4,4 @@ Will create a point at location.
 Will pan or (on long press) zoom.
 Will navigate inside Qfield or (on long press) in google maps.
 Has a few customisable settings.
+Also adds abilty to search for/convert and Navigate to Irish and UK grid locations from the search bar.
