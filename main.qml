@@ -20,7 +20,51 @@ Item {
  property var canvasEPSG : parseInt(canvas.project.crs.authid.split(":")[1]); // Canvas CRS
  property var mapCanvas: iface.mapCanvas()
 
- Component.onCompleted: {iface.addItemToPluginsToolbar(digitizeButton)}
+ Component.onCompleted: {
+    iface.addItemToPluginsToolbar(digitizeButton)
+    //gridLocatorFilter.locatorBridge.registerQFieldLocatorFilter(gridLocatorFilter);
+    }
+
+ Component.onDestruction: { 
+    gridLocatorFilter.locatorBridge.deregisterQFieldLocatorFilter(gridLocatorFilter);
+    }   
+
+
+// Irish Grid Locator Filter
+QFieldLocatorFilter {
+    id: gridLocatorFilter
+    delay: 1000
+    name: "irishgrid"
+    displayName: "Irish Grid Ref"
+    prefix: "grid" // Remove or modify if you don't want a prefix
+    locatorBridge: iface.findItemByObjectName('locatorBridge')
+
+    function triggerResult(searchString) {
+        console.log("triggerResult called with:", searchString); // Debugging
+
+        // Trim spaces and check if input is empty
+        let queryText = searchString.trim();
+        if (queryText === "") {
+            return;
+        }
+
+        // Create a result object that simply echoes the input
+        let result = {
+            displayString: queryText,   // What appears in the dropdown
+            userData: { input: queryText } // Store the input as data
+        };
+
+        console.log("Adding result:", result); // Debugging
+        locatorBridge.addResult(this, result);
+
+        // Display the input as a toast message
+        iface.showToast("You entered: " + queryText, 2000); // 2000ms = 2 seconds
+    }
+}
+    
+
+
+
 
 //chanegable stuff default values
 property var fsize : "16" // general font size
@@ -1048,9 +1092,8 @@ Button {
     var lon = parseFloat(parts[1]); // Ensure proper order
     var lat = parseFloat(parts[0]);
 
-    
-    var googleMapsUrl = "https://www.google.com/maps/dir/?api=1&destination=" 
-                        + lat + "%2C" + lon + "&travelmode=driving";
+    var googleMapsUrl = "https://www.google.com/maps/search/?api=1&query="+ lat + "," + lon // pin
+  //var googleMapsUrl = "https://www.google.com/maps/dir/?api=1&destination=" + lat + "%2C" + lon + "&travelmode=driving"; // navigate
     
     Qt.openUrlExternally(googleMapsUrl);
 }
@@ -1060,7 +1103,7 @@ Button {
 
  } 
  
- 
+
  
 Frame{
     id: customisation
@@ -1069,9 +1112,8 @@ visible: false
 Column{
     anchors.fill: parent
     anchors.margins: 1
-RowLayout { 
+RowLayout {    
     Layout.fillWidth: true
-
 Label{
  id:font_Size1
  font.pixelSize: 10
@@ -1081,7 +1123,6 @@ Label{
  //Layout.preferredWidth: 65 
  Layout.preferredHeight: 10 
  }
- 
  TextField{
  id:font_Size
  font.pixelSize: 10
@@ -1096,7 +1137,7 @@ Label{
  font.pixelSize: 10
  font.family: "Arial"
  font.italic: true
- text : "Zoom:"
+ text : "      Zoom:"
  //Layout.preferredWidth: 65 
  Layout.preferredHeight: 10 
  }
@@ -1165,6 +1206,7 @@ Label{
 
  RowLayout{
 
+
     CheckBox {
         id: showUK
         text: "UK Grid"
@@ -1232,7 +1274,7 @@ Label{
     custom1CRS.visible = false
     custom2BoxXY.visible = false
     custom2CRS.visible = false    
-    wgs84DMBox.visible = false
+    wgs84DMBox.visible = false 
     customisation.visible = false
     showIG.checked = true
     showUK.checked = false
@@ -1248,6 +1290,8 @@ Label{
 
 }}
  
+
+
 
  // Lookup table for the IG letter matrix (for EPSG:29903 /29902)
  property var igletterMatrix: {
