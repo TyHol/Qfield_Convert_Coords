@@ -22,46 +22,72 @@ Item {
 
  Component.onCompleted: {
     iface.addItemToPluginsToolbar(digitizeButton)
-    //gridLocatorFilter.locatorBridge.registerQFieldLocatorFilter(gridLocatorFilter);
+    igukGridsFilter.locatorBridge.registerQFieldLocatorFilter(igukGridsFilter);
     }
 
  Component.onDestruction: { 
-    gridLocatorFilter.locatorBridge.deregisterQFieldLocatorFilter(gridLocatorFilter);
+    igukGridsFilter.locatorBridge.deregisterQFieldLocatorFilter(igukGridsFilter);
     }   
 
 
 // Irish Grid Locator Filter
 QFieldLocatorFilter {
-    id: gridLocatorFilter
+    id: igukGridsFilter
     delay: 1000
-    name: "irishgrid"
-    displayName: "Irish Grid Ref"
-    prefix: "grid" // Remove or modify if you don't want a prefix
+    name: "IGUK Grids"
+    displayName: "IG UK Grid finder"
+    prefix: "grid"
     locatorBridge: iface.findItemByObjectName('locatorBridge')
-
-    function triggerResult(searchString) {
-        console.log("triggerResult called with:", searchString); // Debugging
-
-        // Trim spaces and check if input is empty
-        let queryText = searchString.trim();
-        if (queryText === "") {
-            return;
-        }
-
-        // Create a result object that simply echoes the input
-        let result = {
-            displayString: queryText,   // What appears in the dropdown
-            userData: { input: queryText } // Store the input as data
-        };
-
-        console.log("Adding result:", result); // Debugging
-        locatorBridge.addResult(this, result);
-
-        // Display the input as a toast message
-        iface.showToast("You entered: " + queryText, 2000); // 2000ms = 2 seconds
-    }
-}
+    source: Qt.resolvedUrl('grids.qml')
     
+
+function triggerResult(result) {
+  if (result.userData && result.userData.geometry) {
+    const geometry = result.userData.geometry;
+    const crs = CoordinateReferenceSystemUtils.fromDescription(result.userData.crs);
+
+    // Reproject the geometry to the map's CRS
+    const reprojectedGeometry = GeometryUtils.reprojectPoint(
+      geometry,
+      crs,
+      mapCanvas.mapSettings.destinationCrs
+    );
+
+    // Center the map on the reprojected geometry
+   mapCanvas.mapSettings.setCenter(reprojectedGeometry, true);
+
+    // Highlight the geometry on the map
+    locatorBridge.locatorHighlightGeometry.qgsGeometry = geometry;
+    locatorBridge.locatorHighlightGeometry.crs = crs;
+  } else {
+    mainWindow.displayToast("Invalid geometry in result");
+  }
+}
+function triggerResultFromAction(result, actionId) {
+  if (actionId === 1 && result.userData && result.userData.geometry) {
+    const geometry = result.userData.geometry;
+    const crs = CoordinateReferenceSystemUtils.fromDescription(result.userData.crs);
+
+    // Reproject the geometry to the map's CRS
+    const reprojectedGeometry = GeometryUtils.reprojectPoint(
+      geometry,
+      crs,
+      mapCanvas.mapSettings.destinationCrs
+    );
+
+    // Set the navigation destination
+    const navigation = iface.findItemByObjectName('navigation');
+    if (navigation) {
+      navigation.destination = reprojectedGeometry;
+      mainWindow.displayToast("Destination set successfully");
+    } else {
+      mainWindow.displayToast("Navigation component not found");
+    }
+  } else {
+    mainWindow.displayToast("Invalid action or geometry");
+  }
+}
+}   
 
 
 
@@ -1093,7 +1119,7 @@ Button {
     var lat = parseFloat(parts[0]);
 
     var googleMapsUrl = "https://www.google.com/maps/search/?api=1&query="+ lat + "," + lon // pin
-  //var googleMapsUrl = "https://www.google.com/maps/dir/?api=1&destination=" + lat + "%2C" + lon + "&travelmode=driving"; // navigate
+  //var googleMapsUrl = "https://www.google.com/maps/dir/?api=1&destination=" + lat + "%2C" + lon  + "&travelmode=driving"; // navigate
     
     Qt.openUrlExternally(googleMapsUrl);
 }
