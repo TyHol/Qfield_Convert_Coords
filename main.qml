@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import org.qfield
 import org.qgis
+
 import Theme
 
 import "qrc:/qml" as QFieldItems
@@ -22,20 +23,20 @@ Item {
 
  Component.onCompleted: {
     iface.addItemToPluginsToolbar(digitizeButton)
-    igukGridsFilter.locatorBridge.registerQFieldLocatorFilter(igukGridsFilter);
+    igukGridsFilter2.locatorBridge.registerQFieldLocatorFilter(igukGridsFilter2);
     }
 
  Component.onDestruction: { 
-    igukGridsFilter.locatorBridge.deregisterQFieldLocatorFilter(igukGridsFilter);
+    igukGridsFilter2.locatorBridge.deregisterQFieldLocatorFilter(igukGridsFilter2);
     }   
 
 
 // Irish Grid Locator Filter
 QFieldLocatorFilter {
-    id: igukGridsFilter
+    id: igukGridsFilter2
     delay: 1000
-    name: "IGUK Grids"
-    displayName: "IG UK Grid finder"
+    name: "IG & UK Grids"
+    displayName: "IG & UK Grid finder"
     prefix: "grid"
     locatorBridge: iface.findItemByObjectName('locatorBridge')
     source: Qt.resolvedUrl('grids.qml')
@@ -64,28 +65,56 @@ function triggerResult(result) {
   }
 }
 function triggerResultFromAction(result, actionId) {
-  if (actionId === 1 && result.userData && result.userData.geometry) {
+  if (result.userData && result.userData.geometry) {
     const geometry = result.userData.geometry;
     const crs = CoordinateReferenceSystemUtils.fromDescription(result.userData.crs);
 
     // Reproject the geometry to the map's CRS
-    const reprojectedGeometry = GeometryUtils.reprojectPoint(
+    const reprojectedPoint = GeometryUtils.reprojectPoint(
       geometry,
       crs,
       mapCanvas.mapSettings.destinationCrs
     );
 
-    // Set the navigation destination
-    const navigation = iface.findItemByObjectName('navigation');
-    if (navigation) {
-      navigation.destination = reprojectedGeometry;
-      mainWindow.displayToast("Destination set successfully");
-    } else {
-      mainWindow.displayToast("Navigation component not found");
+    if (actionId === 1) {
+      // Set the navigation destination
+      const navigation = iface.findItemByObjectName('navigation');
+      if (navigation) {
+        navigation.destination = reprojectedPoint;
+        mainWindow.displayToast("Destination set successfully");
+      } else {
+        mainWindow.displayToast("Navigation component not found");
+      }
+
+    } else if (actionId === 2) {
+      // Ensure an editable layer is selected
+      dashBoard.ensureEditableLayerSelected();
+     
+      // Check if the active layer is valid
+      if (!dashBoard.activeLayer) {
+        mainWindow.displayToast("No active layer selected");
+        return;
+      }
+            // Check if the active layer is a point layer
+      if (dashBoard.activeLayer.geometryType() !== Qgis.GeometryType.Point) {
+        mainWindow.displayToast(qsTr("Active vector layer must be a point geometry"));
+        return;
+      }
+       // Create the geometry 
+      var reprojectedGeometry = GeometryUtils.createGeometryFromWkt(`POINT(${reprojectedPoint.x} ${reprojectedPoint.y})`)
+       
+      // Create a new feature
+      var feature = FeatureUtils.createFeature(dashBoard.activeLayer, reprojectedGeometry);
+
+      // Open the form for the new feature
+      overlayFeatureFormDrawer.featureModel.feature = feature;
+      overlayFeatureFormDrawer.state = "Add";
+      overlayFeatureFormDrawer.open();
     }
   } else {
     mainWindow.displayToast("Invalid action or geometry");
   }
+  
 }
 }   
 
@@ -166,6 +195,40 @@ Dialog {
  anchors.fill: parent
  anchors.margins : 1
 
+
+     Dialog {
+        id: coordinatesDialog
+        //title: "Coordinates"
+        width: 350
+        height: 300
+        modal: true
+
+        Column {
+            spacing: 40
+            anchors.centerIn: parent
+            Label {
+                text: igInputBox.text 
+                font.pixelSize: 30
+                font.bold: true
+            }
+            Label {
+                text: ukInputBox.text 
+                font.pixelSize: 30
+                font.bold: true
+            }            
+            Label {
+                text:wgs84Box.text 
+                font.pixelSize: 30
+                font.bold: true
+            }
+            Label {
+                text:wgs84DMBox.text 
+                font.pixelSize: 30
+                font.bold: true
+            }            
+        }
+    } 
+
 RowLayout{
 Layout.fillWidth: true
  Label {
@@ -233,6 +296,15 @@ TextField {
  Layout.fillWidth: true
  placeholderText: "Irish Grid: X 00000 00000"
  visible: true
+        // MouseArea to handle click-and-hold
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton
+
+                       // Signal emitted when the mouse is pressed and held
+            onPressAndHold: {coordinatesDialog.open()
+            }
+          }
 
  // Custom validation logic
  onTextChanged: {
@@ -299,7 +371,7 @@ TextField {
  }
 }
  
- 
+
  
 // UK Grid 
  
@@ -313,7 +385,15 @@ TextField {
  Layout.fillWidth: true
  placeholderText: "UK Grid: XX 00000 00000"
  visible: false
+        // MouseArea to handle click-and-hold
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton
 
+                       // Signal emitted when the mouse is pressed and held
+            onPressAndHold: {coordinatesDialog.open()
+            }
+          }
  // Flag to indicate programmatic updates
  property bool isProgrammaticUpdate: false
 
@@ -407,7 +487,15 @@ TextField {
  placeholderText: "X,Y or Long (E), Lat (N) "
  visible: false
  text: ""
+        // MouseArea to handle click-and-hold
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton
 
+                       // Signal emitted when the mouse is pressed and held
+            onPressAndHold: {coordinatesDialog.open()
+            }
+          }
  onTextChanged: {
     custom1BoxXY.placeholderText  = "Custom1"
  var cursorPos = cursorPosition // Store cursor position
@@ -508,7 +596,15 @@ TextField {
  placeholderText: "X,Y or Long (E), Lat (N) "
  visible: false
  text: ""
+        // MouseArea to handle click-and-hold
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton
 
+                       // Signal emitted when the mouse is pressed and held
+            onPressAndHold: {coordinatesDialog.open()
+            }
+          }
  onTextChanged: {
     custom2BoxXY.placeholderText  = "Custom2"
  var cursorPos = cursorPosition // Store cursor position
@@ -609,7 +705,15 @@ TextField {
  placeholderText: "Lat(N), Long(E) "
  visible: true
  text: ""
+        // MouseArea to handle click-and-hold
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton
 
+                       // Signal emitted when the mouse is pressed and held
+            onPressAndHold: {coordinatesDialog.open()
+            }
+          }
  onTextChanged: {
     wgs84Box.placeholderText  = "Lat Long"
  var cursorPos = cursorPosition // Store cursor position
@@ -689,7 +793,15 @@ TextField {
  placeholderText: "Lat(N), Long(E) (e.g., 34° 27.36', 56° 40.2')"
  visible: false
  text: ""
+        // MouseArea to handle click-and-hold
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton
 
+                       // Signal emitted when the mouse is pressed and held
+            onPressAndHold: {coordinatesDialog.open()
+            }
+          }
  property bool isProgrammaticUpdate: false
  
  onTextChanged: {
@@ -938,6 +1050,8 @@ onTextChanged: lonMinClampTimer.restart()
  //font.bold: true
  font.pixelSize: font_Size.text
  //Layout.preferredHeight: 35
+
+
  onClicked:{ 
  var latDeg = parseFloat(latDegrees.text) || 0
  var latMin = parseFloat(latMinutesDecimal.text) || 0
@@ -952,9 +1066,28 @@ onTextChanged: lonMinClampTimer.restart()
  var ylon = parts[1] 
  
  updateCoordinates(ylon, xlat, 4326, custom1CRS.text, custom2CRS.text,5)} 
- }}
  }
 
+
+onPressAndHold: {
+ var latDeg = parseFloat(latDegrees.text) || 0
+ var latMin = parseFloat(latMinutesDecimal.text) || 0
+ var lonDeg = parseFloat(lonDegrees.text) || 0
+ var lonMin = parseFloat(lonMinutesDecimal.text) || 0
+ 
+ wgs84Box.text = (latDeg + Math.sign(latDeg) * latMin / 60).toFixed(decimalsd.text) + ", " + (lonDeg + Math.sign(lonDeg) * lonMin / 60).toFixed(decimalsd.text)
+
+ // convert get X,Y from textfield:
+ {var parts = wgs84Box.text.split(',')
+ var xlat = parts[0] 
+ var ylon = parts[1] 
+ 
+ updateCoordinates(ylon, xlat, 4326, custom1CRS.text, custom2CRS.text,5)} 
+ coordinatesDialog.open()
+ } 
+ 
+ }
+ }
 
  
  
@@ -1311,10 +1444,13 @@ Label{
  }
  }
  }
- } 
+ }
+
+ 
 }
 
-}}
+}
+}
  
 
 

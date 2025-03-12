@@ -84,18 +84,23 @@ function fetchResults(string, context, parameters) {
 
   console.log('Processing input string....');
 
-  let details = {
-    "userData": null,
-    "displayString": string,
-    "description": "desc.txt",
-    "actions": []
-  };
-
-  details["actions"].push({
-    "id": 1,
-    "name": "Set as destination",
-    "icon": "qrc:/themes/qfield/nodpi/ic_navigation_flag_purple_24dp.svg"
-  });
+let details = {
+  "userData": null,
+  "displayString": string,
+  "description": "desc.txt",
+  "actions": [
+    {
+      "id": 1,
+      "name": "Set as destination",
+      "icon": "qrc:/themes/qfield/nodpi/ic_navigation_flag_purple_24dp.svg"
+    },
+    {
+      "id": 2,
+      "name": "Create a point",
+      "icon": Qt.resolvedUrl("new.svg")
+    }
+  ]
+};
 
   // Check if the input string is a valid Grid reference
   if (igtoWGS(string)) {
@@ -115,7 +120,7 @@ function fetchResults(string, context, parameters) {
     };
     details.description = decimalToDDM(pointGeometry.y) + ", "+ decimalToDDM(pointGeometry.x) ;
       } else {
-    details.displayString = string + " is not a valid Irish/UK Grid reference";
+    details.displayString = string + " not valid Irish/UK Grid ref";
     details.description = " X 00000 00000 or XX 00000 00000 format expected";
   }
 

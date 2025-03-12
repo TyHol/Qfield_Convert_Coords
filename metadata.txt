@@ -1,7 +1,7 @@
 [general]
-name=CZoomPoCo
-description=add/zoom/convert/navigate to points/coordinates UK Irish Grid WGS 84 or custom
+name=Convert_Coords_IRE_UK_Grids
+description= Form and searchbar tools: Form to convert between & navigate to/zoom to/add points features at coordinates/Irish Grid & UK Grid references/Screencentre/GPS/custom). Also adds Irish Grid & UK Grid to searchbar.
 author=Tyhol
 icon=icon2.svg
-version=0.01
+version=1.0
 homepage=https://github.com/TyHol/Qfield_Convert_Coords.git
