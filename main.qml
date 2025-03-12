@@ -1218,9 +1218,6 @@ Button {
  Layout.fillWidth: true
  font.pixelSize: font_Size.text 
  Layout.preferredHeight: 60 
- icon.source: zoom_out_map_24dp.svg // Path to the icon
- icon.width: 24 // Set icon width
- icon.height: 24 // Set icon height
  onClicked: { coordinatesDialog.open() }
  }
  } 
