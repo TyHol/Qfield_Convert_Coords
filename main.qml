@@ -206,13 +206,14 @@ Dialog {
         Column {
             spacing: 40
             anchors.centerIn: parent
+
             Label {
-                text: igInputBox.text 
+                text: igInputBox.text
                 font.pixelSize: 30
                 font.bold: true
-            }
+            }               
             Label {
-                text: ukInputBox.text 
+                text: ukInputBox.text
                 font.pixelSize: 30
                 font.bold: true
             }            
@@ -222,7 +223,7 @@ Dialog {
                 font.bold: true
             }
             Label {
-                text:wgs84DMBox.text 
+                text:wgs84DMBox.text
                 font.pixelSize: 30
                 font.bold: true
             }            
@@ -296,15 +297,6 @@ TextField {
  Layout.fillWidth: true
  placeholderText: "Irish Grid: X 00000 00000"
  visible: true
-        // MouseArea to handle click-and-hold
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.LeftButton
-
-                       // Signal emitted when the mouse is pressed and held
-            onPressAndHold: {coordinatesDialog.open()
-            }
-          }
 
  // Custom validation logic
  onTextChanged: {
@@ -385,15 +377,7 @@ TextField {
  Layout.fillWidth: true
  placeholderText: "UK Grid: XX 00000 00000"
  visible: false
-        // MouseArea to handle click-and-hold
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.LeftButton
-
-                       // Signal emitted when the mouse is pressed and held
-            onPressAndHold: {coordinatesDialog.open()
-            }
-          }
+ 
  // Flag to indicate programmatic updates
  property bool isProgrammaticUpdate: false
 
@@ -487,15 +471,7 @@ TextField {
  placeholderText: "X,Y or Long (E), Lat (N) "
  visible: false
  text: ""
-        // MouseArea to handle click-and-hold
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.LeftButton
 
-                       // Signal emitted when the mouse is pressed and held
-            onPressAndHold: {coordinatesDialog.open()
-            }
-          }
  onTextChanged: {
     custom1BoxXY.placeholderText  = "Custom1"
  var cursorPos = cursorPosition // Store cursor position
@@ -596,15 +572,7 @@ TextField {
  placeholderText: "X,Y or Long (E), Lat (N) "
  visible: false
  text: ""
-        // MouseArea to handle click-and-hold
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.LeftButton
 
-                       // Signal emitted when the mouse is pressed and held
-            onPressAndHold: {coordinatesDialog.open()
-            }
-          }
  onTextChanged: {
     custom2BoxXY.placeholderText  = "Custom2"
  var cursorPos = cursorPosition // Store cursor position
@@ -705,15 +673,7 @@ TextField {
  placeholderText: "Lat(N), Long(E) "
  visible: true
  text: ""
-        // MouseArea to handle click-and-hold
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.LeftButton
 
-                       // Signal emitted when the mouse is pressed and held
-            onPressAndHold: {coordinatesDialog.open()
-            }
-          }
  onTextChanged: {
     wgs84Box.placeholderText  = "Lat Long"
  var cursorPos = cursorPosition // Store cursor position
@@ -793,15 +753,7 @@ TextField {
  placeholderText: "Lat(N), Long(E) (e.g., 34° 27.36', 56° 40.2')"
  visible: false
  text: ""
-        // MouseArea to handle click-and-hold
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.LeftButton
 
-                       // Signal emitted when the mouse is pressed and held
-            onPressAndHold: {coordinatesDialog.open()
-            }
-          }
  property bool isProgrammaticUpdate: false
  
  onTextChanged: {
@@ -1098,7 +1050,7 @@ RowLayout{
  visible: true
  wrapMode: Text.Wrap
  font.bold: true
- text: qsTr("Do stuff:")
+ text: qsTr("Do:")
  font.pixelSize: font_Size.text 
  font.family: "Arial" // Set font family
  font.italic: true // Make text italic
@@ -1173,7 +1125,7 @@ var geometry = GeometryUtils.createGeometryFromWkt(polygonWkt);
  }
  
 Button {
- text: qsTr("Create")
+ text: qsTr("Add")
  font.bold: true
  Layout.fillWidth: true
  font.pixelSize: font_Size.text 
@@ -1259,7 +1211,18 @@ Button {
 
 
 }
-
+Button {
+ text: qsTr("BIG")
+ 
+ font.bold: true
+ Layout.fillWidth: true
+ font.pixelSize: font_Size.text 
+ Layout.preferredHeight: 60 
+ icon.source: zoom_out_map_24dp.svg // Path to the icon
+ icon.width: 24 // Set icon width
+ icon.height: 24 // Set icon height
+ onClicked: { coordinatesDialog.open() }
+ }
  } 
  
 
