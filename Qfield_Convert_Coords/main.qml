@@ -763,13 +763,13 @@ TextField {
  property bool isProgrammaticUpdate: false
  
  // need to get this to work or delete it....
- //onTextChanged: {
+ onTextChanged: {
  //   wgs84DMBox.placeholderText  = "Lat Long"
- // if (isProgrammaticUpdate) {
+  if (isProgrammaticUpdate) {
  // Skip validation if the text is being updated programmatically
- //isProgrammaticUpdate = false
- //return
- //}
+ isProgrammaticUpdate = false
+ return
+ }
  
  //var cursorPos = cursorPosition // Store cursor position
  //var originalText = text
@@ -833,7 +833,7 @@ TextField {
  //function adjustCursorPosition(pos, oldText, newText) {
  //return Math.min(pos, newText.length)
  //}
-//} 
+} 
 
 }
 RowLayout {
