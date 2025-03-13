@@ -17,7 +17,7 @@ Item {
  property var overlayFeatureFormDrawer: iface.findItemByObjectName('overlayFeatureFormDrawer')
  property var positionSource: iface.findItemByObjectName('positionSource')
  property var canvasCrs : canvas.destinationCrs ;
- property var crsGeo : canvasCrs.isGeographic // is the canvas Geogrpahic true (deg) or projected (false) (m)
+ property var crsGeo : canvasCrs.isGeographic // is the canvas Geogrpahic (true (deg)) or projected (false (m))
  property var canvasEPSG : parseInt(canvas.project.crs.authid.split(":")[1]); // Canvas CRS
  property var mapCanvas: iface.mapCanvas()
 
@@ -31,7 +31,7 @@ Item {
     }   
 
 
-// Irish Grid Locator Filter
+// Irish Grid/ UK  Locator Filter
 QFieldLocatorFilter {
     id: igukGridsFilter2
     delay: 1000
@@ -121,25 +121,31 @@ function triggerResultFromAction(result, actionId) {
 
 
 
-//chanegable stuff default values
-property var fsize : "16" // general font size
+//chanegable stuff 
+//default values
+property var fsize : "15" // general font size
 property var zoomV : "4" // zoom level (does this work?)
-property var decm : "0"  // decimal plaves for meter coordinates
-property var decd : "5"  // decimal plaves for degree coordinates
+property var decm : "0"  // decimal places for meter coordinates
+property var decd : "5"  // decimal places for degree coordinates
+// for testing:
 property var degwa : "40"  // width of degree input box when no decimals in it
 property var degwb : "110"  // width of degree input box when decimals in it
 property var minwa : "80"  // width of minute input box when no decimals in degree box
 property var minwb : "0" // width of minute input box when no decimals in degree box
-property var ukgvis: false // visibility of UK grid
-property var igvis: true // visibility of Irish grid
-property var custom1vis: false // visibility of custom1
-property var custom2vis: false // visibility of custom2 
-property var wgs84vis: true // visibility of wgs84
-property var wgs84DMvis: false // visibility of wgs84 DM    
-property var customisationvis: true // visibility of customisation
+// to do: need to tweak this
+//property var ukgvis: false // visibility of UK grid
+//property var igvis: true // visibility of Irish grid
+//property var custom1vis: false // visibility of custom1
+//property var custom2vis: false // visibility of custom2 
+//property var wgs84vis: true // visibility of wgs84
+//property var wgs84DMvis: false // visibility of wgs84 DM    
+//property var customisationvis: true // visibility of customisation
+//property var crosshairvis: true // visibility of crosshair
 
-
+//small crosshair
  Rectangle{
+ id: crosshair
+ visible: true 
  parent: iface.mapCanvas()
  color: "transparent"
  border.color: "grey"
@@ -161,13 +167,13 @@ property var customisationvis: true // visibility of customisation
  anchors.verticalCenter: parent.verticalCenter
  }
  Rectangle {
-  width: 1
+ width: 1
  height: parent.height 
  color: "grey"
  anchors.horizontalCenter: parent.horizontalCenter
  }
- 
  } 
+
 QfToolButton {
  id: digitizeButton
  bgcolor: Theme.darkGray
@@ -750,84 +756,86 @@ TextField {
  font.family: "Arial"
  font.italic: true
  font.bold: true
- placeholderText: "Lat(N), Long(E) (e.g., 34° 27.36', 56° 40.2')"
+ placeholderText: "(Read only)" //"Lat(N), Long(E) (e.g., 34° 27.36', 56° 40.2')"
  visible: false
  text: ""
 
  property bool isProgrammaticUpdate: false
  
- onTextChanged: {
-    wgs84DMBox.placeholderText  = "Lat Long"
- if (isProgrammaticUpdate) {
+ // need to get this to work or delete it....
+ //onTextChanged: {
+ //   wgs84DMBox.placeholderText  = "Lat Long"
+ // if (isProgrammaticUpdate) {
  // Skip validation if the text is being updated programmatically
- isProgrammaticUpdate = false
- return
- }
+ //isProgrammaticUpdate = false
+ //return
+ //}
  
- var cursorPos = cursorPosition // Store cursor position
- var originalText = text
+ //var cursorPos = cursorPosition // Store cursor position
+ //var originalText = text
 
  // Clean input: allow digits, minus, dot, degree (°), minute ('), comma, and spaces
- var cleanedText = text.replace(/[^0-9-°'.,\s]/g, '')
+ //var cleanedText = text.replace(/[^0-9-°'.,\s]/g, '')
 
  // Split by comma to separate longitude and latitude
- var parts = cleanedText.split(',')
- if (parts.length > 2) {
- cleanedText = parts[0] + ',' + parts[1]
- parts = cleanedText.split(',')
- }
+ //var parts = cleanedText.split(',')
+ //if (parts.length > 2) {
+ //cleanedText = parts[0] + ',' + parts[1]
+ //parts = cleanedText.split(',')
+ //}
 
- for (var i = 0; i < parts.length; i++) {
- var coord = parts[i].trim()
+ //for (var i = 0; i < parts.length; i++) {
+ //var coord = parts[i].trim()
 
  // Handle empty or partial input
- if (coord === '' || coord === '-') {
- parts[i] = coord
- continue
- }
+ //if (coord === '' || coord === '-') {
+ //parts[i] = coord
+ //continue
+ //}
 
- var degMin = coord.split(/°|\s+/).filter(Boolean)
- if (degMin.length === 0) {
- parts[i] = ''
- continue
- }
+ //var degMin = coord.split(/°|\s+/).filter(Boolean)
+ //if (degMin.length === 0) {
+ //parts[i] = ''
+ //continue
+ //}
 
- var degrees = parseInt(degMin[0], 10)
- if (isNaN(degrees)) degrees = 0
- degrees = Math.max(-180, Math.min(180, degrees))
+ //var degrees = parseInt(degMin[0], 10)
+ //if (isNaN(degrees)) degrees = 0
+ //degrees = Math.max(-180, Math.min(180, degrees))
 
- var minutes = 0
- if (degMin.length > 1) {
- minutes = parseFloat(degMin[1].replace("'", ""))
- if (isNaN(minutes)) minutes = 0
- minutes = Math.max(0, Math.min(60, minutes))
- }
+ //var minutes = 0
+ //if (degMin.length > 1) {
+ //minutes = parseFloat(degMin[1].replace("'", ""))
+ //if (isNaN(minutes)) minutes = 0
+ //minutes = Math.max(0, Math.min(60, minutes))
+ //}
 
- parts[i] = degrees + "° " + minutes.toFixed(4) + "'"
- }
+ //parts[i] = degrees + "° " + minutes.toFixed(4) + "'"
+ //}
 
- cleanedText = parts[0] || ''
- if (parts.length > 1) {
- cleanedText += ', ' + (parts[1] || '')
- }
+ //cleanedText = parts[0] || ''
+ //if (parts.length > 1) {
+ //cleanedText += ', ' + (parts[1] || '')
+ //}
 
- if (text !== cleanedText) {
- text = cleanedText
- cursorPosition = adjustCursorPosition(cursorPos, originalText, cleanedText)
- }
+ //if (text !== cleanedText) {
+ //text = cleanedText
+ //cursorPosition = adjustCursorPosition(cursorPos, originalText, cleanedText)
+ //}
 
- var xlat = ddmToDecimal(parts[0])
- var xlon = parts.length > 1 ? ddmToDecimal(parts[1]) : ''
- if (xIN !== '' && yIN !== '') {
- updateCoordinates(xlon, xlat, 4326, custom1CRS.text, custom2CRS.text, 6)
- }
- }
+ //var xlat = ddmToDecimal(parts[0])
+ //var xlon = parts.length > 1 ? ddmToDecimal(parts[1]) : ''
+ //if (xIN !== '' && yIN !== '') {
+ //updateCoordinates(xlon, xlat, 4326, custom1CRS.text, custom2CRS.text, 6)
+ //}
+ //}
 
- function adjustCursorPosition(pos, oldText, newText) {
- return Math.min(pos, newText.length)
- }
-} 
+ //function adjustCursorPosition(pos, oldText, newText) {
+ //return Math.min(pos, newText.length)
+ //}
+//} 
 
+}
 RowLayout {
  spacing: 5
 
@@ -1225,14 +1233,26 @@ Button {
 
  
 Frame{
-    id: customisation
+id: customisation
 Layout.fillWidth: true
 visible: false
+
+
 Column{
     anchors.fill: parent
     anchors.margins: 1
-RowLayout {    
-    Layout.fillWidth: true
+
+GridLayout{  
+    columns: 4
+    rows: 2
+    columnSpacing: 5
+    rowSpacing: 5
+    
+    Layout.fillWidth: true 
+//toprow
+//
+ //   Layout.fillWidth: true
+
 Label{
  id:font_Size1
  font.pixelSize: 10
@@ -1250,7 +1270,12 @@ Label{
  text : fsize
  Layout.preferredWidth: 40 
  Layout.preferredHeight: 20 
+ validator: IntValidator {
+        bottom: 5
+        top: 25
+    }
  }
+
  Label{
  id:zoomlabel
  font.pixelSize: 10
@@ -1260,24 +1285,25 @@ Label{
  //Layout.preferredWidth: 65 
  Layout.preferredHeight: 10 
  }
- 
- TextField{
+  TextField{
  id:zoom
  font.pixelSize: 10
  font.family: "Arial"
-
  font.italic: true
  text : zoomV
  Layout.preferredWidth: 40 
  Layout.preferredHeight: 20 
+ validator: IntValidator {
+        bottom: 1
+        top: 10
+    } 
  } 
- 
- } 
- 
+ //} 
+//end of topo row
 
-
-RowLayout { 
-    Layout.fillWidth: true
+//second row
+//RowLayout { 
+//    Layout.fillWidth: true
 Label{
  id:decimals1
  font.pixelSize: 10
@@ -1287,15 +1313,18 @@ Label{
  //Layout.preferredWidth: 60 
  Layout.preferredHeight: 10 
  }
- 
- TextField{
+  TextField{
  id:decimalsm
  font.pixelSize: 10
  font.family: "Arial"
  font.italic: true
  text : decm
  Layout.preferredWidth: 40 
- Layout.preferredHeight: 20 
+ Layout.preferredHeight: 20
+ validator: IntValidator {
+      bottom: 0
+      top: 10
+  }  
  }
  
  Label{
@@ -1312,24 +1341,28 @@ Label{
  id:decimalsd
  font.pixelSize: 10
  font.family: "Arial"
-
  font.italic: true
  text : decd
  Layout.preferredWidth: 40 
  Layout.preferredHeight: 20 
+ validator: IntValidator {
+        bottom: 0
+        top: 10
+    } 
  } 
- }
 
 
-
-
+//}
+//end of second row
+}
+//third row
  RowLayout{
 
 
     CheckBox {
         id: showUK
         text: "UK Grid"
-        font.pixelSize: font_Size.text
+        font.pixelSize: 10
         checked: false
         onCheckedChanged: {
             ukInputBox.visible = checked
@@ -1338,7 +1371,7 @@ Label{
     CheckBox {
         id: showIG
         text: "Irish Grid"
-        font.pixelSize: font_Size.text
+        font.pixelSize: 10
         checked: true
         onCheckedChanged: {
             igInputBox.visible = checked
@@ -1347,7 +1380,7 @@ Label{
         CheckBox {
         id: showWGS84
         text: "WGS84"
-        font.pixelSize: font_Size.text
+        font.pixelSize: 10
         checked: false
         onCheckedChanged: {
             wgs84DMBox.visible = checked
@@ -1358,7 +1391,7 @@ Label{
     CheckBox {
         id: showCustom1
         text: "Custom1"
-        font.pixelSize: font_Size.text
+        font.pixelSize: 10
         checked: false
         onCheckedChanged: {
             custom1BoxXY.visible = checked
@@ -1368,44 +1401,58 @@ Label{
     CheckBox {
         id: showCustom2
         text: "Custom2"
-        font.pixelSize: font_Size.text
+        font.pixelSize: 10
         checked: false
         onCheckedChanged: {
             custom2BoxXY.visible = checked
             custom2CRS.visible = checked
         }
     }
-
+    CheckBox {
+        id: showCrosshair
+        text: "Crosshair"
+        font.pixelSize: 10
+        checked: true
+        onCheckedChanged: {
+            crosshair.visible = checked
+        }
+    }
+ }
+ RowLayout{  
      Button {
  text: qsTr("Reset")
- font.pixelSize: font_Size.text 
+ font.pixelSize: 10 
  Layout.preferredHeight: 35 
  onClicked: {
  custom1CRS.text = canvasEPSG
  custom2CRS.text = "4326"
- font_Size.text = "16"
- decimalsm.text = "0"
- decimalsd.text = "5"
+ font_Size.text = fsize
+ decimalsm.text = decm
+ decimalsd.text = decd
  zoom.text = zoomV
- igInputBox.visible = true
- ukInputBox.visible = false
+
+    igInputBox.visible = true
+    ukInputBox.visible = false
     custom1BoxXY.visible = false
     custom1CRS.visible = false
     custom2BoxXY.visible = false
     custom2CRS.visible = false    
     wgs84DMBox.visible = false 
     customisation.visible = false
+    crosshair.visible = true
+    
     showIG.checked = true
     showUK.checked = false
     showCustom1.checked = false 
     showCustom2.checked = false
     showWGS84.checked = false
     showCustomisation.checked = false
+    showCrosshair.checked = true
  }
  }
  }
  }
-
+ 
  
 }
 
