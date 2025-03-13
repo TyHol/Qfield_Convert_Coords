@@ -467,99 +467,58 @@ ukInputBox.placeholderText  = "UKG"
  }
 }
 
-
-
  
 // Custom1 Row
 RowLayout { 
+
+//custombox1
+
 TextField {
- id: custom1BoxXY //3
- Layout.preferredHeight: 35
- Layout.preferredWidth: 200
- font.pixelSize: font_Size.text 
- font.family: "Arial"
- font.bold: true
- font.italic: true
- placeholderText: "X,Y or Long (E), Lat (N) "
- visible: false
- text: ""
- property bool isProgrammaticUpdate: false
- 
+    id: custom1BoxXY //3
+    property bool isProgrammaticUpdate: false
+    Layout.preferredHeight: 35
+    Layout.preferredWidth: 200
+    font.pixelSize: font_Size.text
+    font.family: "Arial"
+    font.bold: true
+    font.italic: true
+    placeholderText: "X,Y or Long (E), Lat (N)"
+    visible: false
+    text: ""
 
-onTextChanged: {
+    // Timer for delayed validation
+    Timer {
+        id: validationTimer
+        interval: 500 // 500ms delay
+        running: false
+        repeat: false
+        onTriggered: {
+            // Run validation logic here
+            validateInput(custom1BoxXY);
 
-    if (isProgrammaticUpdate) {
- // Skip validation if the text is being updated programmatically
- isProgrammaticUpdate = false
- return
- }
+            // After validation, extract coordinates and call updateCoordinates
+            var parts = custom1BoxXY.text.split(',');
+            var xIN = parts[0];
+            var yIN = parts[1];
 
-    custom1BoxXY.placeholderText  = "Custom 1"
- var cursorPos = cursorPosition // Store cursor position
- var originalText = text
+            updateCoordinates(xIN, yIN, custom1CRS.text, custom1CRS.text, custom2CRS.text, 3);
+        }
+    }
 
- // Clean input: allow digits, minus, dot, comma, and spaces
- var cleanedText = text.replace(/[^0-9-.,\s]/g, '')
+    onTextChanged: {
+        if (isProgrammaticUpdate) {
+            isProgrammaticUpdate = false;
+            return;
+        }
 
- // Split by comma
- var parts = cleanedText.split(',')
- if (parts.length > 2) {
- cleanedText = parts[0] + ',' + parts[1]
- parts = cleanedText.split(',')
- }
-
- // Process each part
- for (var i = 0; i < parts.length; i++) {
- var num = parts[i].trim()
-
- // Allow partial input (e.g., "-", "45.", "45.1") during typing
- if (num === '' || num === '-' || num.match(/^-?\d*\.?\d*$/)) {
- // If it’s a valid partial number (including just a dot), keep it as-is
- parts[i] = num
- continue
- }
-
- // Remove extra dots (keep only the first one)
- var dots = (num.match(/\./g) || []).length
- if (dots > 1) {
- var firstDotIndex = num.indexOf('.')
- num = num.substring(0, firstDotIndex + 1) + num.substring(firstDotIndex + 1).replace(/\./g, '')
- }
-
- // Parse and clamp the value
- var value = parseFloat(num)
- if (isNaN(value)) {
- num = num.replace(/[^0-9-.]/g, '') // Remove invalid characters
- } else if (value < -1000000) {
- num = ''
- } else if (value > 1000000) {
- num = ''
- } else {
- num = value.toString()
- }
- parts[i] = num
- }
-
- // Reconstruct the text
- cleanedText = parts[0] || ''
- if (parts.length > 1) {
- cleanedText += ', ' + (parts[1] || '')
- }
-
- // Update text only if it changed, and restore cursor
- if (text !== cleanedText) {
- text = cleanedText
- cursorPosition = cursorPos
-
- // convert get X,Y from textfield:
- var parts = custom1BoxXY.text.split(',')
- var xIN = parts[0] 
- var yIN = parts[1] 
- updateCoordinates(xIN, yIN, custom1CRS.text, custom1CRS.text, custom2CRS.text,3) 
- }
- }
+        // Restart the timer on every keystroke
+        validationTimer.restart();
+    }
 }
- 
+
+//end of custombox1 
+
+
  TextField {
  id: custom1CRS
  Layout.fillWidth: true
@@ -581,96 +540,52 @@ onTextChanged: {
  }
  
 // custom2
-RowLayout { 
+RowLayout {
+
+//second custom box   
 TextField {
- id: custom2BoxXY //4
- Layout.preferredWidth: 200
- Layout.preferredHeight: 35
- font.pixelSize: font_Size.text 
- font.family: "Arial"
- font.italic: true
- font.bold: true
- placeholderText: "X,Y or Long (E), Lat (N) "
- visible: false
- text: ""
- property bool isProgrammaticUpdate: false
- // Custom validation logic
- onTextChanged: {
+    id: custom2BoxXY
+    property bool isProgrammaticUpdate: false
+    Layout.preferredWidth: 200
+    Layout.preferredHeight: 35
+    font.pixelSize: font_Size.text
+    font.family: "Arial"
+    font.italic: true
+    font.bold: true
+    placeholderText: "X,Y or Long (E), Lat (N)"
+    visible: false
+    text: ""
 
-    if (isProgrammaticUpdate) {
- // Skip validation if the text is being updated programmatically
- isProgrammaticUpdate = false
- return
- }
- 
-    custom2BoxXY.placeholderText  = "Custom 2"
- var cursorPos = cursorPosition // Store cursor position
- var originalText = text
+    Timer {
+        id: validationTimer2
+        interval: 500
+        running: false
+        repeat: false
+        onTriggered: {
+            // Run validation logic here
+            validateInput(custom2BoxXY);
 
- // Clean input: allow digits, minus, dot, comma, and spaces
- var cleanedText = text.replace(/[^0-9-.,\s]/g, '')
+            // After validation, extract coordinates and call updateCoordinates
+            var parts = custom2BoxXY.text.split(',');
+            var xIN = parts[0];
+            var yIN = parts[1];
 
- // Split by comma
- var parts = cleanedText.split(',')
- if (parts.length > 2) {
- cleanedText = parts[0] + ',' + parts[1]
- parts = cleanedText.split(',')
- }
+            updateCoordinates(xIN, yIN, custom2CRS.text, custom1CRS.text, custom2CRS.text, 4);
+        }
+    }
 
- // Process each part
- for (var i = 0; i < parts.length; i++) {
- var num = parts[i].trim()
-
- // Allow partial input (e.g., "-", "45.", "45.1") during typing
- if (num === '' || num === '-' || num.match(/^-?\d*\.?\d*$/)) {
- // If it’s a valid partial number (including just a dot), keep it as-is
- parts[i] = num
- continue
- }
-
- // Remove extra dots (keep only the first one)
- var dots = (num.match(/\./g) || []).length
- if (dots > 1) {
- var firstDotIndex = num.indexOf('.')
- num = num.substring(0, firstDotIndex + 1) + num.substring(firstDotIndex + 1).replace(/\./g, '')
- }
-
- // Parse and clamp the value
- var value = parseFloat(num)
- if (isNaN(value)) {
- num = num.replace(/[^0-9-.]/g, '') // Remove invalid characters
- } else if (value < -90) {
- num = '-90'
- } else if (value > 90) {
- num = '90'
- } else {
- num = value.toString()
- }
- parts[i] = num
- }
-
- // Reconstruct the text
- cleanedText = parts[0] || ''
- if (parts.length > 1) {
- cleanedText += ', ' + (parts[1] || '')
- }
-
- // Update text only if it changed, and restore cursor
- if (text !== cleanedText) {
- text = cleanedText
- cursorPosition = cursorPos
-{ 
- // convert get X,Y from textfield:
- var parts = custom2BoxXY.text.split(',')
- var xIN = parts[0] 
- var yIN = parts[1]
- 
- updateCoordinates(xIN, yIN, custom2CRS.text, custom1CRS.text, custom2CRS.text, 4) } 
- 
- }
- }
+    onTextChanged: {
+        if (isProgrammaticUpdate) {
+            isProgrammaticUpdate = false;
+            return;
+        }
+        validationTimer2.restart();
+    }
 }
- 
+//end of second custom box
+
+
+
  TextField {
  id: custom2CRS
  Layout.fillWidth: true
@@ -1579,6 +1494,61 @@ property var ukletterMatrix: {
  'HT': { first: 3, second: 11 },
  'HU': { first: 4, second: 11 },
  'HP': { first: 4, second: 12 }}
+
+function validateInput(textBox) {
+    // Your validation logic here
+    console.log("Validating input for:", textBox.objectName);
+
+    // Example validation logic
+    var inputText = textBox.text;
+    var cleanedText = inputText.replace(/[^0-9-.,\s]/g, '');
+    var parts = cleanedText.split(',');
+
+    if (parts.length > 2) {
+        cleanedText = parts[0] + ',' + parts[1];
+        parts = cleanedText.split(',');
+    }
+
+    // Process each part
+    for (var i = 0; i < parts.length; i++) {
+        var num = parts[i].trim();
+
+        if (num === '' || num === '-' || num.match(/^-?\d*\.?\d*$/)) {
+            parts[i] = num;
+            continue;
+        }
+
+        var dots = (num.match(/\./g) || []).length;
+        if (dots > 1) {
+            var firstDotIndex = num.indexOf('.');
+            num = num.substring(0, firstDotIndex + 1) + num.substring(firstDotIndex + 1).replace(/\./g, '');
+        }
+
+        var value = parseFloat(num);
+        if (isNaN(value)) {
+            num = num.replace(/[^0-9-.]/g, '');
+        } else if (value < -1000000) {
+            num = '';
+        } else if (value > 1000000) {
+            num = '';
+        } else {
+            num = value.toString();
+        }
+        parts[i] = num;
+    }
+
+    // Reconstruct the text
+    cleanedText = parts[0] || '';
+    if (parts.length > 1) {
+        cleanedText += ', ' + (parts[1] || '');
+    }
+
+    // Update the text box if the text has changed
+    if (textBox.text !== cleanedText) {
+        textBox.isProgrammaticUpdate = true;
+        textBox.text = cleanedText;
+    }
+}
 
 function getIGFromXY(x, y) {
  // Check if x or y is greater than 0
