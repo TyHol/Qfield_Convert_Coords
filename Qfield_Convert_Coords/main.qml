@@ -303,9 +303,15 @@ TextField {
  Layout.fillWidth: true
  placeholderText: "Irish Grid: X 00000 00000"
  visible: true
-
+ property bool isProgrammaticUpdate: false
  // Custom validation logic
  onTextChanged: {
+
+    if (isProgrammaticUpdate) {
+ // Skip validation if the text is being updated programmatically
+ isProgrammaticUpdate = false
+ return
+ }
    igInputBox.placeholderText  = "IG"
  // Remove any non-alphanumeric characters (except spaces)
  var cleanedText = igInputBox.text.replace(/[^A-Za-z0-9\s]/g, '')
@@ -473,13 +479,22 @@ TextField {
  font.pixelSize: font_Size.text 
  font.family: "Arial"
  font.bold: true
- font.italic: false
+ font.italic: true
  placeholderText: "X,Y or Long (E), Lat (N) "
  visible: false
  text: ""
+ property bool isProgrammaticUpdate: false
+ 
 
- onTextChanged: {
-    custom1BoxXY.placeholderText  = "Custom1"
+onTextChanged: {
+
+    if (isProgrammaticUpdate) {
+ // Skip validation if the text is being updated programmatically
+ isProgrammaticUpdate = false
+ return
+ }
+
+    custom1BoxXY.placeholderText  = "Custom 1"
  var cursorPos = cursorPosition // Store cursor position
  var originalText = text
 
@@ -540,7 +555,7 @@ TextField {
  var parts = custom1BoxXY.text.split(',')
  var xIN = parts[0] 
  var yIN = parts[1] 
- updateCoordinates(xIN, yIN, canvasEPSG, custom1CRS.text, custom2CRS.text,3) 
+ updateCoordinates(xIN, yIN, custom1CRS.text, custom1CRS.text, custom2CRS.text,3) 
  }
  }
 }
@@ -578,9 +593,17 @@ TextField {
  placeholderText: "X,Y or Long (E), Lat (N) "
  visible: false
  text: ""
-
+ property bool isProgrammaticUpdate: false
+ // Custom validation logic
  onTextChanged: {
-    custom2BoxXY.placeholderText  = "Custom2"
+
+    if (isProgrammaticUpdate) {
+ // Skip validation if the text is being updated programmatically
+ isProgrammaticUpdate = false
+ return
+ }
+ 
+    custom2BoxXY.placeholderText  = "Custom 2"
  var cursorPos = cursorPosition // Store cursor position
  var originalText = text
 
@@ -642,7 +665,7 @@ TextField {
  var xIN = parts[0] 
  var yIN = parts[1]
  
- updateCoordinates(xIN, yIN, custom2CRS, custom1CRS.text, custom2CRS.text, 4) } 
+ updateCoordinates(xIN, yIN, custom2CRS.text, custom1CRS.text, custom2CRS.text, 4) } 
  
  }
  }
@@ -679,8 +702,15 @@ TextField {
  placeholderText: "Lat(N), Long(E) "
  visible: true
  text: ""
-
+ property bool isProgrammaticUpdate: false
+ 
  onTextChanged: {
+
+    if (isProgrammaticUpdate) {
+ // Skip validation if the text is being updated programmatically
+ isProgrammaticUpdate = false
+ return
+ }
     wgs84Box.placeholderText  = "Lat Long"
  var cursorPos = cursorPosition // Store cursor position
  var originalText = text
@@ -836,6 +866,11 @@ TextField {
 } 
 
 }
+
+// Seperate input boxes for lat Degrees, lon Minutes lat Degrees and Long minutes. 
+// Entering decimals in the Degrees boaxes will remove the minute boxes.
+// update of the othre coordinate boxes is achieved by button which enters the parsed 
+// ddlat and ddlong from these boxes into the above wgs84Box. 
 RowLayout {
  spacing: 5
 
@@ -1018,6 +1053,9 @@ onTextChanged: lonMinClampTimer.restart()
  var lonDeg = parseFloat(lonDegrees.text) || 0
  var lonMin = parseFloat(lonMinutesDecimal.text) || 0
  
+ // should I notify the wgs84Boxbox that this is a programmtic update?.
+ wgs84Box.isProgrammaticUpdate = true
+ // update the wgs84Box 
  wgs84Box.text = (latDeg + Math.sign(latDeg) * latMin / 60).toFixed(decimalsd.text) + ", " + (lonDeg + Math.sign(lonDeg) * lonMin / 60).toFixed(decimalsd.text)
 
  // convert get X,Y from textfield:
@@ -1249,9 +1287,7 @@ GridLayout{
     rowSpacing: 5
     
     Layout.fillWidth: true 
-//toprow
-//
- //   Layout.fillWidth: true
+
 
 Label{
  id:font_Size1
@@ -1298,12 +1334,8 @@ Label{
         top: 10
     } 
  } 
- //} 
-//end of topo row
 
-//second row
-//RowLayout { 
-//    Layout.fillWidth: true
+
 Label{
  id:decimals1
  font.pixelSize: 10
@@ -1352,10 +1384,9 @@ Label{
  } 
 
 
-//}
-//end of second row
+
 }
-//third row
+
  RowLayout{
 
 
@@ -1390,7 +1421,7 @@ Label{
  RowLayout{
     CheckBox {
         id: showCustom1
-        text: "Custom1"
+        text: "Custom 1"
         font.pixelSize: 10
         checked: false
         onCheckedChanged: {
@@ -1400,7 +1431,7 @@ Label{
     }
     CheckBox {
         id: showCustom2
-        text: "Custom2"
+        text: "Custom 2"
         font.pixelSize: 10
         checked: false
         onCheckedChanged: {
@@ -1649,38 +1680,43 @@ function decimalToMinutes(decimal) {
  return ((absDecimal - degrees) * 60).toFixed(3)
 }
 
+// should loop through and update coordinates in all OTHER textfields
  function updateCoordinates(x, y, sourceEPSG, targetEPSG1, targetEPSG2, inputDialog) {
  var sourceCrs = CoordinateReferenceSystemUtils.fromDescription("EPSG:" + parseFloat(sourceEPSG))
  var targetCrs1 = CoordinateReferenceSystemUtils.fromDescription("EPSG:" + parseFloat(targetEPSG1))
  var targetCrs2 = CoordinateReferenceSystemUtils.fromDescription("EPSG:" + parseFloat(targetEPSG2))
 
- if (inputDialog !== 1) {
+ if (inputDialog !== 1) { // Update IG
  var igPoint = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, CoordinateReferenceSystemUtils.fromDescription("EPSG:29903"))
+ igInputBox.isProgrammaticUpdate = true
  igInputBox.text = getIGFromXY(igPoint.x, igPoint.y)
  }
 
- if (inputDialog !== 2) {
+ if (inputDialog !== 2) { // Update UK
  var ukPoint = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, CoordinateReferenceSystemUtils.fromDescription("EPSG:27700"))
  ukInputBox.isProgrammaticUpdate = true
  ukInputBox.text = getUKFromXY(ukPoint.x, ukPoint.y)
  }
 
- if (inputDialog !== 3) {
+ if (inputDialog !== 3) { // Update Custom1
  var custom1Point = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, targetCrs1)
+ custom1BoxXY.isProgrammaticUpdate = true
  custom1BoxXY.text = formatPoint(custom1Point, targetCrs1)
  }
 
- if (inputDialog !== 4) {
+ if (inputDialog !== 4) { // Update Custom2
  var custom2Point = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, targetCrs2)
+ custom2BoxXY.isProgrammaticUpdate = true
  custom2BoxXY.text = formatPoint(custom2Point, targetCrs2)
  }
 
- if (inputDialog !== 5) {
+ if (inputDialog !== 5) { // Update WGS84
  var wgs84Point = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"))
+ wgs84Box.isProgrammaticUpdate = true
  wgs84Box.text = parseFloat(wgs84Point.y.toFixed(decimalsd.text)) + ", " + parseFloat(wgs84Point.x.toFixed(decimalsd.text))
  }
 
- if (inputDialog !== 6) {
+ if (inputDialog !== 6) { // Update WGS84 DDM
  var wgs84dmPoint = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, CoordinateReferenceSystemUtils.fromDescription("EPSG:4326")) 
  wgs84DMBox.isProgrammaticUpdate = true
  wgs84DMBox.text = decimalToDDM(wgs84dmPoint.y) + ", " + decimalToDDM(wgs84dmPoint.x)
@@ -1688,8 +1724,7 @@ function decimalToMinutes(decimal) {
  latMinutesDecimal.text = decimalToMinutes(wgs84dmPoint.y)
  lonDegrees.text = decTODeg(wgs84dmPoint.x)
  lonMinutesDecimal.text = decimalToMinutes(wgs84dmPoint.x) 
- 
- 
+  
  } 
  }
 
