@@ -36,10 +36,10 @@ function igtoWGS(input) {
   //Helper funcion to check UKG Validity
 function uktoWGS(input) {
   const string = input.replace(/\s/g, ''); // Remove all spaces from the input string
-  if (typeof string !== 'string' || string.length !== 12) return false;
+  if (typeof string !== 'string' || string.length !== 12 ) return false;
   const letters = string.slice(0, 2).toUpperCase();
   const numbers = string.slice(2); // Extract the remaining 10 characters
-  // Check if the letter is valid and the remaining characters are exactly 10 digits
+  
   if (
     !ukletterMatrix.hasOwnProperty(letters) && // Check if the letter is in the UK matrix
     !/^\d{10}$/.test(numbers) // Check if the remaining characters are exactly 10 digits
@@ -105,7 +105,14 @@ let details = {
   // Check if the input string is a valid Grid reference
   if (igtoWGS(string)) {
     const pointGeometry = igtoWGS(string); // Get the point geometry
-    details.displayString = pointGeometry.y.toFixed(5) + ", "+ pointGeometry.x.toFixed(5)  + " from Irish Grid";
+
+    const stringcl = string.replace(/\s/g, ''); // Clean the input string
+    const letter = stringcl.slice(0, 1).toUpperCase(); // Extract and uppercase the first letter
+    const numbersa = stringcl.slice(1, 6); // Extract the next 5 characters
+    const numbersb = stringcl.slice(6); // Extract the remaining 5 characters
+    const inputstr = letter + " " + numbersa + " " + numbersb; // Reformat for output  const stringcl = string.replace(/\s/g, ''); //clean the input string
+        
+    details.displayString = pointGeometry.y.toFixed(5) + ", "+ pointGeometry.x.toFixed(5)  + " from Irish Grid: "+inputstr;
     details.userData = {
       geometry: pointGeometry, // Store the geometry in userData
       crs: "EPSG:4326" // Store the CRS
@@ -113,7 +120,14 @@ let details = {
     details.description = decimalToDDM(pointGeometry.y) + ", "+ decimalToDDM(pointGeometry.x) ;
   } else if (uktoWGS(string)) {
     const pointGeometry = uktoWGS(string); // Get the point geometry
-    details.displayString = pointGeometry.y.toFixed(5) + ", "+ pointGeometry.x.toFixed(5)  + " from UK Grid";
+    
+    const stringcl = string.replace(/\s/g, ''); // Clean the input string
+    const letter = stringcl.slice(0, 2).toUpperCase(); // Extract and uppercase the first 2 letters
+    const numbersa = stringcl.slice(2, 7); // Extract the next 5 characters
+    const numbersb = stringcl.slice(7); // Extract the remaining 5 characters
+    const inputstr = letter + " " + numbersa + " " + numbersb; // Reformat for output  const stringcl = string.replace(/\s/g, ''); //clean the input string
+    
+    details.displayString = pointGeometry.y.toFixed(5) + ", "+ pointGeometry.x.toFixed(5)  + " from UK Grid: " + inputstr;
     details.userData = {
       geometry: pointGeometry, // Store the geometry in userData
       crs: "EPSG:4326" // Store the CRS
