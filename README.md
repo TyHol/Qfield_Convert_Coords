@@ -1,5 +1,5 @@
 # Convert Coordinates Dialogue
-This is a plugin for the [Qfield](https://qfield.org/) app to convert between coordinates: gps, canvas, Irish Grid, UK Grid, Custom 1 (default=screen CRS) and Custom 2 (default = WGS84). 
+This is a plugin for the most excellent [Qfield](https://qfield.org/) app to convert between coordinates: gps, canvas, Irish Grid, UK Grid, Custom 1 (default=screen CRS) and Custom 2 (default = WGS84). 
 - Will show and convert screen centre coordinates, current GPS coordinates or manually inputted coordinates. 
 - Will create a point (in the active point layer) at location. 
 - Will pan or (on long press) zoom. 
@@ -16,7 +16,7 @@ The UK grid system is also available, as are custom CRSs for when you go on holi
 ![image](https://github.com/user-attachments/assets/8295fd9d-85e9-4653-9a3f-5c62026c4a74)
 
 
-You can change some of the outputs such as decimals displayed, text size nad zoom level, toggle on or off the various CRSs or restore the original defaults....
+You can change some of the outputs such as decimals displayed, text size and zoom level, toggle on or off the various CRSs or restore the original defaults....
 
 
 ## Search Irish UK Grid
