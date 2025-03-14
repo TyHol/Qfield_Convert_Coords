@@ -202,39 +202,6 @@ Dialog {
  anchors.margins : 1
 
 
-     Dialog {
-        id: coordinatesDialog
-        //title: "Coordinates"
-        width: 350
-        height: 300
-        modal: true
-
-        Column {
-            spacing: 40
-            anchors.centerIn: parent
-
-            Label {
-                text: igInputBox.text
-                font.pixelSize: 30
-                font.bold: true
-            }               
-            Label {
-                text: ukInputBox.text
-                font.pixelSize: 30
-                font.bold: true
-            }            
-            Label {
-                text:wgs84Box.text 
-                font.pixelSize: 30
-                font.bold: true
-            }
-            Label {
-                text:wgs84DMBox.text
-                font.pixelSize: 30
-                font.bold: true
-            }            
-        }
-    } 
 
 RowLayout{
 Layout.fillWidth: true
@@ -1400,9 +1367,44 @@ Label{
  }
  
  
+} 
 }
+     Dialog {
+        id: coordinatesDialog
+        title: "Coordinates"
+        font.pixelSize: 35
+        width: 400
+        height: 400
+        modal: true
+        anchors.centerIn:  parent
 
-}
+        Column {
+            spacing: 40
+            anchors.centerIn: parent
+
+            Label {
+                text: igInputBox.text
+                font.pixelSize: 35
+                font.bold: true
+            }               
+            Label {
+                text: ukInputBox.text
+                font.pixelSize: 35
+                font.bold: true
+            }            
+            Label {
+                text:wgs84Box.text 
+                font.pixelSize: 35
+                font.bold: true
+            }
+            Label {
+                text:wgs84DMBox.text
+                font.pixelSize: 35
+                font.bold: true
+            }            
+        }
+    }
+
 }
  
 
