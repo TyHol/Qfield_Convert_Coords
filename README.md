@@ -9,7 +9,7 @@ It has a few customisable settings.
 
 The basic screen shows Irish grid and Lat Longs. Coordinates can be grabbed from the screen centre (marked by a small crosshair)  or GPS, or you can type in.<br>
 
-The UK grid system is also available, as are custom CRSs for when you go on holiday.... By default the Custom 1 is set to the project CRS and Custom 2 is set to WGS84 (EPSG:4326). These can be set by inputting the appropriate EPSG code & can be reset to default by using the <b>Reset</b> button in the options menu.
+The UK grid system is also available, as are custom CRSs for when you go on holiday.... By default the Custom 1 is set to the project CRS and Custom 2 is set to WGS84 (EPSG:4326). These can be set by inputting the appropriate [EPSG](https://epsg.io/) code & can be reset to default by using the <b>Reset</b> button in the options menu.
 
 ...Long pressing on buttons will give the alternative function... <b>Google</b> links to the location in your browser.
 
