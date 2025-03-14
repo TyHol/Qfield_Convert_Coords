@@ -1,17 +1,28 @@
-Qfield Plugin to convert between coordinates: gps, canvas, Irish Grid, UK Grid, Custom 1 (default=screen CRS) and Custom 2 (default = WGS84). 
-Will show and convert screen centre coordinates, current GPS coordinates or manually inputted coordinates. 
-Will create a point (in the active point layer) at location. 
-Will pan or (on long press) zoom. 
-Will navigate inside Qfield or (on long press) in google maps. 
-Has a few customisable settings.
-Also adds ability to search for and navigate to Irish grid or UK grid locations in the searchbar. Will give also give appropriate lat long as both Decimal Degrees and Degrees + Decimal Minutes, along with an option to digitize point (in the active point layer) at location.
+# Convert Coordinates Dialogue
+This is a plugin for the [Qfield](https://qfield.org/) app to convert between coordinates: gps, canvas, Irish Grid, UK Grid, Custom 1 (default=screen CRS) and Custom 2 (default = WGS84). 
+- Will show and convert screen centre coordinates, current GPS coordinates or manually inputted coordinates. 
+- Will create a point (in the active point layer) at location. 
+- Will pan or (on long press) zoom. 
+- Will navigate inside Qfield or (on long press) in google maps. 
+It has a few customisable settings.
+- Adds ability to search for and navigate to Irish grid or UK grid locations in the searchbar. Will give also give appropriate lat long as both Decimal Degrees and Degrees + Decimal Minutes, along with an option to digitize point (in the active point layer) at location.
 
-Basic screen gets gets coordinates from screen or GPS. Or you can type in...Long pressing on buttons will give the alternative function..Google links to the location in an external app/browser; if you need to share a location it might be useful.
-![Screenshot 2025-03-13 174122](https://github.com/user-attachments/assets/4f10cfb9-f7ff-40cf-b20f-c061cc32a40c)
+The basic screen shows Irish grid and Lat Longs. Coordinates can be grabbed from the screen centre (marked by a small crosshair)  or GPS, or you can type in.<br>
 
-It has extra fields if required for when you go on holiday....You can change some of the outputs, or restore the original defaults....
-![Screenshot 2025-03-13 174136](https://github.com/user-attachments/assets/38bfcb5f-1a57-4ec5-8eeb-0df350e96bf9)
+The UK grid system is also available, as are custom CRSs for when you go on holiday.... By default the Custom 1 is set to the project CRS and Custom 2 is set to WGS84 (EPSG:4326). These can be set by inputting the appropriate EPSG code & can be reset to default by using the <b>Reset</b> button in the options menu.
 
-You can search for locations in the search bar use 'grid' prefix & you can navigate to or add points....
-![Screenshot 2025-03-13 174150](https://github.com/user-attachments/assets/a6174eed-2648-4e3a-b4c8-ab9c81ecb0df)
-![Screenshot 2025-03-13 174210](https://github.com/user-attachments/assets/fb9eb57c-5cfe-4999-9e55-2c59f2521dbf)
+...Long pressing on buttons will give the alternative function... <b>Google</b> links to the location in your browser.
+
+![image](https://github.com/user-attachments/assets/8295fd9d-85e9-4653-9a3f-5c62026c4a74)
+
+
+You can change some of the outputs such as decimals displayed, text size nad zoom level, toggle on or off the various CRSs or restore the original defaults....
+
+
+## Search Irish UK Grid
+It adds the ability to search for and navigate to Irish grid or UK grid locations in the searchbar.<br> It will give also give appropriate lat long as both Decimal Degrees and Degrees + Decimal Minutes. There is the option to *navigate* to the location and an option to *digitize* a point (in the active point layer) at location.<br>
+Use the prefix 'grid' and enter a valid grid reference e.g. <b>V 99667 56878</b> for Irish Grid or <b>SE 58098 29345</b> for UK grid.
+
+![image](https://github.com/user-attachments/assets/38fe92e9-844f-459f-9071-39f5d2ffbd8e)
+
+
