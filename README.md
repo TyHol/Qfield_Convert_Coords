@@ -1,15 +1,15 @@
 # Convert Coordinates Dialogue
-This is a plugin for the most excellent [Qfield](https://qfield.org/) app to convert between coordinates: gps, canvas, Irish Grid, UK Grid, Custom 1 (default=screen CRS) and Custom 2 (default = WGS84). 
+This is a plugin for the most excellent [Qfield](https://qfield.org/) app to convert between coordinates: Irish Grid, UK Grid, Lat long, Custom 1 (default=screen CRS) and Custom 2 (default = WGS84). 
 - Will show and convert screen centre coordinates, current GPS coordinates or manually inputted coordinates. 
 - Will create a point (in the active point layer) at location. 
 - Will pan or (on long press) zoom. 
-- Will navigate inside Qfield or (on long press) in google maps. 
+- Will navigate inside Qfield or (on long press) in google maps. n
 It has a few customisable settings.
 - Adds ability to search for and navigate to Irish grid or UK grid locations in the searchbar. Will give also give appropriate lat long as both Decimal Degrees and Degrees + Decimal Minutes, along with an option to digitize point (in the active point layer) at location.
 
 The basic screen shows Irish grid and Lat Longs. Coordinates can be grabbed from the screen centre (marked by a small crosshair)  or GPS, or you can type in.<br>
 
-The UK grid system is also available, as are custom CRSs for when you go on holiday.... By default the Custom 1 is set to the project CRS and Custom 2 is set to WGS84 (EPSG:4326). These can be set by inputting the appropriate EPSG code & can be reset to default by using the <b>Reset</b> button in the options menu.
+The UK grid system is also available, as are custom CRSs for when you go on holiday.... By default the Custom 1 is set to the project CRS and Custom 2 is set to WGS84 (EPSG:4326). Custom  1 and 2 display and accept input in the form X,Y or Lon/Lat only.  Their CRS can be set by inputting the appropriate [EPSG](https://epsg.io/) code & can be reset to default by using the <b>Reset</b> button in the options menu.
 
 ...Long pressing on buttons will give the alternative function... <b>Google</b> links to the location in your browser.
 
