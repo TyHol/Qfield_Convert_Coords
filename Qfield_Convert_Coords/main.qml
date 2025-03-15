@@ -463,12 +463,14 @@ TextField {
             // Run validation logic here
             validateInput(custom1BoxXY);
 
-            // After validation, extract coordinates and call updateCoordinates
-            var parts = custom1BoxXY.text.split(',');
-            var xIN = parts[0];
-            var yIN = parts[1];
+            // Parse coordinates more robustly
+            var parts = custom1BoxXY.text.split(',').map(function(part) {
+                return parseFloat(part.trim());
+            });
 
-            updateCoordinates(xIN, yIN, custom1CRS.text, custom1CRS.text, custom2CRS.text, 3);
+            if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                updateCoordinates(parts[0], parts[1], custom1CRS.text, custom1CRS.text, custom2CRS.text, 3);
+            }
         }
     }
 
@@ -532,12 +534,14 @@ TextField {
             // Run validation logic here
             validateInput(custom2BoxXY);
 
-            // After validation, extract coordinates and call updateCoordinates
-            var parts = custom2BoxXY.text.split(',');
-            var xIN = parts[0];
-            var yIN = parts[1];
+            // Parse coordinates more robustly
+            var parts = custom2BoxXY.text.split(',').map(function(part) {
+                return parseFloat(part.trim());
+            });
 
-            updateCoordinates(xIN, yIN, custom2CRS.text, custom1CRS.text, custom2CRS.text, 4);
+            if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                updateCoordinates(parts[0], parts[1], custom2CRS.text, custom1CRS.text, custom2CRS.text, 4);
+            }
         }
     }
 
@@ -921,7 +925,7 @@ onTextChanged: lonMinClampTimer.restart()
 
  // Update Button
  Button {
- text: "←" // update from this row...
+ text: "←" // update from this row should get rid of this in future.....
  Layout.fillWidth: true
  Layout.fillHeight: true
  //font.bold: true
@@ -1273,15 +1277,6 @@ Label{
 
 
     CheckBox {
-        id: showUK
-        text: "UK Grid"
-        font.pixelSize: 10
-        checked: false
-        onCheckedChanged: {
-            ukInputBox.visible = checked
-        }
-    }
-    CheckBox {
         id: showIG
         text: "Irish Grid"
         font.pixelSize: 10
@@ -1290,6 +1285,16 @@ Label{
             igInputBox.visible = checked
         }
     }
+    CheckBox {
+        id: showUK
+        text: "UK Grid"
+        font.pixelSize: 10
+        checked: false
+        onCheckedChanged: {
+            ukInputBox.visible = checked
+        }
+    }
+    
         CheckBox {
         id: showWGS84
         text: "WGS84"
