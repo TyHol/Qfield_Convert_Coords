@@ -753,10 +753,11 @@ TextField {
 
 }
 
-// Seperate input boxes for lat Degrees, lon Minutes lat Degrees and Long minutes. 
-// Entering decimals in the Degrees boaxes will remove the minute boxes.
-// update of the othre coordinate boxes is achieved by button which enters the parsed 
-// ddlat and ddlong from these boxes into the above wgs84Box. 
+// Seperate input boxes for lat Degrees, lon Minutes, lat Degrees and long minutes. 
+// Entering decimals in the Degrees boxes will remove the minute boxes.
+// update of the other coordinate boxes is achieved by button which enters the parsed 
+// ddlat and ddlong from these boxes into the above wgs84Box.
+ 
 RowLayout {
  spacing: 5
 
