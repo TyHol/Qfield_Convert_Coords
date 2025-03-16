@@ -10,7 +10,7 @@ This is a plugin for the most excellent [Qfield](https://qfield.org/) app to con
 
 The basic screen shows Irish grid and Lat Longs. Coordinates can be grabbed from the screen centre (marked by a small crosshair)  or GPS, or you can type in.<br>
 
-The UK grid system is also available, as are custom CRSs for when you go on holiday.... <n>By default the Custom 1 is set to the project CRS and Custom 2 is set to WGS84 (EPSG:4326). Custom  1 and 2 display and accept input in the form X,Y or Lon/Lat only. (NB There may be some issues inputting data in custom 1&2 on some devices.) Their CRS can be set by inputting the appropriate [EPSG](https://epsg.io/) code & can be reset to default by using the <b>Reset</b> button in the options menu.
+The UK grid system is also available, as are custom CRSs for when you go on holiday.... <n>By default the Custom 1 is set to the project CRS and Custom 2 is set to WGS84 (EPSG:4326). Custom  1 and 2 display and accept input in the form X,Y or Lon/Lat only. Their CRS can be set by inputting the appropriate [EPSG](https://epsg.io/) code & can be reset to default by using the <b>Reset</b> button in the options menu.
 
 ...Long pressing on buttons will give the alternative function... <b>Google</b> links to the location in your browser.
 
