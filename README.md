@@ -9,7 +9,7 @@ This is a plugin for the most excellent [Qfield](https://qfield.org/) app to con
 - Adds ability to search for and navigate to Irish grid or UK grid locations in the searchbar. Will give also give appropriate lat long as Decimal Degrees, Degrees + Decimal Minutes and Degrees, Minutes + Decimal seconds.
 - Converted coodinates can be copied to the clipboard.
 
-he basic screen shows Irish grid and Lat Longs. Coordinates can be grabbed from the screen centre (marked by a small crosshair)  or GPS, or you can type in.<br>
+The basic screen shows Irish grid and Lat Longs. Coordinates can be grabbed from the screen centre (marked by a small crosshair)  or GPS, or you can type in.<br>
 
 The UK grid system is also available, as are custom CRSs for when you go on holiday.... <n>By default the Custom 1 is set to the project CRS and Custom 2 is set to WGS84 (EPSG:4326). Custom  1 and 2 display and accept input in the form X,Y or Lon/Lat only. Their CRS can be set by inputting the appropriate [EPSG](https://epsg.io/) code & can be reset to default by using the <b>Reset</b> button in the options menu.
 
