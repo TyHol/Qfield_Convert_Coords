@@ -893,7 +893,7 @@ RowLayout {
    
  id: latlongboxesDMS
  spacing: 5
- visible: true
+ visible: false
 
  // Latitude Degrees
  TextField {
@@ -1641,6 +1641,7 @@ GridLayout{  // grid 2
     custom2row.visible = false
     dmrow.visible = false
     dmsrow.visible = false
+    latlongboxesDMS.visible = true
     
     customisation.visible = false
     crosshair.visible = true
@@ -1652,6 +1653,8 @@ GridLayout{  // grid 2
     showDMS.checked = false
     showCustomisation.checked = false
     showCrosshair.checked = true
+    showDMSboxes.checked = false
+
  }
  }
 
@@ -1663,6 +1666,15 @@ GridLayout{  // grid 2
         checked: true
         onCheckedChanged: {
             crosshair.visible = checked
+        }
+    }
+                CheckBox {
+        id: showDMSboxes
+        text: "DMSBoxes"
+        font.pixelSize: 10
+        checked: false
+        onCheckedChanged: {
+            latlongboxesDMS.visible = checked   
         }
     }
 
