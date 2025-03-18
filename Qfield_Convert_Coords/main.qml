@@ -1641,7 +1641,7 @@ GridLayout{  // grid 2
     custom2row.visible = false
     dmrow.visible = false
     dmsrow.visible = false
-    latlongboxesDMS.visible = true
+    latlongboxesDMS.visible = false
     
     customisation.visible = false
     crosshair.visible = true
