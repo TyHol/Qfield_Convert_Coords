@@ -258,8 +258,12 @@ Button {
     } 
 }
 
-// Irish Grid
+ColumnLayout{
+visible: true 
+spacing: 1
 
+// Irish Grid
+RowLayout{
 TextField {
  id: igInputBox //1
  Layout.preferredHeight: 35
@@ -341,11 +345,34 @@ TextField {
  return regex.test(igInputBox.text) && igletterMatrix[igInputBox.text[0].toUpperCase()]
  }
 }
- 
 
- 
+
+Button {
+    text: qsTr("C")
+    id: copyIG  
+    visible: true
+    font.bold: true
+    width: 10
+    height: 10
+    // ...remove Layout.fillWidth and Layout.preferredWidth...
+    background: Rectangle {
+        color: "#B3EBF2" // light green color
+        radius: width / 2
+    }
+    onClicked: {
+        let text = igInputBox.text;
+        let textEdit = Qt.createQmlObject('import QtQuick; TextEdit { }', plugin);
+        textEdit.text = text;
+        textEdit.selectAll();
+        textEdit.copy();
+        textEdit.destroy();
+        mainWindow.displayToast("Copied: " + text);
+    }
+}
+} 
 // UK Grid 
  
+RowLayout{
 TextField {
  id: ukInputBox //2
  Layout.preferredHeight: 35
@@ -433,7 +460,28 @@ ukInputBox.placeholderText  = "UKG"
  return regex.test(ukInputBox.text) && ukletterMatrix[ukInputBox.text.substring(0, 2).toUpperCase()]
  }
 }
-
+Button {
+    text: qsTr("C")
+    id: copyUK  
+    visible: false
+    font.bold: true
+    width: 10
+    height: 10
+    background: Rectangle {
+        color: "#B3EBF2"
+        radius: width / 2
+    }
+    onClicked: {
+        let text = ukInputBox.text;
+        let textEdit = Qt.createQmlObject('import QtQuick; TextEdit { }', plugin);
+        textEdit.text = text;
+        textEdit.selectAll();
+        textEdit.copy();
+        textEdit.destroy();
+        mainWindow.displayToast("Copied: " + text);
+    }
+}
+} 
  
 // Custom1 Row
 RowLayout { 
@@ -444,7 +492,7 @@ TextField {
     id: custom1BoxXY //3
     property bool isProgrammaticUpdate: false
     Layout.preferredHeight: 35
-    Layout.preferredWidth: 200
+    Layout.preferredWidth: 180
     font.pixelSize: font_Size.text
     font.family: "Arial"
     font.bold: true
@@ -492,7 +540,7 @@ TextField {
  id: custom1CRS
  Layout.fillWidth: true
  Layout.preferredHeight: 35 
- placeholderText: "CRS(EPSG)"
+ placeholderText: " EPSG"
  font.pixelSize: font_Size.text // Smaller text size
  font.family: "Arial" // Set font family
  font.italic: true // Make text italic
@@ -506,6 +554,28 @@ TextField {
  } 
  
  }
+ Button {
+    text: qsTr("C")
+    id: custom1copy
+    font.bold: true
+    visible: false
+    width: 35
+    height: 35
+    background: Rectangle {
+        color: "#B3EBF2"
+        radius: width / 2
+    }
+    onClicked: {
+        let text = custom1BoxXY.text;
+        let textEdit = Qt.createQmlObject('import QtQuick; TextEdit { }', plugin);
+        textEdit.text = text;
+        textEdit.selectAll();
+        textEdit.copy();
+        textEdit.destroy();
+        mainWindow.displayToast("Copied: " + text);
+    }
+}
+
  }
  
 // custom2
@@ -515,7 +585,7 @@ RowLayout {
 TextField {
     id: custom2BoxXY
     property bool isProgrammaticUpdate: false
-    Layout.preferredWidth: 200
+    Layout.preferredWidth: 180
     Layout.preferredHeight: 35
     font.pixelSize: font_Size.text
     font.family: "Arial"
@@ -561,7 +631,7 @@ TextField {
  id: custom2CRS
  Layout.fillWidth: true
  Layout.preferredHeight: 35 
- placeholderText: "CRS(EPSG)"
+ placeholderText: " EPSG"
  font.pixelSize: font_Size.text
  font.family: "Arial" // Set font family
  font.bold: true
@@ -573,10 +643,32 @@ TextField {
  bottom: 0 // Allow any negative number
  top: 10000000 // Allow any positive number
  }
- 
+  }
+
+ Button {
+    text: qsTr("C")
+    id: custom2copy
+    font.bold: true
+    visible: false
+    width: 35
+    height: 35
+    background: Rectangle {
+        color: "#B3EBF2"
+        radius: width / 2
+    }
+    onClicked: {
+        let text = custom2BoxXY.text;
+        let textEdit = Qt.createQmlObject('import QtQuick; TextEdit { }', plugin);
+        textEdit.text = text;
+        textEdit.selectAll();
+        textEdit.copy();
+        textEdit.destroy();
+        mainWindow.displayToast("Copied: " + text);
+    }
  }
 }
 // wgs1984 
+RowLayout{
 TextField {
  id: wgs84Box //5
  Layout.fillWidth: true
@@ -663,7 +755,30 @@ TextField {
  }
  }
 }
+ Button {
+    text: qsTr("C")
+    id: wgs84copy
+    font.bold: true
+    visible: true
+    width: 35
+    height: 35
+    background: Rectangle {
+        color: "#B3EBF2"
+        radius: width / 2
+    }
+    onClicked: {
+        let text = wgs84Box.text;
+        let textEdit = Qt.createQmlObject('import QtQuick; TextEdit { }', plugin);
+        textEdit.text = text;
+        textEdit.selectAll();
+        textEdit.copy();
+        textEdit.destroy();
+        mainWindow.displayToast("Copied: " + text);
+    }
+}
+}
 
+RowLayout{
 TextField {
  id: wgs84DMBox //6
  Layout.fillWidth: true
@@ -672,7 +787,7 @@ TextField {
  font.family: "Arial"
  font.italic: true
  font.bold: true
- placeholderText: "(Read only)" //"Lat(N), Long(E) (e.g., 34° 27.36', 56° 40.2')"
+ placeholderText: "D M.mm (Read only)" //"Lat(N), Long(E) (e.g., 34° 27.36', 56° 40.2')"
  visible: false
  text: ""
 
@@ -749,7 +864,29 @@ TextField {
  //function adjustCursorPosition(pos, oldText, newText) {
  //return Math.min(pos, newText.length)
  //}
-} 
+ }}
+ Button {
+    text: qsTr("C")
+    id: wgsdm84copy
+    font.bold: true
+    visible: false
+    width: 35
+    height: 35
+    background: Rectangle {
+        color: "#B3EBF2"
+        radius: width / 2
+    }
+    onClicked: {
+        let text = wgs84DMBox.text;
+        let textEdit = Qt.createQmlObject('import QtQuick; TextEdit { }', plugin);
+        textEdit.text = text;
+        textEdit.selectAll();
+        textEdit.copy();
+        textEdit.destroy();
+        mainWindow.displayToast("Copied: " + text);
+    }
+}
+ 
 
 }
 
@@ -970,9 +1107,9 @@ onPressAndHold: {
  updateCoordinates(ylon, xlat, 4326, custom1CRS.text, custom2CRS.text,5)} 
  coordinatesDialog.open()
  } 
- 
  }
  }
+}
 
  
  
@@ -1136,10 +1273,11 @@ Button {
     var lon = parseFloat(parts[1]); // Ensure proper order
     var lat = parseFloat(parts[0]);
 
-    var googleMapsUrl = "https://www.google.com/maps/search/?api=1&query="+ lat + "," + lon // pin
-  //var googleMapsUrl = "https://www.google.com/maps/dir/?api=1&destination=" + lat + "%2C" + lon  + "&travelmode=driving"; // navigate
-    
-    Qt.openUrlExternally(googleMapsUrl);
+    var MapsUrl = "https://www.google.com/maps/search/?api=1&query="+ lat + "," + lon // pin
+    //var MapsUrl = "https://www.google.com/maps/dir/?api=1&destination=" + lat + "%2C" + lon  + "&travelmode=driving"; // navigate
+    //var MapsUrl = "https://www.openstreetmap.org/#map=15/"+ lat +"/"+lon; // OSM
+   
+    Qt.openUrlExternally(MapsUrl);
 }
 
 
@@ -1284,6 +1422,7 @@ Label{
         checked: true
         onCheckedChanged: {
             igInputBox.visible = checked
+            copyIG.visible = checked
         }
     }
     CheckBox {
@@ -1293,16 +1432,19 @@ Label{
         checked: false
         onCheckedChanged: {
             ukInputBox.visible = checked
+            copyUK.visible = checked
         }
     }
     
         CheckBox {
         id: showWGS84
-        text: "WGS84"
+        text: "D M.mm"
         font.pixelSize: 10
         checked: false
         onCheckedChanged: {
             wgs84DMBox.visible = checked
+            wgsdm84copy.visible = checked
+            
         }
     }
  }
@@ -1315,6 +1457,7 @@ Label{
         onCheckedChanged: {
             custom1BoxXY.visible = checked
             custom1CRS.visible = checked
+            custom1copy.visible = checked
         }
     }
     CheckBox {
@@ -1325,6 +1468,7 @@ Label{
         onCheckedChanged: {
             custom2BoxXY.visible = checked
             custom2CRS.visible = checked
+            custom2copy.visible = checked
         }
     }
     CheckBox {
@@ -1427,7 +1571,6 @@ Label{
  'R': { first: 1, second: 1 },
  'S': { first: 2, second: 1 },
  'T': { first: 3, second: 1 },
- 'U': { first: 4, second: 1 },
  'L': { first: 0, second: 2 },
  'M': { first: 1, second: 2 },
  'N': { first: 2, second: 2 },
