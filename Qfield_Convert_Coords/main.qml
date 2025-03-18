@@ -120,7 +120,6 @@ function triggerResultFromAction(result, actionId) {
 
 
 
-
 //chanegable stuff 
 //default values
 property var fsize : "15" // general font size
@@ -128,10 +127,10 @@ property var zoomV : "4" // zoom level (does this work?)
 property var decm : "0"  // decimal places for meter coordinates
 property var decd : "5"  // decimal places for degree coordinates
 // for testing:
-property var degwa : "40"  // width of degree input box when no decimals in it
-property var degwb : "110"  // width of degree input box when decimals in it
-property var minwa : "80"  // width of minute input box when no decimals in degree box
-property var minwb : "0" // width of minute input box when no decimals in degree box
+property var degwa : "70"  // width of degree input box when no decimals in it
+property var minwa : "70"  // width of minute input box when no decimals in degree box
+
+
 // to do: need to tweak this
 //property var ukgvis: false // visibility of UK grid
 //property var igvis: true // visibility of Irish grid
@@ -204,7 +203,7 @@ Dialog {
 
 
 RowLayout{
-Layout.fillWidth: true
+ Layout.fillWidth: true
  Label {
  id: label_1
  visible: true
@@ -219,7 +218,7 @@ Layout.fillWidth: true
 Button {
  text: qsTr("Screencenter")
  font.bold: true
- Layout.fillWidth: true
+  Layout.fillWidth: true
  font.pixelSize: font_Size.text 
  font.family: "Arial"
  font.italic: true
@@ -234,7 +233,7 @@ Button {
  Button {
  text: qsTr("GPS")
  font.bold: true
- Layout.fillWidth: true
+  Layout.fillWidth: true
  font.pixelSize: font_Size.text 
  Layout.preferredHeight: 35 
  property bool isPositionValid: positionSource.active && positionSource.positionInformation.latitudeValid && positionSource.positionInformation.longitudeValid
@@ -250,7 +249,6 @@ Button {
  }
      CheckBox {
         id: showCustomisation
-        //text: "Show Customisation"
         checked: false
         onCheckedChanged: {
             customisation.visible = checked
@@ -258,12 +256,16 @@ Button {
     } 
 }
 
+
 ColumnLayout{
 visible: true 
-spacing: 1
+//spacing: 1
 
 // Irish Grid
 RowLayout{
+    id: igridrow
+    visible: true
+
 TextField {
  id: igInputBox //1
  Layout.preferredHeight: 35
@@ -273,7 +275,6 @@ TextField {
  font.italic: true
  Layout.fillWidth: true
  placeholderText: "Irish Grid: X 00000 00000"
- visible: true
  property bool isProgrammaticUpdate: false
  // Custom validation logic
  onTextChanged: {
@@ -350,13 +351,12 @@ TextField {
 Button {
     text: qsTr("C")
     id: copyIG  
-    visible: true
     font.bold: true
     width: 10
     height: 10
-    // ...remove Layout.fillWidth and Layout.preferredWidth...
+
     background: Rectangle {
-        color: "#B3EBF2" // light green color
+        color: "#B3EBF2" 
         radius: width / 2
     }
     onClicked: {
@@ -373,6 +373,9 @@ Button {
 // UK Grid 
  
 RowLayout{
+    id:ukgridrow 
+    visible: false
+
 TextField {
  id: ukInputBox //2
  Layout.preferredHeight: 35
@@ -382,7 +385,6 @@ TextField {
  font.italic: true 
  Layout.fillWidth: true
  placeholderText: "UK Grid: XX 00000 00000"
- visible: false
  
  // Flag to indicate programmatic updates
  property bool isProgrammaticUpdate: false
@@ -463,7 +465,7 @@ ukInputBox.placeholderText  = "UKG"
 Button {
     text: qsTr("C")
     id: copyUK  
-    visible: false
+    //visible: false
     font.bold: true
     width: 10
     height: 10
@@ -485,6 +487,8 @@ Button {
  
 // Custom1 Row
 RowLayout { 
+    id: custom1row
+    visible: false
 
 //custombox1
 
@@ -498,7 +502,7 @@ TextField {
     font.bold: true
     font.italic: true
     placeholderText: "X,Y or Long (E), Lat (N)"
-    visible: false
+    //visible: false
     text: ""
 
     // Timer for delayed validation
@@ -538,7 +542,7 @@ TextField {
 
  TextField {
  id: custom1CRS
- Layout.fillWidth: true
+  Layout.fillWidth: true
  Layout.preferredHeight: 35 
  placeholderText: " EPSG"
  font.pixelSize: font_Size.text // Smaller text size
@@ -546,7 +550,6 @@ TextField {
  font.italic: true // Make text italic
  font.bold: true
  text: canvasEPSG
- visible: false
  // Enforce integer number input
  validator: IntValidator {
  bottom: 0 // Allow any negative number
@@ -558,7 +561,6 @@ TextField {
     text: qsTr("C")
     id: custom1copy
     font.bold: true
-    visible: false
     width: 35
     height: 35
     background: Rectangle {
@@ -580,6 +582,8 @@ TextField {
  
 // custom2
 RowLayout {
+ id: custom2row
+ visible: false  
 
 //second custom box   
 TextField {
@@ -592,7 +596,7 @@ TextField {
     font.italic: true
     font.bold: true
     placeholderText: "X,Y or Long (E), Lat (N)"
-    visible: false
+    //visible: false
     text: ""
 
     Timer {
@@ -629,7 +633,7 @@ TextField {
 
  TextField {
  id: custom2CRS
- Layout.fillWidth: true
+  Layout.fillWidth: true
  Layout.preferredHeight: 35 
  placeholderText: " EPSG"
  font.pixelSize: font_Size.text
@@ -637,7 +641,7 @@ TextField {
  font.bold: true
  font.italic: true // Make text italic
  text: "4326"
- visible: false
+ //visible: false
  // Enforce integer number input
  validator: IntValidator {
  bottom: 0 // Allow any negative number
@@ -649,7 +653,7 @@ TextField {
     text: qsTr("C")
     id: custom2copy
     font.bold: true
-    visible: false
+    //visible: false
     width: 35
     height: 35
     background: Rectangle {
@@ -667,18 +671,21 @@ TextField {
     }
  }
 }
+
+
 // wgs1984 
 RowLayout{
+ id: wgsdegreesrow
+ visible: true // always visible
 TextField {
  id: wgs84Box //5
- Layout.fillWidth: true
+  Layout.fillWidth: true
  font.bold: true
  Layout.preferredHeight: 35
  font.pixelSize: font_Size.text 
  font.family: "Arial"
  font.italic: true
  placeholderText: "Lat(N), Long(E) "
- visible: true
  text: ""
  property bool isProgrammaticUpdate: false
  
@@ -759,7 +766,7 @@ TextField {
     text: qsTr("C")
     id: wgs84copy
     font.bold: true
-    visible: true
+    //visible: true
     width: 35
     height: 35
     background: Rectangle {
@@ -779,22 +786,23 @@ TextField {
 }
 
 RowLayout{
+    id: dmrow
+    visible: false
 TextField {
  id: wgs84DMBox //6
- Layout.fillWidth: true
+  Layout.fillWidth: true
  Layout.preferredHeight: 35
  font.pixelSize: font_Size.text 
  font.family: "Arial"
  font.italic: true
  font.bold: true
  placeholderText: "D M.mm (Read only)" //"Lat(N), Long(E) (e.g., 34° 27.36', 56° 40.2')"
- visible: false
+ //visible: false
  text: ""
 
  property bool isProgrammaticUpdate: false
  
- // need to get this to work or delete it....
- onTextChanged: {
+  onTextChanged: {
  //   wgs84DMBox.placeholderText  = "Lat Long"
   if (isProgrammaticUpdate) {
  // Skip validation if the text is being updated programmatically
@@ -802,74 +810,12 @@ TextField {
  return
  }
  
- //var cursorPos = cursorPosition // Store cursor position
- //var originalText = text
-
- // Clean input: allow digits, minus, dot, degree (°), minute ('), comma, and spaces
- //var cleanedText = text.replace(/[^0-9-°'.,\s]/g, '')
-
- // Split by comma to separate longitude and latitude
- //var parts = cleanedText.split(',')
- //if (parts.length > 2) {
- //cleanedText = parts[0] + ',' + parts[1]
- //parts = cleanedText.split(',')
- //}
-
- //for (var i = 0; i < parts.length; i++) {
- //var coord = parts[i].trim()
-
- // Handle empty or partial input
- //if (coord === '' || coord === '-') {
- //parts[i] = coord
- //continue
- //}
-
- //var degMin = coord.split(/°|\s+/).filter(Boolean)
- //if (degMin.length === 0) {
- //parts[i] = ''
- //continue
- //}
-
- //var degrees = parseInt(degMin[0], 10)
- //if (isNaN(degrees)) degrees = 0
- //degrees = Math.max(-180, Math.min(180, degrees))
-
- //var minutes = 0
- //if (degMin.length > 1) {
- //minutes = parseFloat(degMin[1].replace("'", ""))
- //if (isNaN(minutes)) minutes = 0
- //minutes = Math.max(0, Math.min(60, minutes))
- //}
-
- //parts[i] = degrees + "° " + minutes.toFixed(4) + "'"
- //}
-
- //cleanedText = parts[0] || ''
- //if (parts.length > 1) {
- //cleanedText += ', ' + (parts[1] || '')
- //}
-
- //if (text !== cleanedText) {
- //text = cleanedText
- //cursorPosition = adjustCursorPosition(cursorPos, originalText, cleanedText)
- //}
-
- //var xlat = ddmToDecimal(parts[0])
- //var xlon = parts.length > 1 ? ddmToDecimal(parts[1]) : ''
- //if (xIN !== '' && yIN !== '') {
- //updateCoordinates(xlon, xlat, 4326, custom1CRS.text, custom2CRS.text, 6)
- //}
- //}
-
- //function adjustCursorPosition(pos, oldText, newText) {
- //return Math.min(pos, newText.length)
- //}
+  
  }}
  Button {
     text: qsTr("C")
     id: wgsdm84copy
     font.bold: true
-    visible: false
     width: 35
     height: 35
     background: Rectangle {
@@ -889,25 +835,79 @@ TextField {
  
 
 }
+RowLayout{
+    id: dmsrow
+    visible : false
+TextField {
+ id: wgs84DMSBox //6
+  Layout.fillWidth: true
+ Layout.preferredHeight: 35
+ font.pixelSize: font_Size.text 
+ font.family: "Arial"
+ font.italic: true
+ font.bold: true
+ placeholderText: "D M S.ss (Read only)" //"Lat(N), Long(E) (e.g., 34° 27.36', 56° 40.2')"
+ text: ""
 
+ property bool isProgrammaticUpdate: false
+ 
+ // need to get this to work or delete it....
+ onTextChanged: {
+ //   wgs84DMBox.placeholderText  = "Lat Long"
+  if (isProgrammaticUpdate) {
+ // Skip validation if the text is being updated programmatically
+ isProgrammaticUpdate = false
+ return
+ }
+ 
+
+ }}
+ Button {
+    text: qsTr("C")
+    id: wgsdms84copy
+    font.bold: true
+    width: 35
+    height: 35
+    background: Rectangle {
+        color: "#B3EBF2"
+        radius: width / 2
+    }
+    onClicked: {
+        let text = wgs84DMSBox.text;
+        let textEdit = Qt.createQmlObject('import QtQuick; TextEdit { }', plugin);
+        textEdit.text = text;
+        textEdit.selectAll();
+        textEdit.copy();
+        textEdit.destroy();
+        mainWindow.displayToast("Copied: " + text);
+    }
+}
+ 
+}
 // Seperate input boxes for lat Degrees, lon Minutes, lat Degrees and long minutes. 
 // Entering decimals in the Degrees boxes will remove the minute boxes.
 // update of the other coordinate boxes is achieved by button which enters the parsed 
 // ddlat and ddlong from these boxes into the above wgs84Box.
  
 RowLayout {
+   
+ id: latlongboxesDMS
  spacing: 5
+ visible: true
 
  // Latitude Degrees
  TextField {
  id: latDegrees
- Layout.preferredWidth: degwa 
+ Layout.preferredWidth: 60
+ Layout.fillWidth: true
  Layout.preferredHeight: 35
  font.pixelSize: font_Size.text
  font.bold: true
  font.family: "Arial"
  font.italic: true
  placeholderText: "D"
+ leftPadding: 4
+ rightPadding: 0
  validator: DoubleValidator {
  bottom: -90
  top: 90
@@ -930,31 +930,51 @@ RowLayout {
  onTextChanged: {
  latDegClampTimer.restart() // each change restarts the timer
  
- if (lonDegrees.text.indexOf('.') !== -1 || latDegrees.text.indexOf('.') !== -1) {
- latMinutesDecimal.Layout.preferredWidth = minwb
- latDegrees.Layout.preferredWidth = degwb
- latMinutesDecimal.text = ""
- lonMinutesDecimal.Layout.preferredWidth = minwb
- lonDegrees.Layout.preferredWidth = degwb
- lonMinutesDecimal.text = "" 
- } else {
- latMinutesDecimal.Layout.preferredWidth = minwa
- latDegrees.Layout.preferredWidth = degwa 
- lonMinutesDecimal.Layout.preferredWidth = minwa
- lonDegrees.Layout.preferredWidth = degwa 
+ if (lonDegrees.text.includes('.') || latDegrees.text.includes('.')) { // if there is a decimal in the either degrees box just show degrees & clear data in minutes and seconds boxes
+ latMinutes.visible = false
+ latMinutes.text = ""
+ latSeconds.visible = false
+ latSeconds.text = ""
+ lonMinutes.visible = false
+  lonMinutes.text = "" 
+ lonSeconds.visible = false
+ lonSeconds.text = ""
+ } 
+ else if(lonMinutes.text.includes('.') || latMinutes.text.includes('.')){ // if there is a decimal in the minutes box show degrees and minutes & clear data in seconds box
+  lonDegrees.Layout.preferredWidth = degwa
+  latDegrees.Layout.preferredWidth = degwa
+  latMinutes.visible = true
+  latSeconds.visible = false
+  latSeconds.text = ""  
+  lonMinutes.visible = true
+  lonSeconds.visible = false
+  lonSeconds.text = ""
+ }
+    else {   // if there are no decimals in the degrees or minutes boxes show all boxes
+  lonDegrees.Layout.preferredWidth = degwa
+  latDegrees.Layout.preferredWidth = degwa
+  latMinutes.visible = true
+  lonMinutes.visible = true
+  lonMinutes.Layout.preferredWidth = minwa
+  latMinutes.Layout.preferredWidth = minwa
+  latSeconds.visible = true
+  lonSeconds.visible = true 
  }
  } 
  }
 
  // Latitude Minutes (decimal)
  TextField {
- id: latMinutesDecimal
- Layout.preferredWidth: minwa
+ id: latMinutes
+ Layout.preferredWidth: 60
+ Layout.fillWidth: true
  Layout.preferredHeight: 35
  font.pixelSize: font_Size.text
  font.family: "Arial"
  font.bold: true
  font.italic: true
+ leftPadding: 4
+ rightPadding: 0
  placeholderText: "M"
  validator: DoubleValidator {
  bottom: 0
@@ -967,26 +987,73 @@ Timer {
  running: false
  repeat: false
  onTriggered: {
- var value = parseFloat(latMinutesDecimal.text)
+ var value = parseFloat(latMinutes.text)
  if (!isNaN(value)) {
  value = Math.max(0, Math.min(59.999, value))
- latMinutesDecimal.text = value
+ latMinutes.text = value
  }
  }
 }
-onTextChanged: latMinClampTimer.restart()
+onTextChanged: {
+ latMinClampTimer.restart()
+var hideSecs = latMinutes.text.includes(".") || lonMinutes.text.includes(".")|| lonDegrees.text.includes(".")|| latDegrees.text.includes(".");
+  lonSeconds.visible = !hideSecs;
+  latSeconds.visible = !hideSecs;
+  if (hideSecs== true) {lonSeconds.text = "" 
+  latSeconds.text = ""}
+}
+ }
+
+ // Latitude Seconds
+ TextField {
+ id: latSeconds
+ visible: true
+ Layout.fillWidth: true
+ Layout.preferredHeight: 35
+ font.pixelSize: font_Size.text
+ font.family: "Arial"
+ font.bold: true
+ font.italic: true
+ leftPadding: 4
+ rightPadding: 0
+ placeholderText: "S"
+ validator: DoubleValidator {
+ bottom: 0
+ top: 60
+ decimals: 3
+ }
+ Timer {
+ id: latSecClampTimer
+ interval: 1000
+ running: false
+ repeat: false
+ onTriggered: {
+ var value = parseFloat(latSeconds.text)
+ if (!isNaN(value)) {
+ value = Math.max(0, Math.min(60, value))
+ latSeconds.text = value
+ }
+ }
+}
+onTextChanged: latSecClampTimer.restart()
 
  }
 
  // Longitude Degrees
  TextField {
  id: lonDegrees
- Layout.preferredWidth: degwa
+ Layout.preferredWidth: 60
+ Layout.fillWidth: true
  Layout.preferredHeight: 35
- font.pixelSize: font_Size.text
+  font.pixelSize: font_Size.text
  font.family: "Arial"
  font.bold: true
  font.italic: true
+leftPadding: 4
+
+
+
+ rightPadding: 0
  placeholderText: "D"
  validator: DoubleValidator {
  bottom: -180
@@ -1009,33 +1076,51 @@ Timer {
 onTextChanged: {lonDegClampTimer.restart()
 
  
- 
- 
- if (lonDegrees.text.indexOf('.') !== -1 || latDegrees.text.indexOf('.') !== -1) {
- latMinutesDecimal.Layout.preferredWidth = decm
- latDegrees.Layout.preferredWidth = degwb
- latMinutesDecimal.text = ""
- lonMinutesDecimal.Layout.preferredWidth = minwb
- lonDegrees.Layout.preferredWidth = degwb
- lonMinutesDecimal.text = "" 
- } else {
- latMinutesDecimal.Layout.preferredWidth = minwa
- latDegrees.Layout.preferredWidth = degwa 
- lonMinutesDecimal.Layout.preferredWidth = minwa
- lonDegrees.Layout.preferredWidth = degwa 
+ if (lonDegrees.text.includes('.') || latDegrees.text.includes('.')) { // if there is a decimal in the either degrees box just show degrees & clear data in minutes and seconds boxes
+ latMinutes.visible = false
+ latMinutes.text = ""
+ latSeconds.visible = false
+ latSeconds.text = ""
+ lonMinutes.visible = false
+  lonMinutes.text = "" 
+ lonSeconds.visible = false
+ lonSeconds.text = ""
+ } 
+ else if(lonMinutes.text.includes('.') || latMinutes.text.includes('.')){ // if there is a decimal in the minutes box show degrees and minutes & clear data in seconds box
+  lonDegrees.Layout.preferredWidth = degwa
+  latDegrees.Layout.preferredWidth = degwa
+  latMinutes.visible = true
+  latSeconds.visible = false
+  latSeconds.text = ""  
+  lonMinutes.visible = true
+  lonSeconds.visible = false
+  lonSeconds.text = ""
  }
+    else {   // if there are no decimals in the degrees or minutes boxes show all boxes
+  lonDegrees.Layout.preferredWidth = degwa
+  latDegrees.Layout.preferredWidth = degwa
+  latMinutes.visible = true
+  lonMinutes.visible = true
+  lonMinutes.Layout.preferredWidth = minwa
+  latMinutes.Layout.preferredWidth = minwa
+  latSeconds.visible = true
+  lonSeconds.visible = true 
+    } 
  }
  }
 
  // Longitude Minutes (decimal)
  TextField {
- id: lonMinutesDecimal
- Layout.preferredWidth: minwa
+ id: lonMinutes
+ Layout.preferredWidth: 60
+ Layout.fillWidth: true
  Layout.preferredHeight: 35
  font.pixelSize: font_Size.text
  font.family: "Arial"
  font.bold: true
  font.italic: true
+ leftPadding: 4
+ rightPadding: 0
  placeholderText: "M"
  validator: DoubleValidator {
  bottom: 0
@@ -1048,39 +1133,92 @@ Timer {
  running: false
  repeat: false
  onTriggered: {
- var value = parseFloat(lonMinutesDecimal.text)
+ var value = parseFloat(lonMinutes.text)
  if (!isNaN(value)) {
  value = Math.max(0, Math.min(59.999, value))
- lonMinutesDecimal.text = value
+ lonMinutes.text = value
  }
  }
 }
-onTextChanged: lonMinClampTimer.restart()
+onTextChanged: {
+ lonMinClampTimer.restart();
+ var hideSecs = latMinutes.text.includes(".") || lonMinutes.text.includes(".")|| lonDegrees.text.includes(".")|| latDegrees.text.includes(".");
+  lonSeconds.visible = !hideSecs;
+  latSeconds.visible = !hideSecs;
+  if (hideSecs== true) {lonSeconds.text = "" 
+  latSeconds.text = ""}
 
  }
- 
+ }
 
+ // Longitude Seconds
+ TextField {
+ id: lonSeconds
+ visible: true
+ Layout.fillWidth: true
+ Layout.preferredHeight: 35
+ font.pixelSize: font_Size.text
+ font.family: "Arial"
+ font.bold: true
+ font.italic: true
+ leftPadding: 4
+ rightPadding: 0
+ placeholderText: "S"
+ validator: DoubleValidator {
+ bottom: 0
+ top: 60
+ decimals: 3
+ }
+ Timer {
+ id: lonSecClampTimer
+ interval: 1000
+ running: false
+ repeat: false
+ onTriggered: {
+ var value = parseFloat(lonSeconds.text)
+ if (!isNaN(value)) {
+ value = Math.max(0, Math.min(60, value))
+ lonSeconds.text = value
+ }
+ }
+}
+onTextChanged: lonSecClampTimer.restart()
+
+ }
 
  // Update Button
  Button {
  text: "←" // update from this row should get rid of this in future.....
- Layout.fillWidth: true
- Layout.fillHeight: true
- //font.bold: true
- font.pixelSize: font_Size.text
- //Layout.preferredHeight: 35
+     font.bold: true
+    visible: true
+    width: 35
+    height: 35
+    background: Rectangle {
+        color: "#edad98"
+        radius: width / 2
+    }
 
 
  onClicked:{ 
  var latDeg = parseFloat(latDegrees.text) || 0
- var latMin = parseFloat(latMinutesDecimal.text) || 0
+ var latMin = parseFloat(latMinutes.text) || 0
+ var latSec = parseFloat(latSeconds.text) || 0
  var lonDeg = parseFloat(lonDegrees.text) || 0
- var lonMin = parseFloat(lonMinutesDecimal.text) || 0
+ var lonMin = parseFloat(lonMinutes.text) || 0
+ var lonSec = parseFloat(lonSeconds.text) || 0
  
  // should I notify the wgs84Boxbox that this is a programmtic update?.
  wgs84Box.isProgrammaticUpdate = true
  // update the wgs84Box 
- wgs84Box.text = (latDeg + Math.sign(latDeg) * latMin / 60).toFixed(decimalsd.text) + ", " + (lonDeg + Math.sign(lonDeg) * lonMin / 60).toFixed(decimalsd.text)
+ if (latDeg < 0) { var latDecimal = latDeg - (latMin / 60) - (latSec / 3600) } 
+ else
+ var latDecimal = latDeg + (latMin / 60) + (latSec / 3600)
+ if (lonDeg < 0) {
+ var lonDecimal = lonDeg - (lonMin / 60) - (lonSec / 3600) } 
+ else   
+ var lonDecimal = lonDeg + (lonMin / 60) + (lonSec / 3600) 
+
+ wgs84Box.text = latDecimal.toFixed(decimalsd.text) + ", " + lonDecimal.toFixed(decimalsd.text)
 
  // convert get X,Y from textfield:
  {var parts = wgs84Box.text.split(',')
@@ -1093,11 +1231,15 @@ onTextChanged: lonMinClampTimer.restart()
 
 onPressAndHold: {
  var latDeg = parseFloat(latDegrees.text) || 0
- var latMin = parseFloat(latMinutesDecimal.text) || 0
+ var latMin = parseFloat(latMinutes.text) || 0
+ var latSec = parseFloat(latSeconds.visible ? latSeconds.text : 0) || 0
  var lonDeg = parseFloat(lonDegrees.text) || 0
- var lonMin = parseFloat(lonMinutesDecimal.text) || 0
+ var lonMin = parseFloat(lonMinutes.text) || 0
+ var lonSec = parseFloat(lonSeconds.visible ? lonSeconds.text : 0) || 0
  
- wgs84Box.text = (latDeg + Math.sign(latDeg) * latMin / 60).toFixed(decimalsd.text) + ", " + (lonDeg + Math.sign(lonDeg) * lonMin / 60).toFixed(decimalsd.text)
+ var latDecimal = latDeg + (latMin / 60) + (latSec / 3600)
+ var lonDecimal = lonDeg + (lonMin / 60) + (lonSec / 3600)
+ wgs84Box.text = latDecimal.toFixed(decimalsd.text) + ", " + lonDecimal.toFixed(decimalsd.text)
 
  // convert get X,Y from textfield:
  {var parts = wgs84Box.text.split(',')
@@ -1130,7 +1272,7 @@ RowLayout{
  
  text: qsTr("Pan/\nZoom")
  font.bold: true
- Layout.fillWidth: true
+  Layout.fillWidth: true
  font.pixelSize: font_Size.text  -3
  Layout.preferredHeight: 60 
  onClicked: { //pan to point
@@ -1197,7 +1339,7 @@ var geometry = GeometryUtils.createGeometryFromWkt(polygonWkt);
 Button {
  text: qsTr("Add")
  font.bold: true
- Layout.fillWidth: true
+  Layout.fillWidth: true
  font.pixelSize: font_Size.text 
  Layout.preferredHeight: 60 
 
@@ -1240,7 +1382,7 @@ Button {
 Button {
  visible: true
  text: "Navigate/\nGoogle"
- Layout.fillWidth: true
+  Layout.fillWidth: true
  font.bold: true
  font.pixelSize: font_Size.text -3
  Layout.preferredHeight: 60 
@@ -1257,7 +1399,7 @@ Button {
  
  iface.mapCanvas().mapSettings.center.x = transformedPoint.x;
  iface.mapCanvas().mapSettings.center.y = transformedPoint.y;
- mainWindow.displayToast(transformedPoint.x + ", " + transformedPoint.y);
+ mainWindow.displayToast("navigating to:"+ transformedPoint.x + ", " + transformedPoint.y);
 
  // Directly set destination
  navigation.destination = transformedPoint;
@@ -1278,6 +1420,7 @@ Button {
     //var MapsUrl = "https://www.openstreetmap.org/#map=15/"+ lat +"/"+lon; // OSM
    
     Qt.openUrlExternally(MapsUrl);
+     mainDialog.close()
 }
 
 
@@ -1286,7 +1429,7 @@ Button {
  text: qsTr("BIG")
  
  font.bold: true
- Layout.fillWidth: true
+  Layout.fillWidth: true
  font.pixelSize: font_Size.text 
  Layout.preferredHeight: 60 
  onClicked: { coordinatesDialog.open() }
@@ -1297,21 +1440,22 @@ Button {
  
 Frame{
 id: customisation
-Layout.fillWidth: true
+ Layout.fillWidth: true
 visible: false
 
 
 Column{
+
     anchors.fill: parent
     anchors.margins: 1
 
-GridLayout{  
+GridLayout{  //grid 1
     columns: 4
     rows: 2
-    columnSpacing: 5
-    rowSpacing: 5
+    columnSpacing: 0
+    rowSpacing: 0
     
-    Layout.fillWidth: true 
+     Layout.fillWidth: true 
 
 
 Label{
@@ -1320,9 +1464,9 @@ Label{
  font.family: "Arial"
  font.italic: true
  text : "Font Size:"
- //Layout.preferredWidth: 65 
  Layout.preferredHeight: 10 
  }
+
  TextField{
  id:font_Size
  font.pixelSize: 10
@@ -1343,9 +1487,9 @@ Label{
  font.family: "Arial"
  font.italic: true
  text : "      Zoom:"
- //Layout.preferredWidth: 65 
  Layout.preferredHeight: 10 
  }
+
   TextField{
  id:zoom
  font.pixelSize: 10
@@ -1360,16 +1504,15 @@ Label{
     } 
  } 
 
-
 Label{
  id:decimals1
  font.pixelSize: 10
  font.family: "Arial"
  font.italic: true
  text : "Decimals (m):"
- //Layout.preferredWidth: 60 
  Layout.preferredHeight: 10 
  }
+
   TextField{
  id:decimalsm
  font.pixelSize: 10
@@ -1390,7 +1533,6 @@ Label{
  font.family: "Arial"
  font.italic: true
  text : "Decimals (deg):"
- //Layout.preferredWidth: 65 
  Layout.preferredHeight: 10 
  }
  
@@ -1407,81 +1549,80 @@ Label{
         top: 10
     } 
  } 
+} //end of grid 1
 
+GridLayout{  // grid 2
+    columns: 3
+    rows: 3
+    columnSpacing: 0
+    rowSpacing: 0
+    Layout.fillWidth: true
 
-
-}
-
- RowLayout{
-
-
+//row 1
     CheckBox {
         id: showIG
         text: "Irish Grid"
         font.pixelSize: 10
         checked: true
         onCheckedChanged: {
-            igInputBox.visible = checked
-            copyIG.visible = checked
+            igridrow.visible= checked
         }
     }
+
+        CheckBox {
+        id: showCustom1
+        text: "Custom 1"
+        font.pixelSize: 10
+        checked: false
+        onCheckedChanged: {
+            custom1row.visible = checked
+        }
+    }
+     CheckBox {
+        id: showDMS
+        text: "D M S.ss"
+        font.pixelSize: 10
+        checked: false
+        onCheckedChanged: {
+            dmsrow.visible = checked
+        }
+    }
+
+ 
+//row 2
+
+
     CheckBox {
         id: showUK
         text: "UK Grid"
         font.pixelSize: 10
         checked: false
         onCheckedChanged: {
-            ukInputBox.visible = checked
-            copyUK.visible = checked
+            ukgridrow.visible = checked
         }
     }
-    
-        CheckBox {
-        id: showWGS84
-        text: "D M.mm"
-        font.pixelSize: 10
-        checked: false
-        onCheckedChanged: {
-            wgs84DMBox.visible = checked
-            wgsdm84copy.visible = checked
-            
-        }
-    }
- }
- RowLayout{
-    CheckBox {
-        id: showCustom1
-        text: "Custom 1"
-        font.pixelSize: 10
-        checked: false
-        onCheckedChanged: {
-            custom1BoxXY.visible = checked
-            custom1CRS.visible = checked
-            custom1copy.visible = checked
-        }
-    }
-    CheckBox {
+            CheckBox {
         id: showCustom2
         text: "Custom 2"
         font.pixelSize: 10
         checked: false
         onCheckedChanged: {
-            custom2BoxXY.visible = checked
-            custom2CRS.visible = checked
-            custom2copy.visible = checked
+            custom2row.visible = checked         
         }
     }
-    CheckBox {
-        id: showCrosshair
-        text: "Crosshair"
+            CheckBox {
+        id: showDM
+        text: "D M.mm"
         font.pixelSize: 10
-        checked: true
+        checked: false
         onCheckedChanged: {
-            crosshair.visible = checked
+            dmrow.visible = checked            
         }
     }
- }
- RowLayout{  
+
+//row 3
+ 
+  
      Button {
  text: qsTr("Reset")
  font.pixelSize: 10 
@@ -1494,31 +1635,42 @@ Label{
  decimalsd.text = decd
  zoom.text = zoomV
 
-    igInputBox.visible = true
-    ukInputBox.visible = false
-    custom1BoxXY.visible = false
-    custom1CRS.visible = false
-    custom2BoxXY.visible = false
-    custom2CRS.visible = false    
-    wgs84DMBox.visible = false 
+    igridrow.visible = true
+    ukgridrow.visible = false
+    custom1row.visible = false
+    custom2row.visible = false
+    dmrow.visible = false
+    dmsrow.visible = false
+    
     customisation.visible = false
     crosshair.visible = true
-    
     showIG.checked = true
     showUK.checked = false
     showCustom1.checked = false 
     showCustom2.checked = false
-    showWGS84.checked = false
+    showDM.checked = false
+    showDMS.checked = false
     showCustomisation.checked = false
     showCrosshair.checked = true
  }
  }
- }
- }
- 
- 
-} 
-}
+
+
+    CheckBox {
+        id: showCrosshair
+        text: "Crosshair"
+        font.pixelSize: 10
+        checked: true
+        onCheckedChanged: {
+            crosshair.visible = checked
+        }
+    }
+
+ } // end of grid2
+ } // end of column 
+  
+} // end of customisation 
+} // end of big column
      Dialog {
         id: coordinatesDialog
         title: "Coordinates"
@@ -1781,6 +1933,7 @@ function decimalToDDM(decimal) {
 }
  
 
+
 function decTODeg(decimal) {
 if (typeof decimal !== 'number' || isNaN(decimal)) {
  return ''
@@ -1791,14 +1944,17 @@ if (typeof decimal !== 'number' || isNaN(decimal)) {
  return Math.floor(absDecimal) * sign
 }
 
-function decimalToMinutes(decimal) {
+
+
+function degtoSeconds(decimal) {
  if (typeof decimal !== 'number' || isNaN(decimal)) {
  return ''
  }
  
  const absDecimal = Math.abs(decimal)
  const degrees = Math.floor(absDecimal)
- return ((absDecimal - degrees) * 60).toFixed(3)
+ const minutes = (absDecimal - degrees) * 60
+ return ((minutes - Math.floor(minutes)) * 60).toFixed(2)
 }
 
 // should loop through and update coordinates in all OTHER textfields
@@ -1841,11 +1997,17 @@ function decimalToMinutes(decimal) {
  var wgs84dmPoint = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, CoordinateReferenceSystemUtils.fromDescription("EPSG:4326")) 
  wgs84DMBox.isProgrammaticUpdate = true
  wgs84DMBox.text = decimalToDDM(wgs84dmPoint.y) + ", " + decimalToDDM(wgs84dmPoint.x)
+ 
+ wgs84DMSBox.text = decimalToDMss(wgs84dmPoint.y) + ", " + decimalToDMss(wgs84dmPoint.x)
+
+ // Update d m s boxes
  latDegrees.text = decTODeg(wgs84dmPoint.y)
- latMinutesDecimal.text = decimalToMinutes(wgs84dmPoint.y)
+ latMinutes.text = decimalToMinutes(wgs84dmPoint.y)
+ latSeconds.text = degtoSeconds(wgs84dmPoint.y)
  lonDegrees.text = decTODeg(wgs84dmPoint.x)
- lonMinutesDecimal.text = decimalToMinutes(wgs84dmPoint.x) 
-  
+ lonMinutes.text = decimalToMinutes(wgs84dmPoint.x)
+ lonSeconds.text = degtoSeconds(wgs84dmPoint.x) 
+
  } 
  }
 
@@ -1856,4 +2018,35 @@ function decimalToMinutes(decimal) {
  return parseFloat(point.x.toFixed(decimalsd.text)) + ", " + parseFloat(point.y.toFixed(decimalsd.text))
  }
  }
+
+
+ function decimalToMinutes(decimal) {
+
+if (typeof decimal !== 'number' || isNaN(decimal)) return ''
+
+    var sign = decimal < 0 ? '-' : '';
+    var absDecimal = Math.abs(decimal);
+
+    var degrees = Math.floor(absDecimal);
+    var minutes = Math.floor((absDecimal - degrees) * 60);
+    var seconds = ((absDecimal - degrees - minutes / 60) * 3600).toFixed(2);
+
+    return minutes;
+}
+
+ function decimalToDMss(decimal) {
+
+if (typeof decimal !== 'number' || isNaN(decimal)) return ''
+
+    var sign = decimal < 0 ? '-' : '';
+    var absDecimal = Math.abs(decimal);
+
+    var degrees = Math.floor(absDecimal);
+    var minutes = Math.floor((absDecimal - degrees) * 60);
+    var seconds = ((absDecimal - degrees - minutes / 60) * 3600).toFixed(2);
+
+    return `${sign}${degrees}° ${minutes}' ${seconds}"`;
+}
+ 
+
 }
