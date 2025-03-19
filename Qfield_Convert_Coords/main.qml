@@ -17,9 +17,35 @@ Item {
  property var overlayFeatureFormDrawer: iface.findItemByObjectName('overlayFeatureFormDrawer')
  property var positionSource: iface.findItemByObjectName('positionSource')
  property var canvasCrs : canvas.destinationCrs ;
- property var crsGeo : canvasCrs.isGeographic // is the canvas Geogrpahic (true (deg)) or projected (false (m))
+ //property var crsGeo : canvasCrs.isGeographic // is the canvas Geogrpahic (true (deg)) or projected (false (m))
  property var canvasEPSG : parseInt(canvas.project.crs.authid.split(":")[1]); // Canvas CRS
  property var mapCanvas: iface.mapCanvas()
+
+
+
+//changable stuff 
+//default values
+property var fsize : "15" // general font size
+property var zoomV : "4" // zoom level 
+property var decm : "0"  // decimal places for meter coordinates
+property var decd : "5"  // decimal places for degree coordinates
+  
+ //Default visibility of various boxes
+property var igvis: true // visibility of Irish grid
+property var ukgvis: false // visibility of UK grid
+property var custom1vis: false // visibility of custom1
+property var custom2vis: false // visibility of custom2 
+property var wgs84vis: true // visibility of wgs84 // always visible
+property var dmvis: false // visibility of DM
+property var dmsvis: false // visibility of DMS
+property var dmsBoxesvis: false // visibility of DMS boxes
+property var customisationvis: false // visibility of customisation
+property var crosshairvis: true // visibility of crosshair
+// for testing:
+property var degwa : "70"  // width of degree input box when no decimals in it
+property var minwa : "70"  // width of minute input box when no decimals in degree box
+
+
 
  Component.onCompleted: {
     iface.addItemToPluginsToolbar(digitizeButton)
@@ -31,7 +57,7 @@ Item {
     }   
 
 
-// Irish Grid/ UK  Locator Filter
+// Irish Grid/ UK Grid Locator Filter
 QFieldLocatorFilter {
     id: igukGridsFilter2
     delay: 1000
@@ -120,26 +146,6 @@ function triggerResultFromAction(result, actionId) {
 
 
 
-//chanegable stuff 
-//default values
-property var fsize : "15" // general font size
-property var zoomV : "4" // zoom level (does this work?)
-property var decm : "0"  // decimal places for meter coordinates
-property var decd : "5"  // decimal places for degree coordinates
-// for testing:
-property var degwa : "70"  // width of degree input box when no decimals in it
-property var minwa : "70"  // width of minute input box when no decimals in degree box
-
-
-// to do: need to tweak this
-//property var ukgvis: false // visibility of UK grid
-//property var igvis: true // visibility of Irish grid
-//property var custom1vis: false // visibility of custom1
-//property var custom2vis: false // visibility of custom2 
-//property var wgs84vis: true // visibility of wgs84
-//property var wgs84DMvis: false // visibility of wgs84 DM    
-//property var customisationvis: true // visibility of customisation
-//property var crosshairvis: true // visibility of crosshair
 
 //small crosshair
  Rectangle{
@@ -264,7 +270,7 @@ visible: true
 // Irish Grid
 RowLayout{
     id: igridrow
-    visible: true
+    visible: igvis
 
 TextField {
  id: igInputBox //1
@@ -374,7 +380,7 @@ Button {
  
 RowLayout{
     id:ukgridrow 
-    visible: false
+    visible: ukgvis
 
 TextField {
  id: ukInputBox //2
@@ -488,7 +494,7 @@ Button {
 // Custom1 Row
 RowLayout { 
     id: custom1row
-    visible: false
+    visible: custom1vis
 
 //custombox1
 
@@ -583,7 +589,7 @@ TextField {
 // custom2
 RowLayout {
  id: custom2row
- visible: false  
+ visible: custom2vis  
 
 //second custom box   
 TextField {
@@ -787,7 +793,7 @@ TextField {
 
 RowLayout{
     id: dmrow
-    visible: false
+    visible: dmvis
 TextField {
  id: wgs84DMBox //6
   Layout.fillWidth: true
@@ -837,7 +843,7 @@ TextField {
 }
 RowLayout{
     id: dmsrow
-    visible : false
+    visible : dmsvis
 TextField {
  id: wgs84DMSBox //6
   Layout.fillWidth: true
@@ -893,7 +899,7 @@ RowLayout {
    
  id: latlongboxesDMS
  spacing: 5
- visible: false
+ visible: dmsBoxesvis
 
  // Latitude Degrees
  TextField {
@@ -1381,7 +1387,7 @@ Button {
 
 Button {
  visible: true
- text: "Navigate/\nGoogle"
+ text: "Navigate/\nWeb"
   Layout.fillWidth: true
  font.bold: true
  font.pixelSize: font_Size.text -3
@@ -1635,25 +1641,16 @@ GridLayout{  // grid 2
  decimalsd.text = decd
  zoom.text = zoomV
 
-    igridrow.visible = true
-    ukgridrow.visible = false
-    custom1row.visible = false
-    custom2row.visible = false
-    dmrow.visible = false
-    dmsrow.visible = false
-    latlongboxesDMS.visible = false
     
-    customisation.visible = false
-    crosshair.visible = true
-    showIG.checked = true
-    showUK.checked = false
-    showCustom1.checked = false 
-    showCustom2.checked = false
-    showDM.checked = false
-    showDMS.checked = false
-    showCustomisation.checked = false
-    showCrosshair.checked = true
-    showDMSboxes.checked = false
+    showIG.checked = igvis
+    showUK.checked = ukgvis
+    showCustom1.checked = custom1vis 
+    showCustom2.checked = custom2vis
+    showDM.checked = dmvis
+    showDMS.checked = dmsvis
+    showDMSboxes.checked = dmsBoxesvis
+    showCustomisation.checked = customisationvis
+    showCrosshair.checked = crosshairvis
 
  }
  }
