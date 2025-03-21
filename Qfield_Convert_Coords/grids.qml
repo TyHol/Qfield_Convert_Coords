@@ -13,13 +13,10 @@ function igtoWGS(input) {
   if (typeof string !== 'string' || string.length !== 11) return false;
   const letter = string[0].toUpperCase();
   const numbers = string.slice(1); // Extract the remaining 10 characters
-  if (
-    !igletterMatrix.hasOwnProperty(letter) || // Check if the letter is in the IG matrix
-    !/^\d{10}$/.test(numbers) // Check if the remaining characters are exactly 10 digits
-  ) {
-    return false;
-       
-  }
+  if (!igletterMatrix.hasOwnProperty(letter)) // Check if the letter is in the IG matrix
+    {return false;}
+    if (!/^\d{10}$/.test(numbers))// Check if the remaining characters are exactly 10 digits
+    {return false;}
   // Extract the 5-digit easting and northing values
   const x5 = numbers.slice(0, 5); // First 5 digits (easting)
   const y5 = numbers.slice(5, 10); // Next 5 digits (northing)
@@ -40,12 +37,11 @@ function uktoWGS(input) {
   const letters = string.slice(0, 2).toUpperCase();
   const numbers = string.slice(2); // Extract the remaining 10 characters
   
-  if (
-    !ukletterMatrix.hasOwnProperty(letters) && // Check if the letter is in the UK matrix
-    !/^\d{10}$/.test(numbers) // Check if the remaining characters are exactly 10 digits
-  ){
-    return false;
-  }
+  if (!ukletterMatrix.hasOwnProperty(letters)) // Check if the letters are in the UK matrix
+    {return false;}
+    if (!/^\d{10}$/.test(numbers))// Check if the remaining characters are exactly 10 digits
+    {return false;}
+
   // Extract the 5-digit easting and northing values
   const x5 = numbers.slice(0, 5); // First 5 digits (easting)
   const y5 = numbers.slice(5, 10); // Next 5 digits (northing)
