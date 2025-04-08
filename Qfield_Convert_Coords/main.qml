@@ -1438,7 +1438,13 @@ Button {
   Layout.fillWidth: true
  font.pixelSize: font_Size.text 
  Layout.preferredHeight: 60 
- onClicked: { coordinatesDialog.open() }
+ onClicked: { 
+    bigDialog.open() 
+    }
+
+ onPressAndHold: {
+     bigDialog2.open() 
+     }
  }
  } 
  
@@ -1680,41 +1686,314 @@ GridLayout{  // grid 2
   
 } // end of customisation 
 } // end of big column
-     Dialog {
-        id: coordinatesDialog
-        title: "Coordinates"
-        font.pixelSize: 35
-        width: 400
-        height: 400
-        modal: true
-        anchors.centerIn:  parent
+  Dialog {
+    id: bigDialog
+    font.pixelSize: 35
+    width: 350
+    height: 400
+    modal: true
+    anchors.centerIn: parent
+
+    Column {
+        spacing: 20
+        width: parent.width
+        anchors.centerIn: parent
+
+        // GPS Box
+        Rectangle {
+            id: gpsBox
+            visible: gpsBoxvis
+            width: parent.width
+            implicitHeight: childrenRect.height + 20
+            color: "#D9CCE7"
+            radius: 10
+            border.color: "black"
+            border.width: 0.5
+            anchors.horizontalCenter: parent.horizontalCenter
+
+            Column {
+                id: childrenRect
+                width: parent.width
+                spacing: 10
+                anchors.margins: 10
+                anchors.centerIn: parent
+
+                Label {
+                    text: "GPS"
+                    font.pixelSize: 20
+                    font.bold: true
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
+                // IG (GPS)
+                MouseArea {
+                    width: parent.width
+                    height: gpsIG.implicitHeight
+                    onClicked: {
+                        let text = gpsIG.text;
+                        let textEdit = Qt.createQmlObject('import QtQuick; TextEdit { }', plugin);
+                        textEdit.text = text;
+                        textEdit.selectAll();
+                        textEdit.copy();
+                        textEdit.destroy();
+                        mainWindow.displayToast("Copied: " + text);
+                    }
+
+                    Label {
+                        id: gpsIG
+                        text: (positionSource.active && positionSource.positionInformation.latitudeValid && positionSource.positionInformation.longitudeValid)
+        ? ((showIG.checked
+            ? justIG(positionSource.projectedPosition, canvasEPSG)
+            : justUKG(positionSource.projectedPosition, canvasEPSG)))
+        : "No GPS"
+                        font.pixelSize: 35
+                        wrapMode: Text.Wrap
+                        horizontalAlignment: Text.AlignHCenter
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                }
+
+                // LL (GPS)
+                MouseArea {
+                    width: parent.width
+                    height: gpsLL.implicitHeight
+                    onClicked: {
+                        let text = gpsLL.text;
+                        let textEdit = Qt.createQmlObject('import QtQuick; TextEdit { }', plugin);
+                        textEdit.text = text;
+                        textEdit.selectAll();
+                        textEdit.copy();
+                        textEdit.destroy();
+                        mainWindow.displayToast("Copied: " + text);
+                    }
+
+                    Label {
+                        id: gpsLL
+                        text: (positionSource.active && positionSource.positionInformation.latitudeValid && positionSource.positionInformation.longitudeValid)
+                            ? justLL(positionSource.projectedPosition, canvasEPSG)
+                            : ""
+                        font.pixelSize: 30
+                        wrapMode: Text.Wrap
+                        horizontalAlignment: Text.AlignHCenter
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                }
+            }
+        }
+
+        // Screen Center Box
+        Rectangle {
+            id: screenBox
+            visible: screenBoxvis
+            width: parent.width
+            implicitHeight: childrenRect2.height + 20
+            color: "#f0f0f0"
+            radius: 10
+            border.color: "black"
+            border.width: 0.5
+            anchors.horizontalCenter: parent.horizontalCenter
+
+            Column {
+                id: childrenRect2
+                width: parent.width
+                spacing: 10
+                anchors.margins: 10
+                anchors.centerIn: parent
+
+                Label {
+                    text: "Screen Center"
+                    font.pixelSize: 20
+                    font.bold: true
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
+                // IG (Screen Center)
+                MouseArea {
+                    width: parent.width
+                    height: screenIG.implicitHeight
+                    onClicked: {
+                        let text = screenIG.text;
+                        let textEdit = Qt.createQmlObject('import QtQuick; TextEdit { }', plugin);
+                        textEdit.text = text;
+                        textEdit.selectAll();
+                        textEdit.copy();
+                        textEdit.destroy();
+                        mainWindow.displayToast("Copied: " + text);
+                    }
+
+                    Label {
+                        id: screenIG
+                        text:  showIG.checked ? justIG(canvas.center, canvasEPSG) :justUKG(canvas.center, canvasEPSG)
+                        font.pixelSize: 35
+                        wrapMode: Text.Wrap
+                        horizontalAlignment: Text.AlignHCenter
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                }
+
+                // LL (Screen Center)
+                MouseArea {
+                    width: parent.width
+                    height: screenLL.implicitHeight
+                    onClicked: {
+                        let text = screenLL.text;
+                        let textEdit = Qt.createQmlObject('import QtQuick; TextEdit { }', plugin);
+                        textEdit.text = text;
+                        textEdit.selectAll();
+                        textEdit.copy();
+                        textEdit.destroy();
+                        mainWindow.displayToast("Copied: " + text);
+                    }
+
+                    Label {
+                        id: screenLL
+                        text: justLL(canvas.center, canvasEPSG)
+                        font.pixelSize: 30
+                        wrapMode: Text.Wrap
+                        horizontalAlignment: Text.AlignHCenter
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                }
+            }
+        }
+    }
+}
+
+Dialog {
+    id: bigDialog2
+    font.pixelSize: 35
+    width: 400
+    height: 350
+    modal: true
+    anchors.centerIn: parent
+
+    // Third Box: Box contents
+    Rectangle {
+        id: boxBox
+        visible: boxBoxvis
+        width: parent.width
+        implicitHeight: childrenRect3.height + 20
+        color: "#f0fef0"
+        radius: 10
+        border.color: "black"
+        border.width: 0.5
+        anchors.horizontalCenter: parent.horizontalCenter
 
         Column {
-            spacing: 40
+            id: childrenRect3
+            width: parent.width
+            spacing: 10
+            anchors.margins: 10
             anchors.centerIn: parent
 
             Label {
-                text: igInputBox.text
-                font.pixelSize: 35
+                text: "Text box contents"
+                font.pixelSize: 20
                 font.bold: true
-            }               
-            Label {
-                text: ukInputBox.text
-                font.pixelSize: 35
-                font.bold: true
-            }            
-            Label {
-                text:wgs84Box.text 
-                font.pixelSize: 35
-                font.bold: true
+                horizontalAlignment: Text.AlignHCenter
+                anchors.horizontalCenter: parent.horizontalCenter
             }
-            Label {
-                text:wgs84DMBox.text
-                font.pixelSize: 35
-                font.bold: true
-            }            
+
+            // igInputBox text
+            MouseArea {
+                width: parent.width
+                height: igCopy.implicitHeight
+                onClicked: {
+                    let text = igCopy.text;
+                    let textEdit = Qt.createQmlObject('import QtQuick; TextEdit { }', plugin);
+                    textEdit.text = text;
+                    textEdit.selectAll();
+                    textEdit.copy();
+                    textEdit.destroy();
+                    mainWindow.displayToast("Copied: " + text);
+                }
+
+                Label {
+                    id: igCopy
+                    text: igInputBox.text
+                    font.pixelSize: 35
+                    wrapMode: Text.Wrap
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
+
+            // wgs84Box text
+            MouseArea {
+                width: parent.width
+                height: wgs84Copy.implicitHeight
+                onClicked: {
+                    let text = wgs84Copy.text;
+                    let textEdit = Qt.createQmlObject('import QtQuick; TextEdit { }', plugin);
+                    textEdit.text = text;
+                    textEdit.selectAll();
+                    textEdit.copy();
+                    textEdit.destroy();
+                    mainWindow.displayToast("Copied: " + text);
+                }
+
+                Label {
+                    id: wgs84Copy
+                    text: wgs84Box.text
+                    font.pixelSize: 30
+                    wrapMode: Text.Wrap
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
+
+            // wgs84DMBox text
+            MouseArea {
+                width: parent.width
+                height: wgs84DMCopy.implicitHeight
+                onClicked: {
+                    let text = wgs84DMCopy.text;
+                    let textEdit = Qt.createQmlObject('import QtQuick; TextEdit { }', plugin);
+                    textEdit.text = text;
+                    textEdit.selectAll();
+                    textEdit.copy();
+                    textEdit.destroy();
+                    mainWindow.displayToast("Copied: " + text);
+                }
+
+                Label {
+                    id: wgs84DMCopy
+                    text: wgs84DMBox.text
+                    font.pixelSize: 30
+                    wrapMode: Text.Wrap
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
+
+            // wgs84DMSBox text
+            MouseArea {
+                width: parent.width
+                height: wgs84DMSCopy.implicitHeight
+                onClicked: {
+                    let text = wgs84DMSCopy.text;
+                    let textEdit = Qt.createQmlObject('import QtQuick; TextEdit { }', plugin);
+                    textEdit.text = text;
+                    textEdit.selectAll();
+                    textEdit.copy();
+                    textEdit.destroy();
+                    mainWindow.displayToast("Copied: " + text);
+                }
+
+                Label {
+                    id: wgs84DMSCopy
+                    text: wgs84DMSBox.text
+                    font.pixelSize: 30
+                    wrapMode: Text.Wrap
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
         }
     }
+}
 
 }
  
@@ -2020,6 +2299,25 @@ function degtoSeconds(decimal) {
  } 
  }
 
+function justIG(source,crs){ 
+var point = GeometryUtils.reprojectPoint(GeometryUtils.point(source.x, source.y),  CoordinateReferenceSystemUtils.fromDescription("EPSG:"+crs) , CoordinateReferenceSystemUtils.fromDescription("EPSG:29903"))
+ return getIGFromXY(point.x, point.y)
+ }
+
+
+function justUKG(source,crs){ 
+var point = GeometryUtils.reprojectPoint(GeometryUtils.point(source.x, source.y),  CoordinateReferenceSystemUtils.fromDescription("EPSG:"+crs) , CoordinateReferenceSystemUtils.fromDescription("EPSG:27700"))
+ return getUKFromXY(point.x, point.y)
+ }
+
+
+function justLL(source,crs){ 
+var point = GeometryUtils.reprojectPoint(GeometryUtils.point(source.x, source.y),  CoordinateReferenceSystemUtils.fromDescription("EPSG:"+crs) , CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"))
+return ( point.y.toFixed(decimalsd.text)+", "+ point.x.toFixed(decimalsd.text) )
+
+ }
+
+ 
  function formatPoint(point, crs) {
  if (!crs.isGeographic) {
  return parseFloat(point.x.toFixed(decimalsm.text)) + ", " + parseFloat(point.y.toFixed(decimalsm.text))
