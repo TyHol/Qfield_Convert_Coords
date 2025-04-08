@@ -1702,7 +1702,6 @@ GridLayout{  // grid 2
         // GPS Box
         Rectangle {
             id: gpsBox
-            visible: gpsBoxvis
             width: parent.width
             implicitHeight: childrenRect.height + 20
             color: "#D9CCE7"
@@ -1785,7 +1784,6 @@ GridLayout{  // grid 2
         // Screen Center Box
         Rectangle {
             id: screenBox
-            visible: screenBoxvis
             width: parent.width
             implicitHeight: childrenRect2.height + 20
             color: "#f0f0f0"
@@ -1872,7 +1870,6 @@ Dialog {
     // Third Box: Box contents
     Rectangle {
         id: boxBox
-        visible: boxBoxvis
         width: parent.width
         implicitHeight: childrenRect3.height + 20
         color: "#f0fef0"
