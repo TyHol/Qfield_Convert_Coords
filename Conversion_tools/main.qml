@@ -85,6 +85,7 @@ Settings {
     property bool   useNSEW:        false
     property string crs1:           ""
     property string crs2:           "4326"
+    property string recentCrs:      ""  // comma-separated, most recent first, max 3
 }
 
 ListModel { id: pointLayerPickerModel }
@@ -200,6 +201,39 @@ Component.onCompleted: {
         try {
             return CoordinateReferenceSystemUtils.fromDescription("EPSG:" + parseInt(epsgText)).isGeographic
         } catch(e) { return false }
+    }
+
+    // Clears error state on all input boxes
+    function _clearErrors() {
+        igInputBox.hasError    = false
+        ukInputBox.hasError    = false
+        custom1BoxXY.hasError  = false
+        custom2BoxXY.hasError  = false
+        wgs84Box.hasError      = false
+        wgs84DMBox.hasError    = false
+        wgs84DMSBox.hasError   = false
+    }
+
+    // Marks a box as invalid and shows a toast
+    function _setError(box, msg) {
+        _clearErrors()
+        box.hasError = true
+        mainWindow.displayToast(qsTr(msg))
+    }
+
+    // Adds a code to the recent CRS list (max 3, most recent first, no duplicates)
+    function addRecentCrs(code) {
+        var c = code.trim()
+        if (c === "" || isNaN(parseInt(c))) return
+        var arr = appSettings.recentCrs !== "" ? appSettings.recentCrs.split(",") : []
+        arr = arr.filter(function(x) { return x !== c })
+        arr.unshift(c)
+        if (arr.length > 3) arr = arr.slice(0, 3)
+        appSettings.recentCrs = arr.join(",")
+    }
+
+    function _recentCrsArray() {
+        return appSettings.recentCrs !== "" ? appSettings.recentCrs.split(",") : []
     }
 
     function copyToClipboard(textToCopy) {
@@ -1123,8 +1157,11 @@ TextField {
  Layout.fillWidth: true
  placeholderText: "Irish Grid: X 00000 00000"
  property bool isProgrammaticUpdate: false
+ property bool hasError: false
+ background: Rectangle { color: parent.hasError ? "#FFEEEE" : "white"; border.color: parent.hasError ? "#cc0000" : "#cccccc"; border.width: 1; radius: 2 }
  onTextChanged: {
     if (isProgrammaticUpdate) { isProgrammaticUpdate = false; return }
+    hasError = false
     lastEditedBox = "ig"; coordinatesDirty = true
     var cleanedText = igInputBox.text.replace(/[^A-Za-z0-9\s]/g, '')
     // Only apply formatting when first character is a valid IG letter
@@ -1197,9 +1234,11 @@ TextField {
  
  // Flag to indicate programmatic updates
  property bool isProgrammaticUpdate: false
-
+ property bool hasError: false
+ background: Rectangle { color: parent.hasError ? "#FFEEEE" : "white"; border.color: parent.hasError ? "#cc0000" : "#cccccc"; border.width: 1; radius: 2 }
  onTextChanged: {
     if (isProgrammaticUpdate) { isProgrammaticUpdate = false; return }
+    hasError = false
     lastEditedBox = "uk"; coordinatesDirty = true
     var cleanedText = ukInputBox.text.replace(/[^A-Za-z0-9\s]/g, '')
     // Only apply formatting when first two characters are valid UK letters
@@ -1262,6 +1301,8 @@ RowLayout {
 TextField {
     id: custom1BoxXY //3
     property bool isProgrammaticUpdate: false
+    property bool hasError: false
+    background: Rectangle { color: parent.hasError ? "#FFEEEE" : "white"; border.color: parent.hasError ? "#cc0000" : "#cccccc"; border.width: 1; radius: 2 }
     Layout.preferredHeight: 35
     Layout.preferredWidth: 180
     font.pixelSize: font_Size.text
@@ -1287,6 +1328,7 @@ TextField {
  fieldFontSize: font_Size.text
  text: appSettings.crs1 !== "" ? appSettings.crs1 : String(canvasEPSG)
  placeholderText: " EPSG"
+ recentCodes: _recentCrsArray()
  onTextChanged: {
      appSettings.crs1 = text
      var parts = wgs84Box.text.split(',').map(function(p) { return parseFloat(p.trim()) })
@@ -1324,6 +1366,8 @@ RowLayout {
 TextField {
     id: custom2BoxXY
     property bool isProgrammaticUpdate: false
+    property bool hasError: false
+    background: Rectangle { color: parent.hasError ? "#FFEEEE" : "white"; border.color: parent.hasError ? "#cc0000" : "#cccccc"; border.width: 1; radius: 2 }
     Layout.preferredWidth: 180
     Layout.preferredHeight: 35
     font.pixelSize: font_Size.text
@@ -1349,6 +1393,7 @@ TextField {
  fieldFontSize: font_Size.text
  text: appSettings.crs2
  placeholderText: " EPSG"
+ recentCodes: _recentCrsArray()
  onTextChanged: {
      appSettings.crs2 = text
      var parts = wgs84Box.text.split(',').map(function(p) { return parseFloat(p.trim()) })
@@ -1387,13 +1432,15 @@ TextField {
   Layout.fillWidth: true
  font.bold: true
  Layout.preferredHeight: 35
- font.pixelSize: font_Size.text 
+ font.pixelSize: font_Size.text
  font.family: "Arial"
  font.italic: true
  placeholderText: "Lat, Long "
  text: ""
  property bool isProgrammaticUpdate: false
- 
+ property bool hasError: false
+ background: Rectangle { color: parent.hasError ? "#FFEEEE" : "white"; border.color: parent.hasError ? "#cc0000" : "#cccccc"; border.width: 1; radius: 2 }
+
  onTextChanged: {
 
     if (isProgrammaticUpdate) {
@@ -1497,9 +1544,12 @@ TextField {
  text: ""
 
  property bool isProgrammaticUpdate: false
- 
-  onTextChanged: {
+ property bool hasError: false
+ background: Rectangle { color: parent.hasError ? "#FFEEEE" : "white"; border.color: parent.hasError ? "#cc0000" : "#cccccc"; border.width: 1; radius: 2 }
+
+ onTextChanged: {
     if (isProgrammaticUpdate) { isProgrammaticUpdate = false; return; }
+    hasError = false
     lastEditedBox = "ddm"; coordinatesDirty = true;
 }}
  Button {
@@ -1537,9 +1587,12 @@ TextField {
  text: ""
 
  property bool isProgrammaticUpdate: false
- 
+ property bool hasError: false
+ background: Rectangle { color: parent.hasError ? "#FFEEEE" : "white"; border.color: parent.hasError ? "#cc0000" : "#cccccc"; border.width: 1; radius: 2 }
+
  onTextChanged: {
     if (isProgrammaticUpdate) { isProgrammaticUpdate = false; return; }
+    hasError = false
     lastEditedBox = "dms"; coordinatesDirty = true;
  }}
  Button {
@@ -2683,6 +2736,7 @@ function degtoSeconds(decimal) {
 // isProgrammaticUpdate is set before each text assignment to suppress the
 // box's own onTextChanged handler from firing a second updateCoordinates call.
  function updateCoordinates(x, y, sourceEPSG, targetEPSG1, targetEPSG2, inputDialog) {
+ _clearErrors()
  _lastX = x; _lastY = y; _lastEPSG = sourceEPSG
  coordinatesDirty = false
  var sourceCrs = CoordinateReferenceSystemUtils.fromDescription("EPSG:" + parseInt(sourceEPSG))
@@ -2790,16 +2844,16 @@ function convertFromLastEdited() {
             if (parts.length === 2) {
                 var lat = parseCoordPart(parts[0].trim()); var lon = parseCoordPart(parts[1].trim())
                 if (lat !== null && lon !== null) updateCoordinates(lon, lat, 4326, custom1CRS.text, custom2CRS.text, 5)
-                else mainWindow.displayToast(qsTr("Invalid WGS84 decimal input"))
+                else _setError(wgs84Box, "Invalid WGS84 decimal input")
             }
         } else if (lastEditedBox === "ddm") {
             var p = parseDegreeCoordPair(wgs84DMBox.text)
             if (p !== null) updateCoordinates(p.lon, p.lat, 4326, custom1CRS.text, custom2CRS.text, 6)
-            else mainWindow.displayToast(qsTr("Cannot parse DDM input"))
+            else _setError(wgs84DMBox, "Cannot parse DDM input")
         } else if (lastEditedBox === "dms") {
             var p = parseDegreeCoordPair(wgs84DMSBox.text)
             if (p !== null) updateCoordinates(p.lon, p.lat, 4326, custom1CRS.text, custom2CRS.text, 6)
-            else mainWindow.displayToast(qsTr("Cannot parse DMS input"))
+            else _setError(wgs84DMSBox, "Cannot parse DMS input")
         } else if (lastEditedBox === "ig") {
             if (igInputBox.isValidInput()) {
                 var letter = igInputBox.text.substring(0,1).toUpperCase()
@@ -2807,7 +2861,7 @@ function convertFromLastEdited() {
                 var Y5 = parseInt(igInputBox.text.substring(8,13), 10)
                 var me = igletterMatrix[letter]
                 updateCoordinates(X5 + me.first*100000, Y5 + me.second*100000, 29903, custom1CRS.text, custom2CRS.text, 1)
-            } else mainWindow.displayToast(qsTr("Incomplete Irish Grid reference"))
+            } else _setError(igInputBox, "Incomplete Irish Grid reference")
         } else if (lastEditedBox === "uk") {
             if (ukInputBox.isValidInput()) {
                 var letter = ukInputBox.text.substring(0,2).toUpperCase()
@@ -2815,19 +2869,21 @@ function convertFromLastEdited() {
                 var Y5 = parseInt(ukInputBox.text.substring(9,14), 10)
                 var me = ukletterMatrix[letter]
                 updateCoordinates(X5 + me.first*100000, Y5 + me.second*100000, 27700, custom1CRS.text, custom2CRS.text, 2)
-            } else mainWindow.displayToast(qsTr("Incomplete UK Grid reference"))
+            } else _setError(ukInputBox, "Incomplete UK Grid reference")
         } else if (lastEditedBox === "custom1") {
             var parts = custom1BoxXY.text.split(",").map(function(p){ return parseFloat(p.trim()) })
             if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
                 var c1geo = crsIsGeographic(custom1CRS.text)
+                addRecentCrs(custom1CRS.text)
                 updateCoordinates(c1geo ? parts[1] : parts[0], c1geo ? parts[0] : parts[1], custom1CRS.text, custom1CRS.text, custom2CRS.text, 3)
-            } else mainWindow.displayToast(qsTr("Invalid Custom 1 input"))
+            } else _setError(custom1BoxXY, "Invalid Custom 1 input")
         } else if (lastEditedBox === "custom2") {
             var parts = custom2BoxXY.text.split(",").map(function(p){ return parseFloat(p.trim()) })
             if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
                 var c2geo = crsIsGeographic(custom2CRS.text)
+                addRecentCrs(custom2CRS.text)
                 updateCoordinates(c2geo ? parts[1] : parts[0], c2geo ? parts[0] : parts[1], custom2CRS.text, custom1CRS.text, custom2CRS.text, 4)
-            } else mainWindow.displayToast(qsTr("Invalid Custom 2 input"))
+            } else _setError(custom2BoxXY, "Invalid Custom 2 input")
         }
     }
 function ensureConverted() { if (coordinatesDirty) convertFromLastEdited() }

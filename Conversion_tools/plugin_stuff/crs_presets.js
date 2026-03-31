@@ -1,6 +1,6 @@
 .pragma library
 
-// Curated list of ~70 common CRS for Europe / UK / Ireland
+// Curated list of ~100 common CRS for Europe / UK / Ireland
 // Each entry: {name, code}  — code is the EPSG integer as a string
 var list = [
 
@@ -114,5 +114,70 @@ var list = [
 
     // --- Romania ---
     {name: "Stereo70 (Romania)",                code: "3844"},
+
+    // --- Norway ---
+    {name: "EUREF89 / NTM zone 5 (Norway)",     code: "5105"},
+    {name: "EUREF89 / NTM zone 6 (Norway)",     code: "5106"},
+    {name: "EUREF89 / NTM zone 7 (Norway)",     code: "5107"},
+    {name: "EUREF89 / NTM zone 8 (Norway)",     code: "5108"},
+    {name: "EUREF89 / NTM zone 9 (Norway)",     code: "5109"},
+    {name: "EUREF89 / NTM zone 10 (Norway)",    code: "5110"},
+    {name: "EUREF89 / NTM zone 11 (Norway)",    code: "5111"},
+    {name: "EUREF89 / UTM zone 32N (Norway)",   code: "25832"},
+    {name: "EUREF89 / UTM zone 33N (N Norway)", code: "25833"},
+    {name: "NGO1948 geographic (Norway old)",   code: "4273"},
+
+    // --- Denmark ---
+    {name: "ETRS89 / UTM zone 32N (Denmark)",   code: "25832"},
+    {name: "ETRS89 / UTM zone 33N (E Denmark)", code: "25833"},
+    {name: "ETRS89 / Kp2000 Jutland",           code: "2196"},
+    {name: "ETRS89 / Kp2000 Bornholm",         code: "2198"},
+    {name: "ETRS89 / Kp2000 Zealand",           code: "2197"},
+
+    // --- Greece ---
+    {name: "GGRS87 / Greek Grid",               code: "2100"},
+    {name: "GGRS87 geographic",                 code: "4121"},
+    {name: "ED50 / TM Athens (Greece)",         code: "2323"},
+
+    // --- Italy ---
+    {name: "Monte Mario / Italy zone 1",        code: "3003"},
+    {name: "Monte Mario / Italy zone 2",        code: "3004"},
+    {name: "RDN2008 / Italy zone (N)",          code: "7791"},
+    {name: "RDN2008 geographic",                code: "6706"},
+
+    // --- Spain ---
+    {name: "ETRS89 geographic (Spain)",         code: "4258"},
+    {name: "REGCAN95 / UTM zone 27N (Canaries)",code: "4082"},
+    {name: "ETRS89 / UTM zone 28N (Canaries)",  code: "25828"},
+
+    // --- Iceland ---
+    {name: "ISN2016 geographic",                code: "8086"},
+    {name: "ISN2016 / Lambert 2016",            code: "8088"},
+    {name: "ISN93 geographic",                  code: "4659"},
+
+    // --- Turkey ---
+    {name: "TUREF / TM27 (Turkey)",             code: "5254"},
+    {name: "TUREF / TM30 (Turkey)",             code: "5255"},
+    {name: "TUREF / TM33 (Turkey)",             code: "5256"},
+    {name: "TUREF geographic",                  code: "5252"},
+
+    // --- Russia / Ukraine ---
+    {name: "Pulkovo 1942 geographic",           code: "4284"},
+    {name: "SK-42 / Gauss-Kruger zone 4",       code: "28404"},
+    {name: "SK-42 / Gauss-Kruger zone 5",       code: "28405"},
+    {name: "SK-42 / Gauss-Kruger zone 6",       code: "28406"},
+    {name: "SK-42 / Gauss-Kruger zone 7",       code: "28407"},
+
+    // --- Croatia / Slovenia / Serbia ---
+    {name: "HTRS96 / Croatia TM",               code: "3765"},
+    {name: "D96 / TM (Slovenia)",               code: "3794"},
+    {name: "MGI 1901 / Balkans zone 6",         code: "8677"},
+
+    // --- North Africa ---
+    {name: "WGS84 / UTM zone 29N (Morocco)",    code: "32629"},
+    {name: "WGS84 / UTM zone 30N (Algeria)",    code: "32630"},
+    {name: "WGS84 / UTM zone 31N (Tunisia)",    code: "32631"},
+    {name: "WGS84 / UTM zone 32N (Libya/Egypt)",code: "32632"},
+    {name: "WGS84 / UTM zone 36N (Egypt E)",    code: "32636"},
 
 ]

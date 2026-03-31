@@ -9,6 +9,7 @@ import "crs_presets.js" as CrsPresets
 // Exposes:  property string text        — EPSG code (read/write)
 //           property string placeholderText
 //           property real   fieldFontSize
+//           property var    recentCodes  — array of recently used codes (max 3), shown at top
 
 Item {
     id: root
@@ -19,6 +20,7 @@ Item {
     property string text: ""
     property string placeholderText: "EPSG"
     property real   fieldFontSize: 12
+    property var    recentCodes: []   // array of up to 3 recently used code strings
 
     // ── Sync flags ──────────────────────────────────────────────────────────
     property bool _fromRoot:  false
@@ -33,20 +35,36 @@ Item {
         dropModel.clear()
     }
 
+    // ── Lookup name for a code ───────────────────────────────────────────────
+    function _nameForCode(code) {
+        for (var i = 0; i < CrsPresets.list.length; i++)
+            if (CrsPresets.list[i].code === code) return CrsPresets.list[i].name
+        return "Custom (" + code + ")"
+    }
+
     // ── Filter (updates model; only opens popup if already visible) ──────────
     function _filter(query) {
         dropModel.clear()
         var q = query.toLowerCase().trim()
+
+        // Recent codes always at top
+        if (recentCodes && recentCodes.length > 0) {
+            dropModel.append({name: "── Recent ──", code: "", isHeader: true})
+            for (var r = 0; r < recentCodes.length; r++)
+                dropModel.append({name: _nameForCode(recentCodes[r]), code: recentCodes[r], isHeader: false})
+            if (q.length === 0)
+                dropModel.append({name: "── All ──", code: "", isHeader: true})
+        }
+
         if (q.length === 0) {
-            // show full list when field is empty
             for (var i = 0; i < CrsPresets.list.length; i++)
-                dropModel.append(CrsPresets.list[i])
+                dropModel.append({name: CrsPresets.list[i].name, code: CrsPresets.list[i].code, isHeader: false})
             return
         }
         for (var j = 0; j < CrsPresets.list.length; j++) {
             var item = CrsPresets.list[j]
             if (item.code.indexOf(q) !== -1 || item.name.toLowerCase().indexOf(q) !== -1)
-                dropModel.append(item)
+                dropModel.append({name: item.name, code: item.code, isHeader: false})
         }
     }
 
@@ -71,10 +89,8 @@ Item {
                 if (root.text !== text) root.text = text
                 root._fromInput = false
                 if (dropPopup.visible) {
-                    // popup already open — update list (works on PC + Android)
                     root._filter(text)
                 } else if (["windows","osx","linux","unix"].indexOf(Qt.platform.os) !== -1) {
-                    // PC only — auto-open on typing
                     root._filter(text)
                     if (dropModel.count > 0) dropPopup.open()
                 }
@@ -104,8 +120,8 @@ Item {
                 if (dropPopup.visible) {
                     dropPopup.close()
                 } else {
-                    root._filter(codeField.text)   // populate from current text
-                    dropPopup.open()               // touch event — renders on Android
+                    root._filter(codeField.text)
+                    dropPopup.open()
                 }
             }
         }
@@ -134,44 +150,72 @@ Item {
             id: dropList
             model:          dropModel
             clip:           true
-            implicitHeight: Math.min(dropModel.count, 6) * 44
+            implicitHeight: Math.min(dropModel.count, 8) * 44
 
-            delegate: Rectangle {
-                width:   dropList.width
-                height:  44
-                color:   rowMouse.containsMouse ? "#e8f8c8" : "#FFFFFF"
-                opacity: 1.0
+            delegate: Loader {
+                width: dropList.width
+                height: model.isHeader ? 28 : 44
+                sourceComponent: model.isHeader ? headerDelegate : rowDelegate
+            }
 
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left:        parent.left
-                    anchors.right:       parent.right
-                    anchors.leftMargin:  8
-                    anchors.rightMargin: 4
-                    text:  model.name + "  (" + model.code + ")"
-                    font.pixelSize: 12
-                    font.family:    "Arial"
-                    elide:  Text.ElideRight
-                    color:  "#222222"
-                }
-
+            Component {
+                id: headerDelegate
                 Rectangle {
-                    anchors.bottom: parent.bottom
-                    width:  parent.width
-                    height: 1
-                    color:  "#dddddd"
+                    width:  dropList.width
+                    height: 28
+                    color:  "#f0f0f0"
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.left: parent.left
+                        anchors.leftMargin: 8
+                        text:  model.name
+                        font.pixelSize: 10
+                        font.family:    "Arial"
+                        font.bold:      true
+                        color: "#888888"
+                    }
                 }
+            }
 
-                MouseArea {
-                    id: rowMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onClicked: {
-                        root._fromRoot  = true
-                        root.text       = model.code
-                        codeField.text  = model.code
-                        root._fromRoot  = false
-                        dropPopup.close()
+            Component {
+                id: rowDelegate
+                Rectangle {
+                    width:   dropList.width
+                    height:  44
+                    color:   rowMouse.containsMouse ? "#e8f8c8" : "#FFFFFF"
+                    opacity: 1.0
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.left:        parent.left
+                        anchors.right:       parent.right
+                        anchors.leftMargin:  8
+                        anchors.rightMargin: 4
+                        text:  model.name + "  (" + model.code + ")"
+                        font.pixelSize: 12
+                        font.family:    "Arial"
+                        elide:  Text.ElideRight
+                        color:  "#222222"
+                    }
+
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        width:  parent.width
+                        height: 1
+                        color:  "#dddddd"
+                    }
+
+                    MouseArea {
+                        id: rowMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked: {
+                            root._fromRoot  = true
+                            root.text       = model.code
+                            codeField.text  = model.code
+                            root._fromRoot  = false
+                            dropPopup.close()
+                        }
                     }
                 }
             }
