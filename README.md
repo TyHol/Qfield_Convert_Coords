@@ -1,30 +1,188 @@
-# Convert Coordinates Dialogue
+# Convert Coordinates — QField Plugin
 
-This is a plugin for the most excellent [Qfield](https://qfield.org/) app to convert between coordinates: Irish Grid, UK Grid, Lat long, Custom 1 (default=screen CRS) and Custom 2 (default = WGS84).
+A plugin for the [QField](https://qfield.org/) mobile GIS app that converts between coordinate systems, creates points, and adds Irish/UK grid reference search to the QField locator bar.
 
-- Will show and convert screen centre coordinates, current GPS coordinates or manually inputted coordinates.
-- Will create a point (in the active point layer) at location.
-- Will pan or (on long press) zoom.
-- Will navigate inside Qfield or (on long press) in google maps.
-- Adds ability to search for and navigate to Irish grid or UK grid locations in the searchbar. Will give also give appropriate lat long as Decimal Degrees, Degrees + Decimal Minutes and Degrees, Minutes + Decimal seconds.
-- Converted coodinates can be copied to the clipboard.
+> **Version:** 31.3.26..1 | **Author:** Tyhol | **Repository:** https://github.com/TyHol/Qfield_Convert_Coords
 
-The basic screen shows Irish grid and Lat Longs. Coordinates can be grabbed from the screen centre (marked by a small crosshair)  or GPS, or you can type in.<br>
+---
 
-The UK grid system is also available, as are custom CRSs for when you go on holiday.... <n>By default the Custom 1 is set to the project CRS and Custom 2 is set to WGS84 (EPSG:4326). Custom  1 and 2 display and accept input in the form X,Y or Lon/Lat only. Their CRS can be set by inputting the appropriate [EPSG](https://epsg.io/) code & can be reset to default by using the <b>Reset</b> button in the options menu.
+## Contents
 
-...Long pressing on buttons will give the alternative function... <b>Google</b> links to the location in your browser.
+- [Installation](#installation)
+- [Main Dialog](#main-dialog)
+  - [Grabbing Coordinates](#grabbing-coordinates)
+  - [Coordinate Formats](#coordinate-formats)
+  - [Convert Button](#convert-button)
+  - [CRS Picker](#crs-picker-custom-1--2)
+  - [DMS Input Boxes](#dms-input-boxes)
+  - [Action Buttons](#action-buttons)
+  - [BIG Display](#big-display)
+- [Canvas Menu Tools](#canvas-menu-tools)
+- [Paste from Clipboard](#paste-from-clipboard)
+- [Grid Reference Search](#grid-reference-search)
+- [Settings](#settings)
+
+---
+
+## Installation
+
+Download the zip from the releases page and follow the QField plugin installation guide to install it.
+
+---
+
+## Main Dialog
+
+Open the dialog by tapping the plugin button/icon in the QField toolbar.
 
 ![image](https://github.com/user-attachments/assets/8295fd9d-85e9-4653-9a3f-5c62026c4a74)
 
+### Grabbing Coordinates
 
-You can change some of the outputs such as decimals displayed, text size and zoom level, toggle on or off the various CRSs or restore the original defaults....
+| Button | Action |
+|---|---|
+| **Screencenter** | Uses the map canvas centre point (indicated by the crosshair overlay) |
+| **GPS** | Uses the current GPS position (GPS must be active) |
+| **Type in** | Type directly into any coordinate box, then tap **Convert** |
+| **Paste** | Paste a coordinate from the clipboard |
 
+### Coordinate Formats
 
-## Search Irish UK Grid
-It adds the ability to search for and navigate to Irish grid or UK grid locations in the searchbar.<br> It will give also give appropriate lat long as both Decimal Degrees and Degrees + Decimal Minutes. There is the option to *navigate* to the location and an option to *digitize* a point (in the active point layer) at location.<br>
-Use the prefix 'grid' and enter a valid grid reference e.g. <b>V 99667 56878</b> for Irish Grid or <b>SE 58098 29345</b> for UK grid. Spaces ignored and are not required.
+Each row can be shown or hidden in Settings.
+
+| Row | Format | Example | Input? |
+|---|---|---|---|
+| **Irish Grid** | Letter + 5-digit easting + 5-digit northing (EPSG:29903) | `H 54321 89797` | Yes |
+| **UK Grid** | Two letters + 5-digit easting + 5-digit northing (EPSG:27700) | `NS 45140 72887` | Yes |
+| **Custom 1** | X, Y in any CRS — EPSG selectable via picker | `313621, 234156` | Yes |
+| **Custom 2** | X, Y in a second custom CRS | `53.3498, -6.2603` | Yes |
+| **WGS84** | Latitude, Longitude in decimal degrees | `53.34980, -6.26031` | Yes |
+| **WGS84 DDM** | Degrees + Decimal Minutes | `53° 20.988' N, 6° 15.619' W` | Yes |
+| **WGS84 DMS** | Degrees, Minutes, Decimal Seconds | `53° 20' 59.28" N, 6° 15' 37.11" W` | Yes |
+
+Each row has a **copy** button that copies the displayed value to the clipboard.
+
+### Convert Button
+
+A prominent green **Convert** button is the single trigger for all conversions. After editing any coordinate box, tap Convert to update all other rows. Copy buttons and the BIG dialog will auto-convert if needed before running.
+
+### CRS Picker (Custom 1 & 2)
+
+The Custom 1 and 2 EPSG fields have an autocomplete picker built in:
+
+- **Type** a code or name to filter — results appear immediately on desktop, or tap **…** to open the picker on Android/iOS
+- **70+ presets** covering Ireland, UK, ETRS89 UTM zones 26–38, WGS84 UTM, and national grids across Europe
+- Free-text entry still works for any EPSG code not in the list
+- Selected CRS is **saved between sessions** — no need to re-enter after restarting QField
+
+> **Accuracy note:** When converting to/from British National Grid (27700) or Irish Grid (29903/29902), a toast warning appears if PROJ grid shift files (OSTN15/OSTNI15) are not installed — accuracy in that case is ~3–5m (BNG) or ~1–3m (Irish Grid) rather than sub-metre. The warning shows once per CRS selection.
+
+### DMS Input Boxes
+
+Six editable boxes for entering Degrees, Minutes and Seconds separately for latitude and longitude. Tap **Convert** to push the DMS values into all other rows.
+
+### N/S/E/W Labels
+
+A checkbox in Settings toggles between `N/S/E/W` directional labels and `+/−` signs on DDM and DMS output.
+
+### Action Buttons
+
+| Button | Tap | Long Press |
+|---|---|---|
+| **Pan/Zoom** | Pans the map canvas to the coordinate | Zooms to the coordinate |
+| **Add** | Adds a point to the selected layer | — |
+| **Navigate/Web** | Sets QField navigation destination | Opens in external map app |
+| **BIG** | Opens BIG display (GPS + screen centre) | Opens BIG display (all current values) |
+
+### BIG Display
+
+Two large-text overlay dialogs for easy reading in the field:
+
+- **BIG (tap):** Shows current GPS position and screen centre in Irish Grid / UK Grid and Lat/Long.
+- **BIG (long press):** Shows all current values from the main dialog text boxes.
+
+Tap any value in either BIG dialog to copy it to the clipboard.
+
+---
+
+## Canvas Menu Tools
+
+Long-press on the map canvas to access:
+
+| Item | Function |
+|---|---|
+| **Add point** | Adds a point at the tapped location |
+| **Navigate/Web** | Opens tapped location in external map app |
+| **Convert coordinates** | Opens main dialog pre-loaded with tapped location |
+| **Paste location from clipboard** | Parses clipboard as a coordinate, creates a point and zooms to it |
+
+---
+
+## Paste from Clipboard
+
+Accepts a wide range of coordinate formats:
+
+| Format | Example |
+|---|---|
+| Irish Grid | `H 54321 89797` or `H5432189797` |
+| UK Grid | `NS 45140 72887` or `NS4514072887` |
+| WGS84 decimal degrees | `53.3498, -6.2603` |
+| WGS84 DDM | `53° 20.988' N, 6° 15.619' W` |
+| WGS84 DMS | `53° 20' 59" N, 6° 15' 37" W` |
+| Projected coordinates | `313621, 234156` |
+
+A **Confirm coordinate format** dialog appears before anything is committed, showing the parsed text and allowing format correction. Tap **Apply** to accept or **Cancel** to abort.
+
+---
+
+## Grid Reference Search
+
+Type the prefix **`grid`** in the QField search bar followed by a grid reference:
+
+```
+grid H 54321 89797      ← Irish Grid
+grid SE 58098 29345     ← UK Grid
+grid NS4514072887       ← spaces not required
+```
+
+Results show the reference converted to Decimal Degrees and DDM, with options to **Navigate** or **Add point**.
 
 ![image](https://github.com/user-attachments/assets/38fe92e9-844f-459f-9071-39f5d2ffbd8e)
 
+---
 
+## Settings
+
+Open by tapping **⚙** in the main dialog header or long-pressing the plugin toolbar button.
+
+### Add points to
+Selects the target layer — lists all editable point layers in the current project.
+
+### After adding point
+
+| Option | Effect |
+|---|---|
+| Don't zoom/pan | Map view stays put |
+| Pan to | Pans to the new point |
+| Zoom to | Zooms to the new point |
+| Show form on add | Opens attribute form for each new point |
+
+Zoom extent presets: Detail (~25m), Building (~50m), Street (~500m), Town (~2km), Region (~20km), Country (~200km).
+
+### Display
+Toggle visibility of each coordinate row, DMS boxes, and the map crosshair.
+
+### N/S/E/W labels
+Toggle between directional labels and +/− signs on DDM/DMS output.
+
+### External map
+Choose which app opens on Navigate/Web long-press: Google Maps (pin), Google Maps (nav), OpenStreetMap, or OSRM routing.
+
+### Format
+Font size, decimal places for projected coordinates, and decimal places for geographic coordinates.
+
+### Reset
+Restores all settings and CRS codes to defaults (Custom 1 → project CRS, Custom 2 → EPSG:4326).
+
+---
+
+*All settings and CRS selections are persisted between sessions.*

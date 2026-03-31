@@ -1,7 +1,7 @@
 [general]
-name=Convert_Coords_IRE_UK_Grids
+name=Conversion_tools
 description= Form and searchbar tools: Form to convert between & navigate to/zoom to/add points features at coordinates/Irish Grid & UK Grid references/Screencentre/GPS/custom). Also adds Irish Grid & UK Grid to searchbar.
 author=Tyhol
 icon=icon2.svg
-version=1.3.3
+version=2.1
 homepage=https://github.com/TyHol/Qfield_Convert_Coords.git
