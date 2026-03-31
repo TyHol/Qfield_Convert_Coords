@@ -27,7 +27,7 @@ Item {
 
 
 //changable stuff 
-property var filetimedate : "31.3.26..1" // version date
+property var filetimedate : "31.3.26..3" // version date
 property var mapsUrlOption: 3 // Default external map: 1=GMaps pin, 2=GMaps nav, 3=OSM, 4=OSRM route
 property var _lastX: 0; property var _lastY: 0; property var _lastEPSG: 4326 // last coords for re-render on setting change
 property string _lastWarnedEPSGs: "" // tracks last EPSG combo that triggered a Helmert warning
@@ -1390,7 +1390,7 @@ TextField {
  font.pixelSize: font_Size.text 
  font.family: "Arial"
  font.italic: true
- placeholderText: "Lat(N), Long(E) "
+ placeholderText: "Lat, Long "
  text: ""
  property bool isProgrammaticUpdate: false
  
@@ -2722,7 +2722,14 @@ function degtoSeconds(decimal) {
  if (inputDialog !== 5) { // Update WGS84
  var wgs84Point = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"))
  wgs84Box.isProgrammaticUpdate = true
- wgs84Box.text = parseFloat(wgs84Point.y.toFixed(decimalsd.text)) + ", " + parseFloat(wgs84Point.x.toFixed(decimalsd.text))
+ if (appSettings.useNSEW) {
+     var latVal = wgs84Point.y; var lonVal = wgs84Point.x
+     var latStr = Math.abs(latVal).toFixed(decimalsd.text) + (latVal >= 0 ? " N" : " S")
+     var lonStr = Math.abs(lonVal).toFixed(decimalsd.text) + (lonVal >= 0 ? " E" : " W")
+     wgs84Box.text = latStr + ",  " + lonStr
+ } else {
+     wgs84Box.text = parseFloat(wgs84Point.y.toFixed(decimalsd.text)) + ", " + parseFloat(wgs84Point.x.toFixed(decimalsd.text))
+ }
  }
 
  if (inputDialog !== 6) { // Update WGS84 DDM
@@ -2781,8 +2788,8 @@ function convertFromLastEdited() {
         } else if (lastEditedBox === "wgs84") {
             var parts = wgs84Box.text.split(",")
             if (parts.length === 2) {
-                var lat = parseFloat(parts[0].trim()); var lon = parseFloat(parts[1].trim())
-                if (!isNaN(lat) && !isNaN(lon)) updateCoordinates(lon, lat, 4326, custom1CRS.text, custom2CRS.text, 5)
+                var lat = parseCoordPart(parts[0].trim()); var lon = parseCoordPart(parts[1].trim())
+                if (lat !== null && lon !== null) updateCoordinates(lon, lat, 4326, custom1CRS.text, custom2CRS.text, 5)
                 else mainWindow.displayToast(qsTr("Invalid WGS84 decimal input"))
             }
         } else if (lastEditedBox === "ddm") {
@@ -2811,14 +2818,16 @@ function convertFromLastEdited() {
             } else mainWindow.displayToast(qsTr("Incomplete UK Grid reference"))
         } else if (lastEditedBox === "custom1") {
             var parts = custom1BoxXY.text.split(",").map(function(p){ return parseFloat(p.trim()) })
-            if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]))
-                updateCoordinates(parts[0], parts[1], custom1CRS.text, custom1CRS.text, custom2CRS.text, 3)
-            else mainWindow.displayToast(qsTr("Invalid Custom 1 input"))
+            if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                var c1geo = crsIsGeographic(custom1CRS.text)
+                updateCoordinates(c1geo ? parts[1] : parts[0], c1geo ? parts[0] : parts[1], custom1CRS.text, custom1CRS.text, custom2CRS.text, 3)
+            } else mainWindow.displayToast(qsTr("Invalid Custom 1 input"))
         } else if (lastEditedBox === "custom2") {
             var parts = custom2BoxXY.text.split(",").map(function(p){ return parseFloat(p.trim()) })
-            if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]))
-                updateCoordinates(parts[0], parts[1], custom2CRS.text, custom1CRS.text, custom2CRS.text, 4)
-            else mainWindow.displayToast(qsTr("Invalid Custom 2 input"))
+            if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                var c2geo = crsIsGeographic(custom2CRS.text)
+                updateCoordinates(c2geo ? parts[1] : parts[0], c2geo ? parts[0] : parts[1], custom2CRS.text, custom1CRS.text, custom2CRS.text, 4)
+            } else mainWindow.displayToast(qsTr("Invalid Custom 2 input"))
         }
     }
 function ensureConverted() { if (coordinatesDirty) convertFromLastEdited() }
@@ -2895,13 +2904,17 @@ function bestGridRef(source, crs) {
 }
 
  
- // Formats a reprojected point as "x, y" (easting/lon first, northing/lat second).
- // Uses the metres decimal setting for projected CRS, degrees setting for geographic.
+ // Formats a reprojected point.
+ // Projected CRS: "X, Y" (easting, northing). Geographic CRS: "lat, lon", with N/S/E/W if toggle is on.
  function formatPoint(point, crs) {
  if (!crs.isGeographic) {
- return parseFloat(point.x.toFixed(decimalsm.text)) + ", " + parseFloat(point.y.toFixed(decimalsm.text))
+     return parseFloat(point.x.toFixed(decimalsm.text)) + ", " + parseFloat(point.y.toFixed(decimalsm.text))
+ } else if (appSettings.useNSEW) {
+     var latS = Math.abs(point.y).toFixed(decimalsd.text) + (point.y >= 0 ? " N" : " S")
+     var lonS = Math.abs(point.x).toFixed(decimalsd.text) + (point.x >= 0 ? " E" : " W")
+     return latS + ",  " + lonS
  } else {
- return parseFloat(point.x.toFixed(decimalsd.text)) + ", " + parseFloat(point.y.toFixed(decimalsd.text))
+     return parseFloat(point.y.toFixed(decimalsd.text)) + ", " + parseFloat(point.x.toFixed(decimalsd.text))
  }
  }
 
