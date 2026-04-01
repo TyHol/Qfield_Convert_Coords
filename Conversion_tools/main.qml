@@ -9,6 +9,8 @@ import Theme
 
 import "qrc:/qml" as QFieldItems
 import "plugin_stuff"
+import "plugin_stuff/mgrs.js" as Mgrs
+import "plugin_stuff/olc.js"  as OLC
 
 Item {
  id: plugin
@@ -27,7 +29,7 @@ Item {
 
 
 //changable stuff 
-property var filetimedate : "31.3.26..3" // version date
+property var filetimedate : "v2.2  01.04.26.1" // version date
 property var mapsUrlOption: 3 // Default external map: 1=GMaps pin, 2=GMaps nav, 3=OSM, 4=OSRM route
 property var _lastX: 0; property var _lastY: 0; property var _lastEPSG: 4326 // last coords for re-render on setting change
 property string _lastWarnedEPSGs: "" // tracks last EPSG combo that triggered a Helmert warning
@@ -51,6 +53,8 @@ property var dmsvis: false // visibility of DMS
 property var dmsBoxesvis: false // visibility of DMS boxes
 property var customisationvis: false // visibility of customisation
 property var crosshairvis: true // visibility of crosshair
+property var mgrsvis:     false // visibility of MGRS row
+property var pluscodevis: false // visibility of Plus Code row
 property var  showFeatureFormDefault: true // whether Add opens attribute form
 property bool formOnAdd: true             // live mirror of showFeatureForm setting
 property var afterAddDefault: 1           // 0=nothing, 1=pan to, 2=zoom to
@@ -77,6 +81,8 @@ Settings {
     property bool   showDMS:        false
     property bool   showCustom1:    false
     property bool   showCustom2:    false
+    property bool   showMGRS:       false
+    property bool   showPlusCode:   false
     property bool   showCrosshair:  true
     property bool   showDMSboxes:   false
     property bool   showCustomisation: false
@@ -181,6 +187,8 @@ Component.onCompleted: {
     showDMS.checked        = appSettings.showDMS
     showCustom1.checked    = appSettings.showCustom1
     showCustom2.checked    = appSettings.showCustom2
+    showMGRS.checked       = appSettings.showMGRS
+    showPlusCode.checked   = appSettings.showPlusCode
     showCrosshair.checked  = appSettings.showCrosshair
     showDMSboxes.checked   = appSettings.showDMSboxes
     showCustomisation.checked = appSettings.showCustomisation
@@ -212,6 +220,8 @@ Component.onCompleted: {
         wgs84Box.hasError      = false
         wgs84DMBox.hasError    = false
         wgs84DMSBox.hasError   = false
+        mgrsBox.hasError       = false
+        pluscodeBox.hasError   = false
     }
 
     // Marks a box as invalid and shows a toast
@@ -445,6 +455,29 @@ function handlePaste(clipboardText, createPointAndZoom, alwaysZoom) {
         pasteFormatDialog.alwaysZoom = alwaysZoom;
         pendingAlwaysZoom = alwaysZoom;
         pasteFormatDialog.open();
+    }
+
+    // ── 0a. MGRS ──────────────────────────────────────────────────────────
+    var mgrsClean = raw.replace(/\s+/g, '').toUpperCase()
+    // MGRS pattern: 1-2 digits, 3 letters, even digit count 0-10
+    if (/^\d{0,2}[A-Z]{3}\d{0,10}$/.test(mgrsClean) && mgrsClean.length >= 3) {
+        var mgrsLL = mgrsToLatLon(mgrsClean)
+        if (mgrsLL !== null) {
+            var mgrsDisp = "MGRS: " + raw.trim() + "  (giving " + mgrsLL.lat.toFixed(5) + ", " + mgrsLL.lon.toFixed(5) + ")"
+            showFormatDialog(mgrsDisp, mgrsLL.lat, mgrsLL.lon, 0)
+            return true
+        }
+    }
+
+    // ── 0b. Plus Code ─────────────────────────────────────────────────────
+    var olcTest = raw.trim().toUpperCase()
+    if (OLC.isFull(olcTest)) {
+        var olcDec = OLC.decode(olcTest)
+        if (olcDec !== null) {
+            var olcDisp = "Plus Code: " + raw.trim() + "  (giving " + olcDec.latitudeCenter.toFixed(5) + ", " + olcDec.longitudeCenter.toFixed(5) + ")"
+            showFormatDialog(olcDisp, olcDec.latitudeCenter, olcDec.longitudeCenter, 0)
+            return true
+        }
     }
 
     // ── 1. UK Grid: two letters + ten digits ──────────────────────────────
@@ -1158,7 +1191,7 @@ TextField {
  placeholderText: "Irish Grid: X 00000 00000"
  property bool isProgrammaticUpdate: false
  property bool hasError: false
- background: Rectangle { color: parent.hasError ? "#FFEEEE" : "white"; border.color: parent.hasError ? "#cc0000" : "#cccccc"; border.width: 1; radius: 2 }
+ color: hasError ? "#cc0000" : palette.text
  onTextChanged: {
     if (isProgrammaticUpdate) { isProgrammaticUpdate = false; return }
     hasError = false
@@ -1235,7 +1268,7 @@ TextField {
  // Flag to indicate programmatic updates
  property bool isProgrammaticUpdate: false
  property bool hasError: false
- background: Rectangle { color: parent.hasError ? "#FFEEEE" : "white"; border.color: parent.hasError ? "#cc0000" : "#cccccc"; border.width: 1; radius: 2 }
+ color: hasError ? "#cc0000" : palette.text
  onTextChanged: {
     if (isProgrammaticUpdate) { isProgrammaticUpdate = false; return }
     hasError = false
@@ -1293,6 +1326,74 @@ Button {
 }
 } 
  
+// MGRS Row
+RowLayout {
+    id: mgrsrow
+    visible: mgrsvis
+
+TextField {
+    id: mgrsBox
+    Layout.fillWidth: true
+    Layout.preferredHeight: 35
+    font.pixelSize: font_Size.text
+    font.family: "Arial"
+    font.bold: true
+    font.italic: true
+    placeholderText: "MGRS: 30U WB 45140 72887"
+    property bool isProgrammaticUpdate: false
+    property bool hasError: false
+    color: hasError ? "#cc0000" : palette.text
+    onTextChanged: {
+        if (isProgrammaticUpdate) { isProgrammaticUpdate = false; return }
+        hasError = false
+        lastEditedBox = "mgrs"; coordinatesDirty = true
+    }
+}
+Button {
+    text: ""
+    icon.source: "plugin_stuff/copy.svg"
+    icon.width: 18; icon.height: 18
+    font.bold: true
+    width: 10; height: 10
+    background: Rectangle { color: "#B3EBF2"; radius: width / 2 }
+    onClicked: { ensureConverted(); copyToClipboard(mgrsBox.text) }
+}
+}
+
+// Plus Code Row
+RowLayout {
+    id: pluscoderow
+    visible: pluscodevis
+
+TextField {
+    id: pluscodeBox
+    Layout.fillWidth: true
+    Layout.preferredHeight: 35
+    font.pixelSize: font_Size.text
+    font.family: "Arial"
+    font.bold: true
+    font.italic: true
+    placeholderText: "Plus Code: 9C3X2222+22"
+    property bool isProgrammaticUpdate: false
+    property bool hasError: false
+    color: hasError ? "#cc0000" : palette.text
+    onTextChanged: {
+        if (isProgrammaticUpdate) { isProgrammaticUpdate = false; return }
+        hasError = false
+        lastEditedBox = "pluscode"; coordinatesDirty = true
+    }
+}
+Button {
+    text: ""
+    icon.source: "plugin_stuff/copy.svg"
+    icon.width: 18; icon.height: 18
+    font.bold: true
+    width: 10; height: 10
+    background: Rectangle { color: "#B3EBF2"; radius: width / 2 }
+    onClicked: { ensureConverted(); copyToClipboard(pluscodeBox.text) }
+}
+}
+
 // Custom1 Row
 RowLayout {
     id: custom1row
@@ -1302,7 +1403,7 @@ TextField {
     id: custom1BoxXY //3
     property bool isProgrammaticUpdate: false
     property bool hasError: false
-    background: Rectangle { color: parent.hasError ? "#FFEEEE" : "white"; border.color: parent.hasError ? "#cc0000" : "#cccccc"; border.width: 1; radius: 2 }
+    color: hasError ? "#cc0000" : palette.text
     Layout.preferredHeight: 35
     Layout.preferredWidth: 180
     font.pixelSize: font_Size.text
@@ -1367,7 +1468,7 @@ TextField {
     id: custom2BoxXY
     property bool isProgrammaticUpdate: false
     property bool hasError: false
-    background: Rectangle { color: parent.hasError ? "#FFEEEE" : "white"; border.color: parent.hasError ? "#cc0000" : "#cccccc"; border.width: 1; radius: 2 }
+    color: hasError ? "#cc0000" : palette.text
     Layout.preferredWidth: 180
     Layout.preferredHeight: 35
     font.pixelSize: font_Size.text
@@ -1439,7 +1540,7 @@ TextField {
  text: ""
  property bool isProgrammaticUpdate: false
  property bool hasError: false
- background: Rectangle { color: parent.hasError ? "#FFEEEE" : "white"; border.color: parent.hasError ? "#cc0000" : "#cccccc"; border.width: 1; radius: 2 }
+ color: hasError ? "#cc0000" : palette.text
 
  onTextChanged: {
 
@@ -1545,7 +1646,7 @@ TextField {
 
  property bool isProgrammaticUpdate: false
  property bool hasError: false
- background: Rectangle { color: parent.hasError ? "#FFEEEE" : "white"; border.color: parent.hasError ? "#cc0000" : "#cccccc"; border.width: 1; radius: 2 }
+ color: hasError ? "#cc0000" : palette.text
 
  onTextChanged: {
     if (isProgrammaticUpdate) { isProgrammaticUpdate = false; return; }
@@ -1588,7 +1689,7 @@ TextField {
 
  property bool isProgrammaticUpdate: false
  property bool hasError: false
- background: Rectangle { color: parent.hasError ? "#FFEEEE" : "white"; border.color: parent.hasError ? "#cc0000" : "#cccccc"; border.width: 1; radius: 2 }
+ color: hasError ? "#cc0000" : palette.text
 
  onTextChanged: {
     if (isProgrammaticUpdate) { isProgrammaticUpdate = false; return; }
@@ -2178,6 +2279,8 @@ Column {
         CheckBox { id: showDM;        text: "D M.mm";     font.pixelSize: 9; implicitHeight: 26; checked: true;  onCheckedChanged: { dmrow.visible = checked;           appSettings.showDM = checked } }
         CheckBox { id: showCustom1;   text: "Custom 1";   font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { custom1row.visible = checked;      appSettings.showCustom1 = checked } }
         CheckBox { id: showCustom2;   text: "Custom 2";   font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { custom2row.visible = checked;      appSettings.showCustom2 = checked } }
+        CheckBox { id: showMGRS;      text: "MGRS";       font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { mgrsrow.visible = checked;         appSettings.showMGRS = checked } }
+        CheckBox { id: showPlusCode;  text: "Plus Code";  font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { pluscoderow.visible = checked;     appSettings.showPlusCode = checked } }
         CheckBox { id: showDMSboxes;  text: "DMS Boxes";  font.pixelSize: 9; implicitHeight: 26; checked: true;  onCheckedChanged: { latlongboxesDMS.visible = checked; appSettings.showDMSboxes = checked } }
         CheckBox { id: showCrosshair; text: "Crosshair";  font.pixelSize: 9; implicitHeight: 26; checked: true;  onCheckedChanged: { crosshair.visible = checked;       appSettings.showCrosshair = checked } }
     }
@@ -2244,6 +2347,7 @@ Column {
             showDegrees.checked = wgs84vis
             showDM.checked      = dmvis;    showDMS.checked       = dmsvis
             showDMSboxes.checked = dmsBoxesvis; showCrosshair.checked = crosshairvis
+            showMGRS.checked = mgrsvis; showPlusCode.checked = pluscodevis
             formOnAdd = showFeatureFormDefault; showFormOnAdd.checked = showFeatureFormDefault; appSettings.showFeatureForm = showFeatureFormDefault
             appSettings.afterAddAction = afterAddDefault; afterAddGroup.checkedButton = [afterAddNothing, afterAddPan, afterAddZoom][afterAddDefault]
             mapsUrlOption = 3;              appSettings.mapsUrlOption = 3
@@ -2803,6 +2907,21 @@ function degtoSeconds(decimal) {
 
  }
 
+ if (inputDialog !== 7) { // Update MGRS
+     var mgrsWgs = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"))
+     var mgrsStr = latLonToMgrs(mgrsWgs.y, mgrsWgs.x, 5)
+     mgrsBox.isProgrammaticUpdate = true
+     mgrsBox.text = mgrsStr
+     mgrsrow.visible = showMGRS.checked && mgrsStr !== ""
+ }
+
+ if (inputDialog !== 8) { // Update Plus Code
+     var olcWgs = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"))
+     var olcStr = OLC.encode(olcWgs.y, olcWgs.x, 11)
+     pluscodeBox.isProgrammaticUpdate = true
+     pluscodeBox.text = olcStr
+ }
+
  // Helmert accuracy warning — shown once per unique EPSG combination
  var _helmertWarnings = {
      "27700": "BNG (27700): ~3-5m accuracy — OSTN15 grid not loaded",
@@ -2836,6 +2955,8 @@ function convertFromLastEdited() {
             var lonSec = parseFloat(lonSeconds.text) || 0
             var lat = (latDeg < 0) ? latDeg - latMin/60 - latSec/3600 : latDeg + latMin/60 + latSec/3600
             var lon = (lonDeg < 0) ? lonDeg - lonMin/60 - lonSec/3600 : lonDeg + lonMin/60 + lonSec/3600
+            if (Math.abs(lat) > 90)       { mainWindow.displayToast(qsTr("Latitude must be between -90 and 90")); return }
+            if (Math.abs(lon) > 180)      { mainWindow.displayToast(qsTr("Longitude must be between -180 and 180")); return }
             wgs84Box.isProgrammaticUpdate = true
             wgs84Box.text = lat.toFixed(decimalsd.text) + ", " + lon.toFixed(decimalsd.text)
             updateCoordinates(lon, lat, 4326, custom1CRS.text, custom2CRS.text, 5)
@@ -2843,17 +2964,26 @@ function convertFromLastEdited() {
             var parts = wgs84Box.text.split(",")
             if (parts.length === 2) {
                 var lat = parseCoordPart(parts[0].trim()); var lon = parseCoordPart(parts[1].trim())
-                if (lat !== null && lon !== null) updateCoordinates(lon, lat, 4326, custom1CRS.text, custom2CRS.text, 5)
-                else _setError(wgs84Box, "Invalid WGS84 decimal input")
+                if (lat !== null && lon !== null) {
+                    if (Math.abs(lat) > 90)        _setError(wgs84Box, "Latitude must be between -90 and 90")
+                    else if (Math.abs(lon) > 180)  _setError(wgs84Box, "Longitude must be between -180 and 180")
+                    else                           updateCoordinates(lon, lat, 4326, custom1CRS.text, custom2CRS.text, 5)
+                } else _setError(wgs84Box, "Invalid WGS84 decimal input")
             }
         } else if (lastEditedBox === "ddm") {
             var p = parseDegreeCoordPair(wgs84DMBox.text)
-            if (p !== null) updateCoordinates(p.lon, p.lat, 4326, custom1CRS.text, custom2CRS.text, 6)
-            else _setError(wgs84DMBox, "Cannot parse DDM input")
+            if (p !== null) {
+                if      (Math.abs(p.lat) > 90)  _setError(wgs84DMBox, "Latitude must be between -90 and 90")
+                else if (Math.abs(p.lon) > 180) _setError(wgs84DMBox, "Longitude must be between -180 and 180")
+                else                            updateCoordinates(p.lon, p.lat, 4326, custom1CRS.text, custom2CRS.text, 6)
+            } else _setError(wgs84DMBox, "Cannot parse DDM input")
         } else if (lastEditedBox === "dms") {
             var p = parseDegreeCoordPair(wgs84DMSBox.text)
-            if (p !== null) updateCoordinates(p.lon, p.lat, 4326, custom1CRS.text, custom2CRS.text, 6)
-            else _setError(wgs84DMSBox, "Cannot parse DMS input")
+            if (p !== null) {
+                if      (Math.abs(p.lat) > 90)  _setError(wgs84DMSBox, "Latitude must be between -90 and 90")
+                else if (Math.abs(p.lon) > 180) _setError(wgs84DMSBox, "Longitude must be between -180 and 180")
+                else                            updateCoordinates(p.lon, p.lat, 4326, custom1CRS.text, custom2CRS.text, 6)
+            } else _setError(wgs84DMSBox, "Cannot parse DMS input")
         } else if (lastEditedBox === "ig") {
             if (igInputBox.isValidInput()) {
                 var letter = igInputBox.text.substring(0,1).toUpperCase()
@@ -2874,16 +3004,26 @@ function convertFromLastEdited() {
             var parts = custom1BoxXY.text.split(",").map(function(p){ return parseFloat(p.trim()) })
             if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
                 var c1geo = crsIsGeographic(custom1CRS.text)
-                addRecentCrs(custom1CRS.text)
-                updateCoordinates(c1geo ? parts[1] : parts[0], c1geo ? parts[0] : parts[1], custom1CRS.text, custom1CRS.text, custom2CRS.text, 3)
+                if (c1geo && Math.abs(parts[0]) > 90)  { _setError(custom1BoxXY, "Latitude must be between -90 and 90"); }
+                else if (c1geo && Math.abs(parts[1]) > 180) { _setError(custom1BoxXY, "Longitude must be between -180 and 180"); }
+                else { addRecentCrs(custom1CRS.text); updateCoordinates(c1geo ? parts[1] : parts[0], c1geo ? parts[0] : parts[1], custom1CRS.text, custom1CRS.text, custom2CRS.text, 3) }
             } else _setError(custom1BoxXY, "Invalid Custom 1 input")
         } else if (lastEditedBox === "custom2") {
             var parts = custom2BoxXY.text.split(",").map(function(p){ return parseFloat(p.trim()) })
             if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
                 var c2geo = crsIsGeographic(custom2CRS.text)
-                addRecentCrs(custom2CRS.text)
-                updateCoordinates(c2geo ? parts[1] : parts[0], c2geo ? parts[0] : parts[1], custom2CRS.text, custom1CRS.text, custom2CRS.text, 4)
+                if (c2geo && Math.abs(parts[0]) > 90)  { _setError(custom2BoxXY, "Latitude must be between -90 and 90"); }
+                else if (c2geo && Math.abs(parts[1]) > 180) { _setError(custom2BoxXY, "Longitude must be between -180 and 180"); }
+                else { addRecentCrs(custom2CRS.text); updateCoordinates(c2geo ? parts[1] : parts[0], c2geo ? parts[0] : parts[1], custom2CRS.text, custom1CRS.text, custom2CRS.text, 4) }
             } else _setError(custom2BoxXY, "Invalid Custom 2 input")
+        } else if (lastEditedBox === "mgrs") {
+            var ll = mgrsToLatLon(mgrsBox.text)
+            if (ll !== null) updateCoordinates(ll.lon, ll.lat, 4326, custom1CRS.text, custom2CRS.text, 7)
+            else _setError(mgrsBox, "Cannot parse MGRS reference")
+        } else if (lastEditedBox === "pluscode") {
+            var decoded = OLC.decode(pluscodeBox.text.trim().toUpperCase())
+            if (decoded !== null) updateCoordinates(decoded.longitudeCenter, decoded.latitudeCenter, 4326, custom1CRS.text, custom2CRS.text, 8)
+            else _setError(pluscodeBox, "Cannot parse Plus Code")
         }
     }
 function ensureConverted() { if (coordinatesDirty) convertFromLastEdited() }
@@ -2960,6 +3100,30 @@ function bestGridRef(source, crs) {
 }
 
  
+ // Convert WGS84 lat/lon → MGRS string (uses QField projection + Mgrs grid math)
+ function latLonToMgrs(lat, lon, precision) {
+     var info = Mgrs.epsgForLatLon(lat, lon)
+     if (!info) return ""
+     var utmPt = GeometryUtils.reprojectPoint(
+         GeometryUtils.point(lon, lat),
+         CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"),
+         CoordinateReferenceSystemUtils.fromDescription("EPSG:" + info.epsg))
+     return Mgrs.utmToMgrs(info.zone, info.hemisphere, lat, utmPt.x, utmPt.y, precision !== undefined ? precision : 5)
+ }
+
+ // Convert MGRS string → {lat, lon} or null
+ function mgrsToLatLon(mgrsStr) {
+     var utm = Mgrs.mgrsToUtm(mgrsStr)
+     if (!utm) return null
+     var epsg = Mgrs.epsgForUtm(utm.zone, utm.hemisphere)
+     var wgsPt = GeometryUtils.reprojectPoint(
+         GeometryUtils.point(utm.easting, utm.northing),
+         CoordinateReferenceSystemUtils.fromDescription("EPSG:" + epsg),
+         CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"))
+     if (!wgsPt || isNaN(wgsPt.y) || isNaN(wgsPt.x)) return null
+     return { lat: wgsPt.y, lon: wgsPt.x }
+ }
+
  // Formats a reprojected point.
  // Projected CRS: "X, Y" (easting, northing). Geographic CRS: "lat, lon", with N/S/E/W if toggle is on.
  function formatPoint(point, crs) {
