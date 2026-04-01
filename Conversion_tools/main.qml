@@ -91,7 +91,6 @@ Settings {
     property bool   useNSEW:        false
     property string crs1:           ""
     property string crs2:           "4326"
-    property string recentCrs:      ""  // comma-separated, most recent first, max 3
 }
 
 ListModel { id: pointLayerPickerModel }
@@ -231,20 +230,6 @@ Component.onCompleted: {
         mainWindow.displayToast(qsTr(msg))
     }
 
-    // Adds a code to the recent CRS list (max 3, most recent first, no duplicates)
-    function addRecentCrs(code) {
-        var c = code.trim()
-        if (c === "" || isNaN(parseInt(c))) return
-        var arr = appSettings.recentCrs !== "" ? appSettings.recentCrs.split(",") : []
-        arr = arr.filter(function(x) { return x !== c })
-        arr.unshift(c)
-        if (arr.length > 3) arr = arr.slice(0, 3)
-        appSettings.recentCrs = arr.join(",")
-    }
-
-    function _recentCrsArray() {
-        return appSettings.recentCrs !== "" ? appSettings.recentCrs.split(",") : []
-    }
 
     function copyToClipboard(textToCopy) {
         let textEdit = Qt.createQmlObject('import QtQuick; TextEdit { }', plugin);
@@ -1429,7 +1414,6 @@ TextField {
  fieldFontSize: font_Size.text
  text: appSettings.crs1 !== "" ? appSettings.crs1 : String(canvasEPSG)
  placeholderText: " EPSG"
- recentCodes: _recentCrsArray()
  onTextChanged: {
      appSettings.crs1 = text
      var parts = wgs84Box.text.split(',').map(function(p) { return parseFloat(p.trim()) })
@@ -1494,7 +1478,6 @@ TextField {
  fieldFontSize: font_Size.text
  text: appSettings.crs2
  placeholderText: " EPSG"
- recentCodes: _recentCrsArray()
  onTextChanged: {
      appSettings.crs2 = text
      var parts = wgs84Box.text.split(',').map(function(p) { return parseFloat(p.trim()) })
@@ -3006,7 +2989,7 @@ function convertFromLastEdited() {
                 var c1geo = crsIsGeographic(custom1CRS.text)
                 if (c1geo && Math.abs(parts[0]) > 90)  { _setError(custom1BoxXY, "Latitude must be between -90 and 90"); }
                 else if (c1geo && Math.abs(parts[1]) > 180) { _setError(custom1BoxXY, "Longitude must be between -180 and 180"); }
-                else { addRecentCrs(custom1CRS.text); updateCoordinates(c1geo ? parts[1] : parts[0], c1geo ? parts[0] : parts[1], custom1CRS.text, custom1CRS.text, custom2CRS.text, 3) }
+                else { updateCoordinates(c1geo ? parts[1] : parts[0], c1geo ? parts[0] : parts[1], custom1CRS.text, custom1CRS.text, custom2CRS.text, 3) }
             } else _setError(custom1BoxXY, "Invalid Custom 1 input")
         } else if (lastEditedBox === "custom2") {
             var parts = custom2BoxXY.text.split(",").map(function(p){ return parseFloat(p.trim()) })
@@ -3014,7 +2997,7 @@ function convertFromLastEdited() {
                 var c2geo = crsIsGeographic(custom2CRS.text)
                 if (c2geo && Math.abs(parts[0]) > 90)  { _setError(custom2BoxXY, "Latitude must be between -90 and 90"); }
                 else if (c2geo && Math.abs(parts[1]) > 180) { _setError(custom2BoxXY, "Longitude must be between -180 and 180"); }
-                else { addRecentCrs(custom2CRS.text); updateCoordinates(c2geo ? parts[1] : parts[0], c2geo ? parts[0] : parts[1], custom2CRS.text, custom1CRS.text, custom2CRS.text, 4) }
+                else { updateCoordinates(c2geo ? parts[1] : parts[0], c2geo ? parts[0] : parts[1], custom2CRS.text, custom1CRS.text, custom2CRS.text, 4) }
             } else _setError(custom2BoxXY, "Invalid Custom 2 input")
         } else if (lastEditedBox === "mgrs") {
             var ll = mgrsToLatLon(mgrsBox.text)

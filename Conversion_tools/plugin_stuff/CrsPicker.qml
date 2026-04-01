@@ -20,7 +20,6 @@ Item {
     property string text: ""
     property string placeholderText: "EPSG"
     property real   fieldFontSize: 12
-    property var    recentCodes: []   // array of up to 3 recently used code strings
 
     // ── Sync flags ──────────────────────────────────────────────────────────
     property bool _fromRoot:  false
@@ -46,15 +45,6 @@ Item {
     function _filter(query) {
         dropModel.clear()
         var q = query.toLowerCase().trim()
-
-        // Recent codes always at top
-        if (recentCodes && recentCodes.length > 0) {
-            dropModel.append({name: "── Recent ──", code: "", isHeader: true})
-            for (var r = 0; r < recentCodes.length; r++)
-                dropModel.append({name: _nameForCode(recentCodes[r]), code: recentCodes[r], isHeader: false})
-            if (q.length === 0)
-                dropModel.append({name: "── All ──", code: "", isHeader: true})
-        }
 
         if (q.length === 0) {
             for (var i = 0; i < CrsPresets.list.length; i++)
@@ -152,70 +142,44 @@ Item {
             clip:           true
             implicitHeight: Math.min(dropModel.count, 8) * 44
 
-            delegate: Loader {
-                width: dropList.width
+            delegate: Rectangle {
+                width:  dropList.width
                 height: model.isHeader ? 28 : 44
-                sourceComponent: model.isHeader ? headerDelegate : rowDelegate
-            }
+                color:  model.isHeader ? "#f0f0f0" : (rowMouse.containsMouse ? "#e8f8c8" : "#FFFFFF")
 
-            Component {
-                id: headerDelegate
-                Rectangle {
-                    width:  dropList.width
-                    height: 28
-                    color:  "#f0f0f0"
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: parent.left
-                        anchors.leftMargin: 8
-                        text:  model.name
-                        font.pixelSize: 10
-                        font.family:    "Arial"
-                        font.bold:      true
-                        color: "#888888"
-                    }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left:        parent.left
+                    anchors.right:       parent.right
+                    anchors.leftMargin:  8
+                    anchors.rightMargin: 4
+                    text:       model.isHeader ? model.name : (model.name + "  (" + model.code + ")")
+                    font.pixelSize: model.isHeader ? 10 : 12
+                    font.family:    "Arial"
+                    font.bold:      model.isHeader
+                    color:      model.isHeader ? "#888888" : "#222222"
+                    elide:      Text.ElideRight
                 }
-            }
 
-            Component {
-                id: rowDelegate
                 Rectangle {
-                    width:   dropList.width
-                    height:  44
-                    color:   rowMouse.containsMouse ? "#e8f8c8" : "#FFFFFF"
-                    opacity: 1.0
+                    visible:        !model.isHeader
+                    anchors.bottom: parent.bottom
+                    width:  parent.width
+                    height: 1
+                    color:  "#dddddd"
+                }
 
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.left:        parent.left
-                        anchors.right:       parent.right
-                        anchors.leftMargin:  8
-                        anchors.rightMargin: 4
-                        text:  model.name + "  (" + model.code + ")"
-                        font.pixelSize: 12
-                        font.family:    "Arial"
-                        elide:  Text.ElideRight
-                        color:  "#222222"
-                    }
-
-                    Rectangle {
-                        anchors.bottom: parent.bottom
-                        width:  parent.width
-                        height: 1
-                        color:  "#dddddd"
-                    }
-
-                    MouseArea {
-                        id: rowMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        onClicked: {
-                            root._fromRoot  = true
-                            root.text       = model.code
-                            codeField.text  = model.code
-                            root._fromRoot  = false
-                            dropPopup.close()
-                        }
+                MouseArea {
+                    id:          rowMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    enabled:     !model.isHeader
+                    onClicked: {
+                        root._fromRoot = true
+                        root.text      = model.code
+                        codeField.text = model.code
+                        root._fromRoot = false
+                        dropPopup.close()
                     }
                 }
             }
