@@ -2,7 +2,7 @@
 
 A plugin for the [QField](https://qfield.org/) mobile GIS app that converts between coordinate systems, creates points, and adds Irish/UK grid reference search to the QField locator bar.
 
-> **Version:** 31.3.26..1 | **Author:** Tyhol | **Repository:** https://github.com/TyHol/Qfield_Convert_Coords
+> **Version:** 2.2 | **Author:** Tyhol | **Repository:** https://github.com/TyHol/Qfield_Convert_Coords
 
 ---
 
@@ -58,6 +58,8 @@ Each row can be shown or hidden in Settings.
 | **WGS84** | Latitude, Longitude in decimal degrees | `53.34980, -6.26031` | Yes |
 | **WGS84 DDM** | Degrees + Decimal Minutes | `53° 20.988' N, 6° 15.619' W` | Yes |
 | **WGS84 DMS** | Degrees, Minutes, Decimal Seconds | `53° 20' 59.28" N, 6° 15' 37.11" W` | Yes |
+| **MGRS** | Military Grid Reference System | `29U MV 12345 67890` | Yes |
+| **Plus Code** | Open Location Code (Google Plus Codes) | `9C5P37C3+45J` | Yes |
 
 Each row has a **copy** button that copies the displayed value to the clipboard.
 
@@ -128,9 +130,11 @@ Accepts a wide range of coordinate formats:
 | WGS84 decimal degrees | `53.3498, -6.2603` |
 | WGS84 DDM | `53° 20.988' N, 6° 15.619' W` |
 | WGS84 DMS | `53° 20' 59" N, 6° 15' 37" W` |
+| MGRS | `29U MV 12345 67890` |
+| Plus Code | `9C5P37C3+45J` |
 | Projected coordinates | `313621, 234156` |
 
-A **Confirm coordinate format** dialog appears before anything is committed, showing the parsed text and allowing format correction. Tap **Apply** to accept or **Cancel** to abort.
+A **Confirm coordinate format** dialog appears before anything is committed, showing the parsed text and the resulting coordinates. Tap **Apply** to accept or **Cancel** to abort.
 
 ---
 
@@ -169,7 +173,7 @@ Selects the target layer — lists all editable point layers in the current proj
 Zoom extent presets: Detail (~25m), Building (~50m), Street (~500m), Town (~2km), Region (~20km), Country (~200km).
 
 ### Display
-Toggle visibility of each coordinate row, DMS boxes, and the map crosshair.
+Toggle visibility of each coordinate row (including MGRS and Plus Code), DMS boxes, and the map crosshair.
 
 ### N/S/E/W labels
 Toggle between directional labels and +/− signs on DDM/DMS output.
