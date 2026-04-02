@@ -29,7 +29,7 @@ Item {
 
 
 //changable stuff 
-property var filetimedate : "v2.2  01.04.26.1" // version date
+property var filetimedate : "v2.2  02.04.26.1" // version date
 property var mapsUrlOption: 3 // Default external map: 1=GMaps pin, 2=GMaps nav, 3=OSM, 4=OSRM route
 property var _lastX: 0; property var _lastY: 0; property var _lastEPSG: 4326 // last coords for re-render on setting change
 property string _lastWarnedEPSGs: "" // tracks last EPSG combo that triggered a Helmert warning
@@ -2265,10 +2265,13 @@ Column {
         CheckBox { id: showMGRS;      text: "MGRS";       font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { mgrsrow.visible = checked;         appSettings.showMGRS = checked } }
         CheckBox { id: showPlusCode;  text: "Plus Code";  font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { pluscoderow.visible = checked;     appSettings.showPlusCode = checked } }
         CheckBox { id: showDMSboxes;  text: "DMS Boxes";  font.pixelSize: 9; implicitHeight: 26; checked: true;  onCheckedChanged: { latlongboxesDMS.visible = checked; appSettings.showDMSboxes = checked } }
-        CheckBox { id: showCrosshair; text: "Crosshair";  font.pixelSize: 9; implicitHeight: 26; checked: true;  onCheckedChanged: { crosshair.visible = checked;       appSettings.showCrosshair = checked } }
     }
-    CheckBox { id: useNSEWCheck; text: "N/S/E/W labels (not +/-)"; font.pixelSize: 9; implicitHeight: 26; checked: appSettings.useNSEW; onCheckedChanged: { appSettings.useNSEW = checked; if (_lastX !== 0 || _lastY !== 0) updateCoordinates(_lastX, _lastY, _lastEPSG, custom1CRS.text, custom2CRS.text) } }
-
+      GridLayout {
+        width: parent.width
+        columns: 2; columnSpacing: 0; rowSpacing: 0
+    CheckBox { id: showCrosshair; text: "Crosshair";  font.pixelSize: 9; implicitHeight: 26; checked: true;  onCheckedChanged: { crosshair.visible = checked;       appSettings.showCrosshair = checked } }
+    CheckBox { id: useNSEWCheck; text: "N/S/E/W labels (vs +/-)"; font.pixelSize: 9; implicitHeight: 26; checked: appSettings.useNSEW; onCheckedChanged: { appSettings.useNSEW = checked; if (_lastX !== 0 || _lastY !== 0) updateCoordinates(_lastX, _lastY, _lastEPSG, custom1CRS.text, custom2CRS.text) } }
+      }
     Rectangle { width: parent.width; height: 1; color: "#cccccc" }
     Item { width: 1; height: 3 }
     ButtonGroup { id: mapsUrlGroup }
