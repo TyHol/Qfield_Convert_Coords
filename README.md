@@ -173,7 +173,7 @@ Selects the target layer — lists all editable point layers in the current proj
 Zoom extent presets: Detail (~25m), Building (~50m), Street (~500m), Town (~2km), Region (~20km), Country (~200km).
 
 ### Display
-Toggle visibility of each coordinate row (including MGRS and Plus Code), DMS boxes, and the map crosshair.
+Toggle visibility of each coordinate row, DMS boxes, and the map crosshair.
 
 ### N/S/E/W labels
 Toggle between directional labels and +/− signs on DDM/DMS output.
