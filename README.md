@@ -132,9 +132,12 @@ Accepts a wide range of coordinate formats:
 | WGS84 DMS | `53° 20' 59" N, 6° 15' 37" W` |
 | MGRS | `29U MV 12345 67890` |
 | Plus Code | `9C5P37C3+45J` |
+| WKT Point | `POINT (84092.667 53131.478)` or a full feature info block containing a Point geometry |
 | Projected coordinates | `313621, 234156` |
 
 A **Confirm coordinate format** dialog appears before anything is committed, showing the parsed text and the resulting coordinates. Tap **Apply** to accept or **Cancel** to abort.
+
+For **WKT Point** pastes, a **Select CRS** step appears first — choose from Project CRS, Layer CRS, Custom 1, or Custom 2. The coordinates are then reprojected to WGS84 and passed through the normal confirm dialog.
 
 ---
 
