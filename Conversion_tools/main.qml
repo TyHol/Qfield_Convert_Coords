@@ -29,7 +29,7 @@ Item {
 
 
 //changable stuff 
-property var filetimedate : "v2.2  02.04.26.1" // version date
+property var filetimedate : "v2.2.1  02.04.26.1" // version date
 property var mapsUrlOption: 3 // Default external map: 1=GMaps pin, 2=GMaps nav, 3=OSM, 4=OSRM route
 property var _lastX: 0; property var _lastY: 0; property var _lastEPSG: 4326 // last coords for re-render on setting change
 property string _lastWarnedEPSGs: "" // tracks last EPSG combo that triggered a Helmert warning
@@ -240,6 +240,26 @@ Component.onCompleted: {
         mainWindow.displayToast("Copied: " + textToCopy);
     }
 
+    // Parses the WGS84 box text into {lat, lon} regardless of whether useNSEW is on.
+    // Handles both "53.349, -6.260" and "53.349 N, 6.260 W".
+    function parseWgs84BoxCoords() {
+        var parts = wgs84Box.text.split(',')
+        if (parts.length < 2) return null
+        function applyHemi(s) {
+            s = s.trim()
+            var m = s.match(/^([-\d.]+)\s*([NSEWnsew]?)$/)
+            if (!m) return NaN
+            var v = parseFloat(m[1])
+            var h = m[2].toUpperCase()
+            if (h === 'S' || h === 'W') v = -Math.abs(v)
+            return v
+        }
+        var lat = applyHemi(parts[0])
+        var lon = applyHemi(parts[1])
+        if (isNaN(lat) || isNaN(lon)) return null
+        return { lat: lat, lon: lon }
+    }
+
     // Builds the external map URL for a WGS84 destination (lat/lon).
     // Option 4 (OSRM routing) also resolves a GPS or screen-centre origin.
     function buildMapsUrl(lat, lon) {
@@ -440,6 +460,21 @@ function handlePaste(clipboardText, createPointAndZoom, alwaysZoom) {
         pasteFormatDialog.alwaysZoom = alwaysZoom;
         pendingAlwaysZoom = alwaysZoom;
         pasteFormatDialog.open();
+    }
+
+    // ── 0. WKT Point ─────────────────────────────────────────────────────
+    var wktMatch = raw.match(/Point\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i)
+    if (wktMatch) {
+        var wktX = parseFloat(wktMatch[1])
+        var wktY = parseFloat(wktMatch[2])
+        if (!isNaN(wktX) && !isNaN(wktY)) {
+            wktCrsDialog.pendingX = wktX
+            wktCrsDialog.pendingY = wktY
+            wktCrsDialog.createPointOnSuccess = createPointAndZoom
+            wktCrsDialog.alwaysZoom = alwaysZoom
+            wktCrsDialog.open()
+            return true
+        }
     }
 
     // ── 0a. MGRS ──────────────────────────────────────────────────────────
@@ -1056,6 +1091,87 @@ QfToolButton {
  
 
 
+
+// ── WKT CRS picker ───────────────────────────────────────────────────────
+Dialog {
+    id: wktCrsDialog
+    parent: mainWindow.contentItem
+    visible: false
+    modal: true
+    width: 350
+    font: Theme.defaultFont
+    x: (mainWindow.width - width) / 2
+    y: (mainWindow.height - height) * 0.15
+
+    property real   pendingX: 0
+    property real   pendingY: 0
+    property bool   createPointOnSuccess: false
+    property bool   alwaysZoom: false
+
+    title: qsTr("WKT Point — select CRS")
+    standardButtons: Dialog.Ok | Dialog.Cancel
+
+    onOpened: {
+        wktCrsModel.clear()
+        var projCrs = mapCanvas.mapSettings.destinationCrs
+        wktCrsModel.append({ label: "Project CRS  (" + projCrs.authid + ")", authid: projCrs.authid })
+        if (dashBoard.activeLayer) {
+            var lCrs = dashBoard.activeLayer.crs
+            if (lCrs && lCrs.authid !== projCrs.authid)
+                wktCrsModel.append({ label: "Layer CRS  (" + lCrs.authid + ")", authid: lCrs.authid })
+        }
+        if (custom1CRS.text)
+            wktCrsModel.append({ label: "Custom 1  (EPSG:" + custom1CRS.text + ")", authid: "EPSG:" + custom1CRS.text })
+        if (custom2CRS.text)
+            wktCrsModel.append({ label: "Custom 2  (EPSG:" + custom2CRS.text + ")", authid: "EPSG:" + custom2CRS.text })
+        wktCrsCombo.currentIndex = 0
+    }
+
+    onAccepted: {
+        var item = wktCrsModel.get(wktCrsCombo.currentIndex)
+        var fromCrs = CoordinateReferenceSystemUtils.fromDescription(item.authid)
+        var wgs84Crs = CoordinateReferenceSystemUtils.fromDescription("EPSG:4326")
+        var pt = GeometryUtils.reprojectPoint(GeometryUtils.point(pendingX, pendingY), fromCrs, wgs84Crs)
+        if (!pt || isNaN(pt.y) || isNaN(pt.x)) {
+            mainWindow.displayToast(qsTr("Could not reproject point — check CRS selection"))
+            return
+        }
+        var disp = "Point (" + pendingX.toFixed(3) + " " + pendingY.toFixed(3) + ")  [" + item.authid + "]"
+        pasteFormatDialog.rawText = disp
+        pasteFormatDialog.parsedA = pt.y
+        pasteFormatDialog.parsedB = pt.x
+        pasteFormatDialog.defaultFormatIndex = 0
+        pasteFormatDialog.createPointOnSuccess = createPointOnSuccess
+        pasteFormatDialog.alwaysZoom = alwaysZoom
+        pendingAlwaysZoom = alwaysZoom
+        pasteFormatDialog.open()
+    }
+
+    ColumnLayout {
+        anchors.fill: parent
+        spacing: 8
+
+        Label {
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            font.bold: true
+            text: "X: " + wktCrsDialog.pendingX.toFixed(3) + "   Y: " + wktCrsDialog.pendingY.toFixed(3)
+        }
+
+        Label {
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            text: qsTr("Which CRS are these coordinates in?")
+        }
+
+        ComboBox {
+            id: wktCrsCombo
+            Layout.fillWidth: true
+            model: ListModel { id: wktCrsModel }
+            textRole: "label"
+        }
+    }
+}
 
 Dialog {
  id: mainDialog
@@ -2056,31 +2172,22 @@ RowLayout{
  font.pixelSize: font_Size.text  -3
  Layout.preferredHeight: 60 
 onPressAndHold: { //pan to point
- // Parse coordinates from text fields 
- var parts = wgs84Box.text.split(',')
- var xIN = parts[1] 
- var yIN = parts[0] 
- var customcrsIN = CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"); 
- 
- var customcrsOUT = CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG); 
- var transformedPoint = GeometryUtils.reprojectPoint(GeometryUtils.point(xIN, yIN), customcrsIN, customcrsOUT); 
- 
- 
+ var coords = parseWgs84BoxCoords()
+ if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
+ var customcrsIN = CoordinateReferenceSystemUtils.fromDescription("EPSG:4326");
+ var customcrsOUT = CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG);
+ var transformedPoint = GeometryUtils.reprojectPoint(GeometryUtils.point(coords.lon, coords.lat), customcrsIN, customcrsOUT);
  iface.mapCanvas().mapSettings.center.x = transformedPoint.x;
  iface.mapCanvas().mapSettings.center.y = transformedPoint.y;
- 
-
- 
- mainWindow.displayToast( transformedPoint.x + ", " + transformedPoint.y)
- mainDialog.close() 
+ mainWindow.displayToast(transformedPoint.x + ", " + transformedPoint.y)
+ mainDialog.close()
  }
   onClicked:{ // zoom to point
- var parts = wgs84Box.text.split(',')
- var xIN = parts[1] 
- var yIN = parts[0]
- zoomToPoint(xIN, yIN, 4326)
+ var coords = parseWgs84BoxCoords()
+ if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
+ zoomToPoint(coords.lon, coords.lat, 4326)
  mainDialog.close()
- } 
+ }
  }
  
 Button {
@@ -2091,15 +2198,13 @@ Button {
  Layout.preferredHeight: 60 
 
  onClicked: {
-    var parts = wgs84Box.text.split(',');
-    if (parts.length < 2) {
+    var coords = parseWgs84BoxCoords()
+    if (!coords) {
         mainWindow.displayToast(qsTr("Input some coordinates first!"))
         return
     }
-    var lon = parseFloat(parts[1].trim())
-    var lat = parseFloat(parts[0].trim())
     var pt = GeometryUtils.reprojectPoint(
-        GeometryUtils.point(lon, lat),
+        GeometryUtils.point(coords.lon, coords.lat),
         CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"),
         CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG))
     addPointToActiveLayer(
@@ -2118,37 +2223,25 @@ Button {
  font.bold: true
  font.pixelSize: font_Size.text -3
  Layout.preferredHeight: 60 
- onClicked: { 
+ onClicked: {
  let navigation = iface.findItemByObjectName('navigation');
- 
- // Parse coordinates and transform
- var parts = wgs84Box.text.split(',');
+ var coords = parseWgs84BoxCoords()
+ if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
  var transformedPoint = GeometryUtils.reprojectPoint(
- GeometryUtils.point(parts[1], parts[0]),
- CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"),
- CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG)
- );
- 
+     GeometryUtils.point(coords.lon, coords.lat),
+     CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"),
+     CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG));
  iface.mapCanvas().mapSettings.center.x = transformedPoint.x;
  iface.mapCanvas().mapSettings.center.y = transformedPoint.y;
- mainWindow.displayToast("navigating to:"+ transformedPoint.x + ", " + transformedPoint.y);
-
- // Directly set destination
+ mainWindow.displayToast("navigating to:" + transformedPoint.x + ", " + transformedPoint.y);
  navigation.destination = transformedPoint;
  mainDialog.close()
  }
   onPressAndHold: {
-    var parts = wgs84Box.text.split(',');
-    if (parts.length < 2) {
-        console.log("Invalid coordinate format");
-        return;
-    }
-
-    var lon = parseFloat(parts[1]); // Ensure proper order
-    var lat = parseFloat(parts[0]);
-
-    Qt.openUrlExternally(buildMapsUrl(lat, lon));
-     mainDialog.close()
+    var coords = parseWgs84BoxCoords()
+    if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
+    Qt.openUrlExternally(buildMapsUrl(coords.lat, coords.lon));
+    mainDialog.close()
 }
 
 

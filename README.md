@@ -2,7 +2,7 @@
 
 A plugin for the [QField](https://qfield.org/) mobile GIS app that converts between coordinate systems, creates points, and adds Irish/UK grid reference search to the QField locator bar.
 
-> **Version:** 2.2 | **Author:** Tyhol | **Repository:** https://github.com/TyHol/Qfield_Convert_Coords
+> **Version:** 2.2.1 | **Author:** Tyhol | **Repository:** https://github.com/TyHol/Qfield_Convert_Coords
 
 ---
 
