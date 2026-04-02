@@ -9,46 +9,38 @@ Item {
 
   //Helper funcion to get IG 
 function igtoWGS(input) {
-   const string = input.replace(/\s/g, ''); // Remove all spaces from the input string
-  if (typeof string !== 'string' || string.length !== 11) return false;
+  const string = input.replace(/\s/g, '');
+  if (typeof string !== 'string' || string.length < 3 || string.length > 11) return false;
   const letter = string[0].toUpperCase();
-  const numbers = string.slice(1); // Extract the remaining 10 characters
-  if (!igletterMatrix.hasOwnProperty(letter)) // Check if the letter is in the IG matrix
-    {return false;}
-    if (!/^\d{10}$/.test(numbers))// Check if the remaining characters are exactly 10 digits
-    {return false;}
-  // Extract the 5-digit easting and northing values
-  const x5 = numbers.slice(0, 5); // First 5 digits (easting)
-  const y5 = numbers.slice(5, 10); // Next 5 digits (northing)
-
-  // Calculate the full easting (x6) and northing (y6)
+  const numbers = string.slice(1);
+  if (!igletterMatrix.hasOwnProperty(letter)) return false;
+  if (!/^\d{2,10}$/.test(numbers) || numbers.length % 2 !== 0) return false;
+  const half = numbers.length / 2;
+  const x5 = numbers.slice(0, half).padEnd(5, '0');
+  const y5 = numbers.slice(half).padEnd(5, '0');
   const x6 = parseInt(x5, 10) + (igletterMatrix[letter].first * 100000);
   const y6 = parseInt(y5, 10) + (igletterMatrix[letter].second * 100000);
-
-  const pointGeometry = GeometryUtils.reprojectPoint(GeometryUtils.point(x6, y6), CoordinateReferenceSystemUtils.fromDescription("EPSG:29903"),  CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"))
-  return pointGeometry;
-
+  return GeometryUtils.reprojectPoint(GeometryUtils.point(x6, y6),
+      CoordinateReferenceSystemUtils.fromDescription("EPSG:29903"),
+      CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"));
 }
 
   //Helper funcion to check UKG Validity
 function uktoWGS(input) {
-  const string = input.replace(/\s/g, ''); // Remove all spaces from the input string
-  if (typeof string !== 'string' || string.length !== 12 ) return false;
+  const string = input.replace(/\s/g, '');
+  if (typeof string !== 'string' || string.length < 4 || string.length > 12) return false;
   const letters = string.slice(0, 2).toUpperCase();
-  const numbers = string.slice(2); // Extract the remaining 10 characters
-  
-  if (!ukletterMatrix.hasOwnProperty(letters)) // Check if the letters are in the UK matrix
-    {return false;}
-    if (!/^\d{10}$/.test(numbers))// Check if the remaining characters are exactly 10 digits
-    {return false;}
-
-  // Extract the 5-digit easting and northing values
-  const x5 = numbers.slice(0, 5); // First 5 digits (easting)
-  const y5 = numbers.slice(5, 10); // Next 5 digits (northing)
+  const numbers = string.slice(2);
+  if (!ukletterMatrix.hasOwnProperty(letters)) return false;
+  if (!/^\d{2,10}$/.test(numbers) || numbers.length % 2 !== 0) return false;
+  const half = numbers.length / 2;
+  const x5 = numbers.slice(0, half).padEnd(5, '0');
+  const y5 = numbers.slice(half).padEnd(5, '0');
   const x6 = parseInt(x5, 10) + (ukletterMatrix[letters].first * 100000);
   const y6 = parseInt(y5, 10) + (ukletterMatrix[letters].second * 100000);
-  const pointGeometry = GeometryUtils.reprojectPoint(GeometryUtils.point(x6, y6), CoordinateReferenceSystemUtils.fromDescription("EPSG:27700"),  CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"))
-  return pointGeometry;
+  return GeometryUtils.reprojectPoint(GeometryUtils.point(x6, y6),
+      CoordinateReferenceSystemUtils.fromDescription("EPSG:27700"),
+      CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"));
 }
 
  function ddmToDecimal(coord) {

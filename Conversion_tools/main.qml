@@ -419,8 +419,15 @@ function handlePaste(clipboardText, createPointAndZoom, alwaysZoom) {
 
     // --- Grid reference helpers ---
     function padGridNumbers(numbers) {
-        if (numbers.length !== 10) return null;
-        return numbers.substring(0,5) + ' ' + numbers.substring(5);
+        // Accept 2, 4, 6, 8 or 10 digits (equal easting/northing halves)
+        var len = numbers.length;
+        if (len < 2 || len > 10 || len % 2 !== 0) return null;
+        var half = len / 2;
+        var e = numbers.substring(0, half);
+        var n = numbers.substring(half);
+        while (e.length < 5) e += '0';
+        while (n.length < 5) n += '0';
+        return e + ' ' + n;
     }
 
     // --- Universal single-coordinate parser ---
@@ -511,8 +518,8 @@ function handlePaste(clipboardText, createPointAndZoom, alwaysZoom) {
         }
     }
 
-    // ── 1. UK Grid: two letters + ten digits ──────────────────────────────
-    if (/^[A-Z]{2}\d{10}$/i.test(compact)) {
+    // ── 1. UK Grid: two letters + 2/4/6/8/10 digits ─────────────────────
+    if (/^[A-Z]{2}\d{2,10}$/i.test(compact) && compact.substring(2).length % 2 === 0) {
         let letters = compact.substring(0,2).toUpperCase();
         let padded  = padGridNumbers(compact.substring(2));
         let entry   = ukletterMatrix[letters];
@@ -523,8 +530,8 @@ function handlePaste(clipboardText, createPointAndZoom, alwaysZoom) {
             return true;
         }
     }
-    // ── 2. Irish Grid: one letter + ten digits ────────────────────────────
-    else if (/^[A-Z]\d{10}$/i.test(compact)) {
+    // ── 2. Irish Grid: one letter + 2/4/6/8/10 digits ───────────────────
+    else if (/^[A-Z]\d{2,10}$/i.test(compact) && compact.substring(1).length % 2 === 0) {
         let letter = compact.substring(0,1).toUpperCase();
         let padded = padGridNumbers(compact.substring(1));
         let entry  = igletterMatrix[letter];
@@ -1320,36 +1327,28 @@ TextField {
     if (isProgrammaticUpdate) { isProgrammaticUpdate = false; return }
     hasError = false
     lastEditedBox = "ig"; coordinatesDirty = true
-    var cleanedText = igInputBox.text.replace(/[^A-Za-z0-9\s]/g, '')
-    // Only apply formatting when first character is a valid IG letter
-    if (cleanedText.length > 0 && igletterMatrix[cleanedText[0].toUpperCase()]) {
-        if (cleanedText.length > 1 && cleanedText[1] !== ' ')
-            cleanedText = cleanedText[0] + ' ' + cleanedText.substring(1)
-        if (cleanedText.length > 7 && cleanedText[7] !== ' ')
-            cleanedText = cleanedText.substring(0, 7) + ' ' + cleanedText.substring(7)
-        if (cleanedText.length > 2) {
-            var fp = cleanedText.substring(2, 7)
-            if (!/^\d{0,5}$/.test(fp)) {
-                fp = fp.replace(/\D/g, '')
-                cleanedText = cleanedText.substring(0, 2) + fp + cleanedText.substring(7)
-            }
+    // Rebuild from raw characters to avoid position-shift bugs when pasting short refs
+    var raw = igInputBox.text.replace(/[^A-Za-z0-9]/g, '')
+    if (raw.length > 0 && igletterMatrix[raw[0].toUpperCase()]) {
+        var letter = raw[0].toUpperCase()
+        var digits = raw.substring(1).replace(/\D/g, '').substring(0, 10)
+        var cleanedText
+        if (digits.length === 0) {
+            cleanedText = letter
+        } else if (digits.length <= 5) {
+            // Still typing easting — no second space yet
+            cleanedText = letter + ' ' + digits
+        } else {
+            cleanedText = letter + ' ' + digits.substring(0, 5) + ' ' + digits.substring(5)
         }
-        if (cleanedText.length > 8) {
-            var sp = cleanedText.substring(8, 13)
-            if (!/^\d{0,5}$/.test(sp)) {
-                sp = sp.replace(/\D/g, '')
-                cleanedText = cleanedText.substring(0, 8) + sp + cleanedText.substring(13)
-            }
-        }
-        if (cleanedText.length > 13) cleanedText = cleanedText.substring(0, 13)
+        if (igInputBox.text !== cleanedText) { isProgrammaticUpdate = true; igInputBox.text = cleanedText }
     }
-    if (igInputBox.text !== cleanedText) { isProgrammaticUpdate = true; igInputBox.text = cleanedText }
  }
 
- // Function to validate the final input
+ // Accept L dN dN where N is 1–5 and both groups have equal digit count
  function isValidInput() {
- var regex = /^[A-Za-z]\s\d{5}\s\d{5}$/
- return regex.test(igInputBox.text) && igletterMatrix[igInputBox.text[0].toUpperCase()]
+     var m = igInputBox.text.match(/^([A-Za-z])\s(\d{1,5})\s(\d{1,5})$/)
+     return m && m[2].length === m[3].length && igletterMatrix[m[1].toUpperCase()]
  }
 }
 
@@ -1397,37 +1396,26 @@ TextField {
     if (isProgrammaticUpdate) { isProgrammaticUpdate = false; return }
     hasError = false
     lastEditedBox = "uk"; coordinatesDirty = true
-    var cleanedText = ukInputBox.text.replace(/[^A-Za-z0-9\s]/g, '')
-    // Only apply formatting when first two characters are valid UK letters
-    var firstTwo = cleanedText.substring(0, 2).toUpperCase()
-    if (cleanedText.length >= 2 && ukletterMatrix[firstTwo]) {
-        if (cleanedText.length > 2 && cleanedText[2] !== ' ')
-            cleanedText = cleanedText.substring(0, 2) + ' ' + cleanedText.substring(2)
-        if (cleanedText.length > 8 && cleanedText[8] !== ' ')
-            cleanedText = cleanedText.substring(0, 8) + ' ' + cleanedText.substring(8)
-        if (cleanedText.length > 3) {
-            var fp = cleanedText.substring(3, 8)
-            if (!/^\d{0,5}$/.test(fp)) {
-                fp = fp.replace(/\D/g, '')
-                cleanedText = cleanedText.substring(0, 3) + fp + cleanedText.substring(8)
-            }
+    var raw = ukInputBox.text.replace(/[^A-Za-z0-9]/g, '')
+    if (raw.length >= 2 && ukletterMatrix[raw.substring(0, 2).toUpperCase()]) {
+        var letters = raw.substring(0, 2).toUpperCase()
+        var digits = raw.substring(2).replace(/\D/g, '').substring(0, 10)
+        var cleanedText
+        if (digits.length === 0) {
+            cleanedText = letters
+        } else if (digits.length <= 5) {
+            cleanedText = letters + ' ' + digits
+        } else {
+            cleanedText = letters + ' ' + digits.substring(0, 5) + ' ' + digits.substring(5)
         }
-        if (cleanedText.length > 9) {
-            var sp = cleanedText.substring(9, 14)
-            if (!/^\d{0,5}$/.test(sp)) {
-                sp = sp.replace(/\D/g, '')
-                cleanedText = cleanedText.substring(0, 9) + sp + cleanedText.substring(14)
-            }
-        }
-        if (cleanedText.length > 14) cleanedText = cleanedText.substring(0, 14)
+        if (ukInputBox.text !== cleanedText) { isProgrammaticUpdate = true; ukInputBox.text = cleanedText }
     }
-    if (ukInputBox.text !== cleanedText) { isProgrammaticUpdate = true; ukInputBox.text = cleanedText }
  }
 
- // Function to validate the final input
+ // Accept LL dN dN where N is 1–5 and both groups have equal digit count
  function isValidInput() {
- var regex = /^[A-Za-z]{2}\s\d{5}\s\d{5}$/
- return regex.test(ukInputBox.text) && ukletterMatrix[ukInputBox.text.substring(0, 2).toUpperCase()]
+     var m = ukInputBox.text.match(/^([A-Za-z]{2})\s(\d{1,5})\s(\d{1,5})$/)
+     return m && m[2].length === m[3].length && ukletterMatrix[m[1].toUpperCase()]
  }
 }
 Button {
@@ -3087,18 +3075,20 @@ function convertFromLastEdited() {
                 else                            updateCoordinates(p.lon, p.lat, 4326, custom1CRS.text, custom2CRS.text, 6)
             } else _setError(wgs84DMSBox, "Cannot parse DMS input")
         } else if (lastEditedBox === "ig") {
-            if (igInputBox.isValidInput()) {
-                var letter = igInputBox.text.substring(0,1).toUpperCase()
-                var X5 = parseInt(igInputBox.text.substring(2,7), 10)
-                var Y5 = parseInt(igInputBox.text.substring(8,13), 10)
+            var igm = igInputBox.text.match(/^([A-Za-z])\s(\d{1,5})\s(\d{1,5})$/)
+            if (igm && igm[2].length === igm[3].length && igletterMatrix[igm[1].toUpperCase()]) {
+                var letter = igm[1].toUpperCase()
+                var X5 = parseInt(igm[2].padEnd(5, '0'), 10)
+                var Y5 = parseInt(igm[3].padEnd(5, '0'), 10)
                 var me = igletterMatrix[letter]
                 updateCoordinates(X5 + me.first*100000, Y5 + me.second*100000, 29903, custom1CRS.text, custom2CRS.text, 1)
             } else _setError(igInputBox, "Incomplete Irish Grid reference")
         } else if (lastEditedBox === "uk") {
-            if (ukInputBox.isValidInput()) {
-                var letter = ukInputBox.text.substring(0,2).toUpperCase()
-                var X5 = parseInt(ukInputBox.text.substring(3,8), 10)
-                var Y5 = parseInt(ukInputBox.text.substring(9,14), 10)
+            var ukm = ukInputBox.text.match(/^([A-Za-z]{2})\s(\d{1,5})\s(\d{1,5})$/)
+            if (ukm && ukm[2].length === ukm[3].length && ukletterMatrix[ukm[1].toUpperCase()]) {
+                var letter = ukm[1].toUpperCase()
+                var X5 = parseInt(ukm[2].padEnd(5, '0'), 10)
+                var Y5 = parseInt(ukm[3].padEnd(5, '0'), 10)
                 var me = ukletterMatrix[letter]
                 updateCoordinates(X5 + me.first*100000, Y5 + me.second*100000, 27700, custom1CRS.text, custom2CRS.text, 2)
             } else _setError(ukInputBox, "Incomplete UK Grid reference")
