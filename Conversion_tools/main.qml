@@ -240,6 +240,54 @@ Component.onCompleted: {
         mainWindow.displayToast("Copied: " + textToCopy);
     }
 
+    // Formats a grid reference input box as the user types.
+    // letterCount=1 for Irish Grid (single letter), 2 for UK Grid (two letters).
+    // Strips non-alphanumeric characters, validates the prefix against letterMatrix,
+    // and inserts spaces: "PREFIX EEEEE NNNNN".
+    function formatGridInput(inputBox, letterMatrix, letterCount) {
+        var raw = inputBox.text.replace(/[^A-Za-z0-9]/g, '')
+        if (raw.length < letterCount) return
+        var prefix = raw.substring(0, letterCount).toUpperCase()
+        if (!letterMatrix[prefix]) return
+        var digits = raw.substring(letterCount).replace(/\D/g, '').substring(0, 10)
+        var cleanedText
+        if (digits.length === 0) {
+            cleanedText = prefix
+        } else if (digits.length <= 5) {
+            cleanedText = prefix + ' ' + digits
+        } else {
+            cleanedText = prefix + ' ' + digits.substring(0, 5) + ' ' + digits.substring(5)
+        }
+        if (inputBox.text !== cleanedText) { inputBox.isProgrammaticUpdate = true; inputBox.text = cleanedText }
+    }
+
+    // Updates DMS box visibility based on whether degrees/minutes contain decimals.
+    // Called from latDegrees and lonDegrees onTextChanged — logic is identical in both.
+    function updateDMSBoxVisibility() {
+        if (lonDegrees.text.includes('.') || latDegrees.text.includes('.')) {
+            latMinutes.visible = false; latMinutes.text = ""
+            latSeconds.visible = false; latSeconds.text = ""
+            lonMinutes.visible = false; lonMinutes.text = ""
+            lonSeconds.visible = false; lonSeconds.text = ""
+        } else if (lonMinutes.text.includes('.') || latMinutes.text.includes('.')) {
+            lonDegrees.Layout.preferredWidth = degwa
+            latDegrees.Layout.preferredWidth = degwa
+            latMinutes.visible = true
+            latSeconds.visible = false; latSeconds.text = ""
+            lonMinutes.visible = true
+            lonSeconds.visible = false; lonSeconds.text = ""
+        } else {
+            lonDegrees.Layout.preferredWidth = degwa
+            latDegrees.Layout.preferredWidth = degwa
+            latMinutes.visible = true
+            lonMinutes.visible = true
+            lonMinutes.Layout.preferredWidth = minwa
+            latMinutes.Layout.preferredWidth = minwa
+            latSeconds.visible = true
+            lonSeconds.visible = true
+        }
+    }
+
     // Parses the WGS84 box text into {lat, lon} regardless of whether useNSEW is on.
     // Handles both "53.349, -6.260" and "53.349 N, 6.260 W".
     function parseWgs84BoxCoords() {
@@ -1327,22 +1375,7 @@ TextField {
     if (isProgrammaticUpdate) { isProgrammaticUpdate = false; return }
     hasError = false
     lastEditedBox = "ig"; coordinatesDirty = true
-    // Rebuild from raw characters to avoid position-shift bugs when pasting short refs
-    var raw = igInputBox.text.replace(/[^A-Za-z0-9]/g, '')
-    if (raw.length > 0 && igletterMatrix[raw[0].toUpperCase()]) {
-        var letter = raw[0].toUpperCase()
-        var digits = raw.substring(1).replace(/\D/g, '').substring(0, 10)
-        var cleanedText
-        if (digits.length === 0) {
-            cleanedText = letter
-        } else if (digits.length <= 5) {
-            // Still typing easting — no second space yet
-            cleanedText = letter + ' ' + digits
-        } else {
-            cleanedText = letter + ' ' + digits.substring(0, 5) + ' ' + digits.substring(5)
-        }
-        if (igInputBox.text !== cleanedText) { isProgrammaticUpdate = true; igInputBox.text = cleanedText }
-    }
+    formatGridInput(igInputBox, igletterMatrix, 1)
  }
 
  // Accept L dN dN where N is 1–5 and both groups have equal digit count
@@ -1396,20 +1429,7 @@ TextField {
     if (isProgrammaticUpdate) { isProgrammaticUpdate = false; return }
     hasError = false
     lastEditedBox = "uk"; coordinatesDirty = true
-    var raw = ukInputBox.text.replace(/[^A-Za-z0-9]/g, '')
-    if (raw.length >= 2 && ukletterMatrix[raw.substring(0, 2).toUpperCase()]) {
-        var letters = raw.substring(0, 2).toUpperCase()
-        var digits = raw.substring(2).replace(/\D/g, '').substring(0, 10)
-        var cleanedText
-        if (digits.length === 0) {
-            cleanedText = letters
-        } else if (digits.length <= 5) {
-            cleanedText = letters + ' ' + digits
-        } else {
-            cleanedText = letters + ' ' + digits.substring(0, 5) + ' ' + digits.substring(5)
-        }
-        if (ukInputBox.text !== cleanedText) { isProgrammaticUpdate = true; ukInputBox.text = cleanedText }
-    }
+    formatGridInput(ukInputBox, ukletterMatrix, 2)
  }
 
  // Accept LL dN dN where N is 1–5 and both groups have equal digit count
@@ -1869,39 +1889,9 @@ RowLayout {
  }
 
  onTextChanged: {
- latDegClampTimer.restart(); lastEditedBox = "dms_boxes"; coordinatesDirty = true
- 
- if (lonDegrees.text.includes('.') || latDegrees.text.includes('.')) { // if there is a decimal in the either degrees box just show degrees & clear data in minutes and seconds boxes
- latMinutes.visible = false
- latMinutes.text = ""
- latSeconds.visible = false
- latSeconds.text = ""
- lonMinutes.visible = false
-  lonMinutes.text = "" 
- lonSeconds.visible = false
- lonSeconds.text = ""
- } 
- else if(lonMinutes.text.includes('.') || latMinutes.text.includes('.')){ // if there is a decimal in the minutes box show degrees and minutes & clear data in seconds box
-  lonDegrees.Layout.preferredWidth = degwa
-  latDegrees.Layout.preferredWidth = degwa
-  latMinutes.visible = true
-  latSeconds.visible = false
-  latSeconds.text = ""  
-  lonMinutes.visible = true
-  lonSeconds.visible = false
-  lonSeconds.text = ""
+     latDegClampTimer.restart(); lastEditedBox = "dms_boxes"; coordinatesDirty = true
+     updateDMSBoxVisibility()
  }
-    else {   // if there are no decimals in the degrees or minutes boxes show all boxes
-  lonDegrees.Layout.preferredWidth = degwa
-  latDegrees.Layout.preferredWidth = degwa
-  latMinutes.visible = true
-  lonMinutes.visible = true
-  lonMinutes.Layout.preferredWidth = minwa
-  latMinutes.Layout.preferredWidth = minwa
-  latSeconds.visible = true
-  lonSeconds.visible = true 
- }
- } 
  }
 
  // Latitude Minutes (decimal)
@@ -2014,39 +2004,9 @@ Timer {
  }
  }
 }
-onTextChanged: {lonDegClampTimer.restart(); lastEditedBox = "dms_boxes"; coordinatesDirty = true
-
- 
- if (lonDegrees.text.includes('.') || latDegrees.text.includes('.')) { // if there is a decimal in the either degrees box just show degrees & clear data in minutes and seconds boxes
- latMinutes.visible = false
- latMinutes.text = ""
- latSeconds.visible = false
- latSeconds.text = ""
- lonMinutes.visible = false
-  lonMinutes.text = "" 
- lonSeconds.visible = false
- lonSeconds.text = ""
- } 
- else if(lonMinutes.text.includes('.') || latMinutes.text.includes('.')){ // if there is a decimal in the minutes box show degrees and minutes & clear data in seconds box
-  lonDegrees.Layout.preferredWidth = degwa
-  latDegrees.Layout.preferredWidth = degwa
-  latMinutes.visible = true
-  latSeconds.visible = false
-  latSeconds.text = ""  
-  lonMinutes.visible = true
-  lonSeconds.visible = false
-  lonSeconds.text = ""
- }
-    else {   // if there are no decimals in the degrees or minutes boxes show all boxes
-  lonDegrees.Layout.preferredWidth = degwa
-  latDegrees.Layout.preferredWidth = degwa
-  latMinutes.visible = true
-  lonMinutes.visible = true
-  lonMinutes.Layout.preferredWidth = minwa
-  latMinutes.Layout.preferredWidth = minwa
-  latSeconds.visible = true
-  lonSeconds.visible = true 
-    } 
+onTextChanged: {
+     lonDegClampTimer.restart(); lastEditedBox = "dms_boxes"; coordinatesDirty = true
+     updateDMSBoxVisibility()
  }
  }
 
@@ -2936,6 +2896,9 @@ function degtoSeconds(decimal) {
  var sourceCrs = CoordinateReferenceSystemUtils.fromDescription("EPSG:" + parseInt(sourceEPSG))
  var targetCrs1 = CoordinateReferenceSystemUtils.fromDescription("EPSG:" + parseInt(targetEPSG1))
  var targetCrs2 = CoordinateReferenceSystemUtils.fromDescription("EPSG:" + parseInt(targetEPSG2))
+ var wgs84Crs = CoordinateReferenceSystemUtils.fromDescription("EPSG:4326")
+ // Reproject to WGS84 once — reused by WGS84 box, DDM, MGRS, and Plus Code blocks
+ var wgs84Point = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, wgs84Crs)
 
  if (inputDialog !== 1) { // Update IG
  var igPoint = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, CoordinateReferenceSystemUtils.fromDescription("EPSG:29903"))
@@ -2968,7 +2931,6 @@ function degtoSeconds(decimal) {
  }
 
  if (inputDialog !== 5) { // Update WGS84
- var wgs84Point = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"))
  wgs84Box.isProgrammaticUpdate = true
  if (appSettings.useNSEW) {
      var latVal = wgs84Point.y; var lonVal = wgs84Point.x
@@ -2981,33 +2943,30 @@ function degtoSeconds(decimal) {
  }
 
  if (inputDialog !== 6) { // Update WGS84 DDM
- var wgs84dmPoint = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"))
  wgs84DMBox.isProgrammaticUpdate = true
- wgs84DMBox.text = decimalToDDM(wgs84dmPoint.y, true) + ",  " + decimalToDDM(wgs84dmPoint.x, false)
+ wgs84DMBox.text = decimalToDDM(wgs84Point.y, true) + ",  " + decimalToDDM(wgs84Point.x, false)
 
- wgs84DMSBox.text = decimalToDMss(wgs84dmPoint.y, true) + ",  " + decimalToDMss(wgs84dmPoint.x, false)
+ wgs84DMSBox.text = decimalToDMss(wgs84Point.y, true) + ",  " + decimalToDMss(wgs84Point.x, false)
 
  // Update d m s boxes
- latDegrees.text = decTODeg(wgs84dmPoint.y)
- latMinutes.text = decimalToMinutes(wgs84dmPoint.y)
- latSeconds.text = degtoSeconds(wgs84dmPoint.y)
- lonDegrees.text = decTODeg(wgs84dmPoint.x)
- lonMinutes.text = decimalToMinutes(wgs84dmPoint.x)
- lonSeconds.text = degtoSeconds(wgs84dmPoint.x)
+ latDegrees.text = decTODeg(wgs84Point.y)
+ latMinutes.text = decimalToMinutes(wgs84Point.y)
+ latSeconds.text = degtoSeconds(wgs84Point.y)
+ lonDegrees.text = decTODeg(wgs84Point.x)
+ lonMinutes.text = decimalToMinutes(wgs84Point.x)
+ lonSeconds.text = degtoSeconds(wgs84Point.x)
 
  }
 
  if (inputDialog !== 7) { // Update MGRS
-     var mgrsWgs = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"))
-     var mgrsStr = latLonToMgrs(mgrsWgs.y, mgrsWgs.x, 5)
+     var mgrsStr = latLonToMgrs(wgs84Point.y, wgs84Point.x, 5)
      mgrsBox.isProgrammaticUpdate = true
      mgrsBox.text = mgrsStr
      mgrsrow.visible = showMGRS.checked && mgrsStr !== ""
  }
 
  if (inputDialog !== 8) { // Update Plus Code
-     var olcWgs = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"))
-     var olcStr = OLC.encode(olcWgs.y, olcWgs.x, 11)
+     var olcStr = OLC.encode(wgs84Point.y, wgs84Point.x, 11)
      pluscodeBox.isProgrammaticUpdate = true
      pluscodeBox.text = olcStr
  }
