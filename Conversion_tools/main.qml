@@ -350,15 +350,17 @@ Component.onCompleted: {
     }
 
     // Called by the paste handler — reprojects to canvas CRS then adds silently.
-    function addPoint(pointX, pointY, crsEpsg) {
+    function addPoint(pointX, pointY, crsEpsg, pointZ) {
         var pt = (crsEpsg !== canvasEPSG)
             ? GeometryUtils.reprojectPoint(
                 GeometryUtils.point(pointX, pointY),
                 CoordinateReferenceSystemUtils.fromDescription("EPSG:" + crsEpsg),
                 CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG))
             : GeometryUtils.point(pointX, pointY);
-        addPointToActiveLayer(
-            GeometryUtils.createGeometryFromWkt(`POINT(${pt.x} ${pt.y})`), false);
+        var wkt = (pointZ !== undefined && !isNaN(pointZ))
+            ? `POINT Z(${pt.x} ${pt.y} ${pointZ})`
+            : `POINT(${pt.x} ${pt.y})`
+        addPointToActiveLayer(GeometryUtils.createGeometryFromWkt(wkt), false);
     }
 
     // Zooms the map canvas to a point, creating a square extent around it.
@@ -455,6 +457,7 @@ function handlePaste(clipboardText, createPointAndZoom, alwaysZoom) {
         pasteFormatDialog.rawText = displayText;
         pasteFormatDialog.parsedA = a;
         pasteFormatDialog.parsedB = b;
+        pasteFormatDialog.parsedZ = NaN;   // no Z for non-WKT pastes
         pasteFormatDialog.defaultFormatIndex = formatIdx;
         pasteFormatDialog.createPointOnSuccess = createPointAndZoom;
         pasteFormatDialog.alwaysZoom = alwaysZoom;
@@ -462,16 +465,24 @@ function handlePaste(clipboardText, createPointAndZoom, alwaysZoom) {
         pasteFormatDialog.open();
     }
 
-    // ── 0. WKT Point ─────────────────────────────────────────────────────
-    var wktMatch = raw.match(/Point\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i)
+    // ── 0. WKT Point (POINT / POINT Z / POINT M / POINT ZM) ──────────────
+    var wktMatch = raw.match(/Point\s*(ZM|Z|M)?\s*\(\s*([-\d.]+)\s+([-\d.]+)(?:\s+([-\d.]+))?(?:\s+([-\d.]+))?\s*\)/i)
     if (wktMatch) {
-        var wktX = parseFloat(wktMatch[1])
-        var wktY = parseFloat(wktMatch[2])
+        var wktType = (wktMatch[1] || "").toUpperCase()  // "", "Z", "M", or "ZM"
+        var wktX = parseFloat(wktMatch[2])
+        var wktY = parseFloat(wktMatch[3])
+        var wktVal3 = wktMatch[4] !== undefined ? parseFloat(wktMatch[4]) : NaN
+        var wktVal4 = wktMatch[5] !== undefined ? parseFloat(wktMatch[5]) : NaN
+        // Z is the 3rd value when type is Z or ZM; absent for plain POINT or POINT M
+        var wktHasZ = (wktType === "Z" || wktType === "ZM") && !isNaN(wktVal3)
+        var wktZ    = wktHasZ ? wktVal3 : NaN
         if (!isNaN(wktX) && !isNaN(wktY)) {
-            wktCrsDialog.pendingX = wktX
-            wktCrsDialog.pendingY = wktY
+            wktCrsDialog.pendingX    = wktX
+            wktCrsDialog.pendingY    = wktY
+            wktCrsDialog.pendingZ    = wktHasZ ? wktZ : 0
+            wktCrsDialog.pendingHasZ = wktHasZ
             wktCrsDialog.createPointOnSuccess = createPointAndZoom
-            wktCrsDialog.alwaysZoom = alwaysZoom
+            wktCrsDialog.alwaysZoom  = alwaysZoom
             wktCrsDialog.open()
             return true
         }
@@ -716,6 +727,7 @@ Dialog {
     property string rawText: ""
     property real   parsedA: 0
     property real   parsedB: 0
+    property real   parsedZ: NaN
     property int    defaultFormatIndex: 0
     property bool   createPointOnSuccess: false
     property bool   alwaysZoom: false
@@ -775,7 +787,7 @@ Dialog {
             updateCoordinates(px, py, epsg, custom1CRS.text, custom2CRS.text)
         }
         if (createPointOnSuccess) {
-            addPoint(px, py, pcrs)
+            addPoint(px, py, pcrs, isNaN(parsedZ) ? undefined : parsedZ)
             let _ax = px, _ay = py, _acrs = pcrs, _az = pendingAlwaysZoom
             Qt.callLater(function() {
                 if (_az)
@@ -1103,8 +1115,10 @@ Dialog {
     x: (mainWindow.width - width) / 2
     y: (mainWindow.height - height) * 0.15
 
-    property real   pendingX: 0
-    property real   pendingY: 0
+    property real   pendingX:    0
+    property real   pendingY:    0
+    property real   pendingZ:    0
+    property bool   pendingHasZ: false
     property bool   createPointOnSuccess: false
     property bool   alwaysZoom: false
 
@@ -1136,10 +1150,12 @@ Dialog {
             mainWindow.displayToast(qsTr("Could not reproject point — check CRS selection"))
             return
         }
-        var disp = "Point (" + pendingX.toFixed(3) + " " + pendingY.toFixed(3) + ")  [" + item.authid + "]"
+        var zPart = pendingHasZ ? " Z=" + pendingZ.toFixed(3) : ""
+        var disp = "Point (" + pendingX.toFixed(3) + " " + pendingY.toFixed(3) + zPart + ")  [" + item.authid + "]"
         pasteFormatDialog.rawText = disp
         pasteFormatDialog.parsedA = pt.y
         pasteFormatDialog.parsedB = pt.x
+        pasteFormatDialog.parsedZ = pendingHasZ ? pendingZ : NaN
         pasteFormatDialog.defaultFormatIndex = 0
         pasteFormatDialog.createPointOnSuccess = createPointOnSuccess
         pasteFormatDialog.alwaysZoom = alwaysZoom
@@ -1156,6 +1172,7 @@ Dialog {
             wrapMode: Text.Wrap
             font.bold: true
             text: "X: " + wktCrsDialog.pendingX.toFixed(3) + "   Y: " + wktCrsDialog.pendingY.toFixed(3)
+                  + (wktCrsDialog.pendingHasZ ? "   Z: " + wktCrsDialog.pendingZ.toFixed(3) : "")
         }
 
         Label {
