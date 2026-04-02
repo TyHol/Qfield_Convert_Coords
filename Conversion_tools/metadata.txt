@@ -1,6 +1,6 @@
 [general]
 name=Conversion_tools
-description= Form and searchbar tools: Form to convert between & navigate to/zoom to/add points features at coordinates/Irish Grid & UK Grid references/Screencentre/GPS/custom). Also adds Irish Grid & UK Grid to searchbar.
+description= Form and searchbar tools: Form to convert between & navigate to/zoom to/add features at coordinates/Irish Grid & UK Grid references/MGRS/Plus Code/Screencentre/GPS/custom). Also adds Irish Grid & UK Grid to searchbar.
 author=Tyhol
 icon=icon2.svg
 version=2.2
