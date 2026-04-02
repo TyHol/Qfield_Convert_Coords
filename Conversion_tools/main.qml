@@ -1150,17 +1150,23 @@ Dialog {
             mainWindow.displayToast(qsTr("Could not reproject point — check CRS selection"))
             return
         }
-        var zPart = pendingHasZ ? " Z=" + pendingZ.toFixed(3) : ""
-        var disp = "Point (" + pendingX.toFixed(3) + " " + pendingY.toFixed(3) + zPart + ")  [" + item.authid + "]"
-        pasteFormatDialog.rawText = disp
-        pasteFormatDialog.parsedA = pt.y
-        pasteFormatDialog.parsedB = pt.x
-        pasteFormatDialog.parsedZ = pendingHasZ ? pendingZ : NaN
-        pasteFormatDialog.defaultFormatIndex = 0
-        pasteFormatDialog.createPointOnSuccess = createPointOnSuccess
-        pasteFormatDialog.alwaysZoom = alwaysZoom
-        pendingAlwaysZoom = alwaysZoom
-        pasteFormatDialog.open()
+        // CRS already resolved — update displays and optionally add point directly
+        updateCoordinates(pendingX, pendingY,
+            parseInt(item.authid.replace("EPSG:","")) || 4326,
+            custom1CRS.text, custom2CRS.text)
+        if (createPointOnSuccess) {
+            var z = pendingHasZ ? pendingZ : undefined
+            addPoint(pendingX, pendingY,
+                parseInt(item.authid.replace("EPSG:","")) || 4326, z)
+            var _ax = pendingX, _ay = pendingY
+            var _acrs = parseInt(item.authid.replace("EPSG:","")) || 4326
+            var _az = alwaysZoom
+            pendingAlwaysZoom = alwaysZoom
+            Qt.callLater(function() {
+                if (_az) zoomToPoint(_ax, _ay, _acrs)
+                else     doAfterAddAction(_ax, _ay, _acrs)
+            })
+        }
     }
 
     ColumnLayout {
