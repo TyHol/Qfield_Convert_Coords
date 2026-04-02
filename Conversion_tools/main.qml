@@ -29,7 +29,7 @@ Item {
 
 
 //changable stuff 
-property var filetimedate : "v2.2.1  02.04.26.3" // version date
+property var filetimedate : "v2.2.1  02.04.26.4" // version date
 property var mapsUrlOption: 3 // Default external map: 1=GMaps pin, 2=GMaps nav, 3=OSM, 4=OSRM route
 property var _lastX: 0; property var _lastY: 0; property var _lastEPSG: 4326 // last coords for re-render on setting change
 property string _lastWarnedEPSGs: "" // tracks last EPSG combo that triggered a Helmert warning
@@ -599,10 +599,10 @@ function diagnosePasteError(raw) {
     if (igLike) {
         let letter = igLike[1].toUpperCase();
         let digits = igLike[2];
-        if (digits.length < 10)
-            return qsTr("Looks like an Irish Grid ref but only has %1 digit(s) — needs exactly 10 (e.g. O 15930 34300).").arg(digits.length);
+        if (digits.length % 2 !== 0)
+            return qsTr("Looks like an Irish Grid ref but has an odd number of digits (%1) — needs an even count of 2–10 (e.g. O 159 343 or O 15930 34300).").arg(digits.length);
         if (digits.length > 10)
-            return qsTr("Looks like an Irish Grid ref but has %1 digits — needs exactly 10 (e.g. O 15930 34300).").arg(digits.length);
+            return qsTr("Looks like an Irish Grid ref but has %1 digits — maximum is 10 (e.g. O 15930 34300).").arg(digits.length);
         if (!igletterMatrix[letter])
             return qsTr("'%1' is not a valid Irish Grid square. Valid letters: A–E, F–H, J–K, L–P, Q–T, V–Z (I and U are not used).").arg(letter);
     }
@@ -612,10 +612,10 @@ function diagnosePasteError(raw) {
     if (ukLike) {
         let letters = ukLike[1].toUpperCase();
         let digits = ukLike[2];
-        if (digits.length < 10)
-            return qsTr("Looks like a UK Grid ref but only has %1 digit(s) — needs exactly 10 (e.g. NS 45140 72887).").arg(digits.length);
+        if (digits.length % 2 !== 0)
+            return qsTr("Looks like a UK Grid ref but has an odd number of digits (%1) — needs an even count of 2–10 (e.g. NS 451 728 or NS 45140 72887).").arg(digits.length);
         if (digits.length > 10)
-            return qsTr("Looks like a UK Grid ref but has %1 digits — needs exactly 10 (e.g. NS 45140 72887).").arg(digits.length);
+            return qsTr("Looks like a UK Grid ref but has %1 digits — maximum is 10 (e.g. NS 45140 72887).").arg(digits.length);
         if (!ukletterMatrix[letters])
             return qsTr("'%1' is not a recognised UK Grid square.").arg(letters);
     }
