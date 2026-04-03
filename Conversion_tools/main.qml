@@ -85,6 +85,7 @@ Settings {
     property bool   showCustom2:    false
     property bool   showMGRS:       false
     property bool   showPlusCode:   false
+    property bool   showQR:         true
     property bool   showCrosshair:  true
     property bool   showDMSboxes:   false
     property bool   showCustomisation: false
@@ -190,6 +191,7 @@ Component.onCompleted: {
     showCustom2.checked    = appSettings.showCustom2
     showMGRS.checked       = appSettings.showMGRS
     showPlusCode.checked   = appSettings.showPlusCode
+    showQR.checked         = appSettings.showQR
     showCrosshair.checked  = appSettings.showCrosshair
     showDMSboxes.checked   = appSettings.showDMSboxes
     showCustomisation.checked = appSettings.showCustomisation
@@ -1871,6 +1873,8 @@ TextField {
 
 // QR Code row — Show QR for current coords / Scan QR into plugin
 RowLayout {
+    id: qrrow
+    visible: appSettings.showQR
     Layout.fillWidth: true
     spacing: 6
 
@@ -2482,6 +2486,7 @@ Column {
         CheckBox { id: showCustom2;   text: "Custom 2";   font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { custom2row.visible = checked;      appSettings.showCustom2 = checked } }
         CheckBox { id: showMGRS;      text: "MGRS";       font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { mgrsrow.visible = checked;         appSettings.showMGRS = checked } }
         CheckBox { id: showPlusCode;  text: "Plus Code";  font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { pluscoderow.visible = checked;     appSettings.showPlusCode = checked } }
+        CheckBox { id: showQR;        text: "QR Buttons"; font.pixelSize: 9; implicitHeight: 26; checked: true;  onCheckedChanged: { qrrow.visible = checked;           appSettings.showQR = checked } }
         CheckBox { id: showDMSboxes;  text: "DMS Boxes";  font.pixelSize: 9; implicitHeight: 26; checked: true;  onCheckedChanged: { latlongboxesDMS.visible = checked; appSettings.showDMSboxes = checked } }
     }
       GridLayout {
@@ -2551,7 +2556,7 @@ Column {
             showDegrees.checked = wgs84vis
             showDM.checked      = dmvis;    showDMS.checked       = dmsvis
             showDMSboxes.checked = dmsBoxesvis; showCrosshair.checked = crosshairvis
-            showMGRS.checked = mgrsvis; showPlusCode.checked = pluscodevis
+            showMGRS.checked = mgrsvis; showPlusCode.checked = pluscodevis; showQR.checked = true; appSettings.showQR = true
             formOnAdd = showFeatureFormDefault; showFormOnAdd.checked = showFeatureFormDefault; appSettings.showFeatureForm = showFeatureFormDefault
             appSettings.afterAddAction = afterAddDefault; afterAddGroup.checkedButton = [afterAddNothing, afterAddPan, afterAddZoom][afterAddDefault]
             mapsUrlOption = 3;              appSettings.mapsUrlOption = 3
