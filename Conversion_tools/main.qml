@@ -755,6 +755,12 @@ Dialog {
         topPadding: 6
 
         TextField {
+            id: textQrTitle
+            width: parent.width
+            placeholderText: qsTr("Title (optional)")
+        }
+
+        TextField {
             id: textQrInput
             width: parent.width
             placeholderText: qsTr("Paste URL or text here")
@@ -774,6 +780,7 @@ Dialog {
                 var t = textQrInput.text.trim()
                 if (t === "") { mainWindow.displayToast(qsTr("Nothing to encode")); return }
                 textQrDialog.close()
+                qrDialog.qrTitle = textQrTitle.text.trim()
                 qrDialog.geoUri = t
                 qrDialog.open()
             }
@@ -785,6 +792,7 @@ Dialog {
 Dialog {
     id: qrDialog
     property string geoUri: ""
+    property string qrTitle: ""
     parent: mainWindow.contentItem
     title: qsTr("QR Code")
     x: (parent.width - width) / 2
@@ -797,6 +805,16 @@ Dialog {
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: 10
         topPadding: 6
+
+        Text {
+            visible: qrDialog.qrTitle !== ""
+            text: qrDialog.qrTitle
+            width: qrDialog.width - 40
+            font.pixelSize: 15; font.bold: true
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.Wrap
+            anchors.horizontalCenter: parent.horizontalCenter
+        }
 
         Image {
             id: qrImage
@@ -2319,7 +2337,7 @@ RowLayout {
             ensureConverted()
             var coords = parseWgs84BoxCoords()
             if (!coords) { mainWindow.displayToast(qsTr("Convert coordinates first")); return }
-            qrDialog.geoUri = "geo:" + coords.lat.toFixed(7) + "," + coords.lon.toFixed(7)
+            qrDialog.qrTitle = ""; qrDialog.geoUri = "geo:" + coords.lat.toFixed(7) + "," + coords.lon.toFixed(7)
             qrDialog.open()
         }
     }
