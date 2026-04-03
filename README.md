@@ -28,6 +28,8 @@ A plugin for the [QField](https://qfield.org/) mobile GIS app that converts betw
 ## Installation
 
 Download the zip from the releases page and follow the QField plugin installation guide to install it.
+Or scan this:
+<img width="415" height="420" alt="Screenshot 2026-04-03 125157" src="https://github.com/user-attachments/assets/9bd6b878-f0a9-49f6-8164-5bffd8230ab9" />
 
 ---
 
