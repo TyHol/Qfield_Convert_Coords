@@ -2710,7 +2710,7 @@ Dialog {
                         text: (positionSource.active && positionSource.positionInformation.latitudeValid && positionSource.positionInformation.longitudeValid)
                             ? justLL(positionSource.projectedPosition, canvasEPSG)
                             : ""
-                        font.pixelSize: 24
+                        font.pixelSize: 30
                         wrapMode: Text.Wrap
                         horizontalAlignment: Text.AlignHCenter
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -2774,7 +2774,7 @@ Dialog {
                     Label {
                         id: screenLL
                         text: justLL(canvas.center, canvasEPSG)
-                        font.pixelSize: 24
+                        font.pixelSize: 30
                         wrapMode: Text.Wrap
                         horizontalAlignment: Text.AlignHCenter
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -2787,107 +2787,74 @@ Dialog {
 
 Dialog {
     id: bigDialog2
-    font.pixelSize: 35
-    width: 400
-    height: 350
+    width: Math.min(380, mainWindow.width - 16)
     modal: true
     anchors.centerIn: parent
+    padding: 8
 
-    // Third Box: Box contents
     Rectangle {
         id: boxBox
         width: parent.width
-        implicitHeight: childrenRect3.height + 20
+        implicitHeight: childrenRect3.implicitHeight + 24
         color: "#f0fef0"
         radius: 10
         border.color: "black"
         border.width: 0.5
-        anchors.horizontalCenter: parent.horizontalCenter
 
         Column {
             id: childrenRect3
-            width: parent.width
-            spacing: 10
-            anchors.margins: 10
+            width: parent.width - 16
             anchors.centerIn: parent
+            spacing: 8
+            topPadding: 8
+            bottomPadding: 8
 
-            Label {
-                text: "Text box contents"
-                font.pixelSize: 20
-                font.bold: true
-                horizontalAlignment: Text.AlignHCenter
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-
-            // igInputBox text
             MouseArea {
-                width: parent.width
-                height: igCopy.implicitHeight
-                onClicked: {
-                    copyToClipboard(igCopy.text)
-                }
-
+                width: parent.width; height: igCopy.implicitHeight
+                onClicked: copyToClipboard(igCopy.text)
                 Label {
                     id: igCopy
                     text: igInputBox.text
-                    font.pixelSize: 28
+                    font.pixelSize: 28; font.bold: true
                     wrapMode: Text.Wrap
+                    width: parent.width
                     horizontalAlignment: Text.AlignHCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
                 }
             }
-
-            // wgs84Box text
             MouseArea {
-                width: parent.width
-                height: wgs84Copy.implicitHeight
-                onClicked: {
-                    copyToClipboard(wgs84Copy.text)
-                }
-
+                width: parent.width; height: wgs84Copy.implicitHeight
+                onClicked: copyToClipboard(wgs84Copy.text)
                 Label {
                     id: wgs84Copy
                     text: wgs84Box.text
                     font.pixelSize: 24
                     wrapMode: Text.Wrap
+                    width: parent.width
                     horizontalAlignment: Text.AlignHCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
                 }
             }
-
-            // wgs84DMBox text
             MouseArea {
-                width: parent.width
-                height: wgs84DMCopy.implicitHeight
-                onClicked: {
-                    copyToClipboard(wgs84DMCopy.text)
-                }
-
+                width: parent.width; height: wgs84DMCopy.implicitHeight
+                onClicked: copyToClipboard(wgs84DMCopy.text)
                 Label {
                     id: wgs84DMCopy
                     text: wgs84DMBox.text
                     font.pixelSize: 24
                     wrapMode: Text.Wrap
+                    width: parent.width
                     horizontalAlignment: Text.AlignHCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
                 }
             }
-
-            // wgs84DMSBox text
             MouseArea {
-                width: parent.width
-                height: wgs84DMSCopy.implicitHeight
-                onClicked: {
-                    copyToClipboard(wgs84DMSCopy.text)
-                }
-
+                width: parent.width; height: wgs84DMSCopy.implicitHeight
+                onClicked: copyToClipboard(wgs84DMSCopy.text)
                 Label {
                     id: wgs84DMSCopy
                     text: wgs84DMSBox.text
                     font.pixelSize: 24
                     wrapMode: Text.Wrap
+                    width: parent.width
                     horizontalAlignment: Text.AlignHCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
                 }
             }
         }
