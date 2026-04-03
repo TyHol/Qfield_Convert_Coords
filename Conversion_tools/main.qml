@@ -2292,131 +2292,124 @@ RowLayout {
  
  
  
-RowLayout{ 
- Label {
- id: label_2
- visible: true
- wrapMode: Text.Wrap
- font.bold: true
- text: qsTr("Do:")
- font.pixelSize: font_Size.text 
- font.family: "Arial" // Set font family
- font.italic: true // Make text italic
- } 
- 
- Button {
-    id: btnPan
-    visible: appSettings.showBtnPan
-    text: qsTr("Pan")
+Label {
+    id: label_2
     font.bold: true
-    Layout.fillWidth: true
-    font.pixelSize: font_Size.text - 3
-    Layout.preferredHeight: 60
-    onClicked: {
-        var coords = parseWgs84BoxCoords()
-        if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
-        var transformedPoint = GeometryUtils.reprojectPoint(
-            GeometryUtils.point(coords.lon, coords.lat),
-            CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"),
-            CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG));
-        iface.mapCanvas().mapSettings.center.x = transformedPoint.x;
-        iface.mapCanvas().mapSettings.center.y = transformedPoint.y;
-        mainWindow.displayToast(transformedPoint.x + ", " + transformedPoint.y)
-        mainDialog.close()
-    }
- }
-
- Button {
-    id: btnZoom
-    visible: appSettings.showBtnZoom
-    text: qsTr("Zoom")
-    font.bold: true
-    Layout.fillWidth: true
-    font.pixelSize: font_Size.text - 3
-    Layout.preferredHeight: 60
-    onClicked: {
-        var coords = parseWgs84BoxCoords()
-        if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
-        zoomToPoint(coords.lon, coords.lat, 4326)
-        mainDialog.close()
-    }
- }
-
- Button {
-    id: btnAdd
-    visible: appSettings.showBtnAdd
-    text: qsTr("Add")
-    font.bold: true
-    Layout.fillWidth: true
+    font.italic: true
+    font.family: "Arial"
     font.pixelSize: font_Size.text
-    Layout.preferredHeight: 60
-    onClicked: {
-        var coords = parseWgs84BoxCoords()
-        if (!coords) { mainWindow.displayToast(qsTr("Input some coordinates first!")); return }
-        var pt = GeometryUtils.reprojectPoint(
-            GeometryUtils.point(coords.lon, coords.lat),
-            CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"),
-            CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG))
-        addPointToActiveLayer(
-            GeometryUtils.createGeometryFromWkt(`POINT(${pt.x} ${pt.y})`),
-            formOnAdd)
-        doAfterAddAction(pt.x, pt.y, canvasEPSG)
-        mainDialog.close()
-    }
- }
+    text: qsTr("Do:")
+}
 
- Button {
-    id: btnNavigate
-    visible: appSettings.showBtnNavigate
-    text: qsTr("Navigate")
-    font.bold: true
+Flow {
+    id: doFlow
     Layout.fillWidth: true
-    font.pixelSize: font_Size.text - 3
-    Layout.preferredHeight: 60
-    onClicked: {
-        var coords = parseWgs84BoxCoords()
-        if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
-        var transformedPoint = GeometryUtils.reprojectPoint(
-            GeometryUtils.point(coords.lon, coords.lat),
-            CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"),
-            CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG));
-        iface.mapCanvas().mapSettings.center.x = transformedPoint.x;
-        iface.mapCanvas().mapSettings.center.y = transformedPoint.y;
-        mainWindow.displayToast("navigating to:" + transformedPoint.x + ", " + transformedPoint.y);
-        let navigation = iface.findItemByObjectName('navigation');
-        navigation.destination = transformedPoint;
-        mainDialog.close()
-    }
- }
+    spacing: 4
+    property int btnW: Math.floor((width - 2 * spacing) / 3)
+    property int btnH: 60
+    property int btnFs: font_Size.text - 3
 
- Button {
-    id: btnWeb
-    visible: appSettings.showBtnWeb
-    text: qsTr("Web")
-    font.bold: true
-    Layout.fillWidth: true
-    font.pixelSize: font_Size.text - 3
-    Layout.preferredHeight: 60
-    onClicked: {
-        var coords = parseWgs84BoxCoords()
-        if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
-        Qt.openUrlExternally(buildMapsUrl(coords.lat, coords.lon));
-        mainDialog.close()
+    Button {
+        id: btnPan
+        visible: appSettings.showBtnPan
+        text: qsTr("Pan")
+        font.bold: true; font.pixelSize: doFlow.btnFs
+        width: doFlow.btnW; height: doFlow.btnH
+        onClicked: {
+            var coords = parseWgs84BoxCoords()
+            if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
+            var transformedPoint = GeometryUtils.reprojectPoint(
+                GeometryUtils.point(coords.lon, coords.lat),
+                CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"),
+                CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG));
+            iface.mapCanvas().mapSettings.center.x = transformedPoint.x;
+            iface.mapCanvas().mapSettings.center.y = transformedPoint.y;
+            mainWindow.displayToast(transformedPoint.x + ", " + transformedPoint.y)
+            mainDialog.close()
+        }
     }
- }
 
- Button {
-    id: btnBIG
-    visible: appSettings.showBtnBIG
-    text: qsTr("BIG")
-    font.bold: true
-    Layout.fillWidth: true
-    font.pixelSize: font_Size.text
-    Layout.preferredHeight: 60
-    onClicked: { ensureConverted(); bigDialog.open() }
-    onPressAndHold: { ensureConverted(); bigDialog2.open() }
- }
- } 
+    Button {
+        id: btnZoom
+        visible: appSettings.showBtnZoom
+        text: qsTr("Zoom")
+        font.bold: true; font.pixelSize: doFlow.btnFs
+        width: doFlow.btnW; height: doFlow.btnH
+        onClicked: {
+            var coords = parseWgs84BoxCoords()
+            if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
+            zoomToPoint(coords.lon, coords.lat, 4326)
+            mainDialog.close()
+        }
+    }
+
+    Button {
+        id: btnAdd
+        visible: appSettings.showBtnAdd
+        text: qsTr("Add")
+        font.bold: true; font.pixelSize: doFlow.btnFs
+        width: doFlow.btnW; height: doFlow.btnH
+        onClicked: {
+            var coords = parseWgs84BoxCoords()
+            if (!coords) { mainWindow.displayToast(qsTr("Input some coordinates first!")); return }
+            var pt = GeometryUtils.reprojectPoint(
+                GeometryUtils.point(coords.lon, coords.lat),
+                CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"),
+                CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG))
+            addPointToActiveLayer(
+                GeometryUtils.createGeometryFromWkt(`POINT(${pt.x} ${pt.y})`),
+                formOnAdd)
+            doAfterAddAction(pt.x, pt.y, canvasEPSG)
+            mainDialog.close()
+        }
+    }
+
+    Button {
+        id: btnNavigate
+        visible: appSettings.showBtnNavigate
+        text: qsTr("Navigate")
+        font.bold: true; font.pixelSize: doFlow.btnFs
+        width: doFlow.btnW; height: doFlow.btnH
+        onClicked: {
+            var coords = parseWgs84BoxCoords()
+            if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
+            var transformedPoint = GeometryUtils.reprojectPoint(
+                GeometryUtils.point(coords.lon, coords.lat),
+                CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"),
+                CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG));
+            iface.mapCanvas().mapSettings.center.x = transformedPoint.x;
+            iface.mapCanvas().mapSettings.center.y = transformedPoint.y;
+            mainWindow.displayToast("navigating to:" + transformedPoint.x + ", " + transformedPoint.y);
+            let navigation = iface.findItemByObjectName('navigation');
+            navigation.destination = transformedPoint;
+            mainDialog.close()
+        }
+    }
+
+    Button {
+        id: btnWeb
+        visible: appSettings.showBtnWeb
+        text: qsTr("Web")
+        font.bold: true; font.pixelSize: doFlow.btnFs
+        width: doFlow.btnW; height: doFlow.btnH
+        onClicked: {
+            var coords = parseWgs84BoxCoords()
+            if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
+            Qt.openUrlExternally(buildMapsUrl(coords.lat, coords.lon));
+            mainDialog.close()
+        }
+    }
+
+    Button {
+        id: btnBIG
+        visible: appSettings.showBtnBIG
+        text: qsTr("BIG")
+        font.bold: true; font.pixelSize: doFlow.btnFs
+        width: doFlow.btnW; height: doFlow.btnH
+        onClicked: { ensureConverted(); bigDialog.open() }
+        onPressAndHold: { ensureConverted(); bigDialog2.open() }
+    }
+}
  
 
  
