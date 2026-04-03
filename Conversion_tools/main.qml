@@ -31,7 +31,7 @@ Item {
 
 
 //changable stuff 
-property var filetimedate : "v2.4.0  03.04.26" // version date
+property var filetimedate : "v2.2  03.04.26..3" // version date
 property var mapsUrlOption: 3 // Default external map: 1=GMaps pin, 2=GMaps nav, 3=OSM, 4=OSRM route
 property var _lastX: 0; property var _lastY: 0; property var _lastEPSG: 4326 // last coords for re-render on setting change
 property string _lastWarnedEPSGs: "" // tracks last EPSG combo that triggered a Helmert warning
@@ -736,6 +736,49 @@ function diagnosePasteError(raw) {
         return qsTr("Too much text to parse. Select and copy just the coordinate part and try again.");
 
     return qsTr("The text could not be recognised as a coordinate. Edit it to match one of the examples below.");
+}
+
+// ── Text → QR input dialog ────────────────────────────────────────────────────
+Dialog {
+    id: textQrDialog
+    parent: mainWindow.contentItem
+    title: qsTr("QR from text / URL")
+    x: (parent.width - width) / 2
+    y: (parent.height - height) / 2
+    width: Math.min(parent.width - 40, 300)
+    modal: true
+    standardButtons: Dialog.Cancel
+
+    Column {
+        width: parent.width
+        spacing: 10
+        topPadding: 6
+
+        TextField {
+            id: textQrInput
+            width: parent.width
+            placeholderText: qsTr("Paste URL or text here")
+            wrapMode: Text.WrapAnywhere
+        }
+
+        Button {
+            text: qsTr("Generate QR")
+            font.bold: true
+            width: parent.width; height: 36
+            background: Rectangle { color: "#B3EBF2"; radius: 8 }
+            contentItem: Text {
+                text: parent.text; font: parent.font; color: "#333333"
+                horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
+            }
+            onClicked: {
+                var t = textQrInput.text.trim()
+                if (t === "") { mainWindow.displayToast(qsTr("Nothing to encode")); return }
+                textQrDialog.close()
+                qrDialog.geoUri = t
+                qrDialog.open()
+            }
+        }
+    }
 }
 
 // ── QR Code dialog — shows geo: URI as scannable QR code ─────────────────────
@@ -2260,6 +2303,7 @@ RowLayout {
         }
     }
 
+
     Button {
         text: qsTr("Show QR")
         font.pixelSize: 12
@@ -2627,6 +2671,14 @@ Column {
             appSettings.pointLayerName = ""; pointLayerCombo.currentIndex = 0
             appSettings.useNSEW = false; useNSEWCheck.checked = false
         }
+    }
+
+    Button {
+        text: qsTr("Generate QR from text / URL")
+        width: parent.width
+        font.pixelSize: 9
+        implicitHeight: 28
+        onClicked: { textQrDialog.open(); settingsDialog.close() }
     }
 
     Label {
