@@ -2211,6 +2211,8 @@ onTextChanged: {
 onTextChanged: { lonSecClampTimer.restart(); lastEditedBox = "dms_boxes"; coordinatesDirty = true }
 
  }
+ } // end latlongboxesDMS
+
 // QR Code row — Show QR for current coords / Scan QR into plugin
 RowLayout {
     id: qrrow
@@ -2256,8 +2258,6 @@ RowLayout {
         }
     }
 }
-
- }
  // Convert / Refresh Button
  Button {
     text: "Convert"
