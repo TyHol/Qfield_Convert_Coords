@@ -2243,6 +2243,24 @@ RowLayout {
     spacing: 6
 
     Button {
+        text: qsTr("Scan QR")
+        font.pixelSize: 12
+        font.bold: true
+        Layout.fillWidth: true
+        Layout.preferredHeight: 36
+        background: Rectangle { color: "#B3EBF2"; radius: 8 }
+        contentItem: Text {
+            text: parent.text; font: parent.font; color: "#333333"
+            horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
+        }
+        onClicked: {
+            if (!codeReader) { mainWindow.displayToast(qsTr("QR scanner not available")); return }
+            _qrScanPending = true
+            codeReader.open()
+        }
+    }
+
+    Button {
         text: qsTr("Show QR")
         font.pixelSize: 12
         font.bold: true
@@ -2262,23 +2280,7 @@ RowLayout {
         }
     }
 
-    Button {
-        text: qsTr("Scan QR")
-        font.pixelSize: 12
-        font.bold: true
-        Layout.fillWidth: true
-        Layout.preferredHeight: 36
-        background: Rectangle { color: "#B3EBF2"; radius: 8 }
-        contentItem: Text {
-            text: parent.text; font: parent.font; color: "#333333"
-            horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
-        }
-        onClicked: {
-            if (!codeReader) { mainWindow.displayToast(qsTr("QR scanner not available")); return }
-            _qrScanPending = true
-            codeReader.open()
-        }
-    }
+
 }
  // Convert / Refresh Button
  Button {
@@ -2654,7 +2656,7 @@ Dialog {
             id: gpsBox
             width: parent.width
             implicitHeight: childrenRect.height + 20
-            color: "#D9CCE7"
+            color: "#a3afc7"
             radius: 10
             border.color: "black"
             border.width: 0.5
@@ -2688,7 +2690,7 @@ Dialog {
                         text: (positionSource.active && positionSource.positionInformation.latitudeValid && positionSource.positionInformation.longitudeValid)
                             ? bestGridRef(positionSource.projectedPosition, canvasEPSG)
                             : "No GPS"
-                        font.pixelSize: gpsIG.text.indexOf("°") >= 0 ? 24 : 35
+                        font.pixelSize: gpsIG.text.indexOf("°") >= 0 ? 20 : 28
                         wrapMode: Text.Wrap
                         horizontalAlignment: Text.AlignHCenter
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -2708,7 +2710,7 @@ Dialog {
                         text: (positionSource.active && positionSource.positionInformation.latitudeValid && positionSource.positionInformation.longitudeValid)
                             ? justLL(positionSource.projectedPosition, canvasEPSG)
                             : ""
-                        font.pixelSize: 30
+                        font.pixelSize: 24
                         wrapMode: Text.Wrap
                         horizontalAlignment: Text.AlignHCenter
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -2772,7 +2774,7 @@ Dialog {
                     Label {
                         id: screenLL
                         text: justLL(canvas.center, canvasEPSG)
-                        font.pixelSize: 30
+                        font.pixelSize: 24
                         wrapMode: Text.Wrap
                         horizontalAlignment: Text.AlignHCenter
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -2828,7 +2830,7 @@ Dialog {
                 Label {
                     id: igCopy
                     text: igInputBox.text
-                    font.pixelSize: 35
+                    font.pixelSize: 28
                     wrapMode: Text.Wrap
                     horizontalAlignment: Text.AlignHCenter
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -2846,7 +2848,7 @@ Dialog {
                 Label {
                     id: wgs84Copy
                     text: wgs84Box.text
-                    font.pixelSize: 30
+                    font.pixelSize: 24
                     wrapMode: Text.Wrap
                     horizontalAlignment: Text.AlignHCenter
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -2864,7 +2866,7 @@ Dialog {
                 Label {
                     id: wgs84DMCopy
                     text: wgs84DMBox.text
-                    font.pixelSize: 30
+                    font.pixelSize: 24
                     wrapMode: Text.Wrap
                     horizontalAlignment: Text.AlignHCenter
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -2882,7 +2884,7 @@ Dialog {
                 Label {
                     id: wgs84DMSCopy
                     text: wgs84DMSBox.text
-                    font.pixelSize: 30
+                    font.pixelSize: 24
                     wrapMode: Text.Wrap
                     horizontalAlignment: Text.AlignHCenter
                     anchors.horizontalCenter: parent.horizontalCenter
