@@ -2640,80 +2640,61 @@ Column {
 } // end of settingsDialog
 Dialog {
     id: bigDialog
-    font.pixelSize: 35
-    width: 350
-    height: 400
+    width: Math.min(380, mainWindow.width - 16)
     modal: true
     anchors.centerIn: parent
+    padding: 8
 
     Column {
-        spacing: 20
         width: parent.width
-        anchors.centerIn: parent
+        spacing: 12
 
         // GPS Box
         Rectangle {
             id: gpsBox
             width: parent.width
-            implicitHeight: childrenRect.height + 20
+            implicitHeight: childrenRect.implicitHeight + 24
             color: "#a3afc7"
             radius: 10
             border.color: "black"
             border.width: 0.5
-            anchors.horizontalCenter: parent.horizontalCenter
 
             Column {
                 id: childrenRect
-                width: parent.width
-                spacing: 10
-                anchors.margins: 10
+                width: parent.width - 16
                 anchors.centerIn: parent
+                spacing: 8
+                topPadding: 8; bottomPadding: 8
 
                 Label {
                     text: "GPS"
-                    font.pixelSize: 20
-                    font.bold: true
-                    horizontalAlignment: Text.AlignHCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-
-                // IG (GPS)
-                MouseArea {
+                    font.pixelSize: 16; font.bold: true
                     width: parent.width
-                    height: gpsIG.implicitHeight
-                    onClicked: {
-                        copyToClipboard(gpsIG.text)
-                    }
-
+                    horizontalAlignment: Text.AlignHCenter
+                }
+                MouseArea {
+                    width: parent.width; height: gpsIG.implicitHeight
+                    onClicked: copyToClipboard(gpsIG.text)
                     Label {
                         id: gpsIG
                         text: (positionSource.active && positionSource.positionInformation.latitudeValid && positionSource.positionInformation.longitudeValid)
-                            ? bestGridRef(positionSource.projectedPosition, canvasEPSG)
-                            : "No GPS"
+                            ? bestGridRef(positionSource.projectedPosition, canvasEPSG) : "No GPS"
                         font.pixelSize: gpsIG.text.indexOf("°") >= 0 ? 20 : 28
-                        wrapMode: Text.Wrap
+                        font.bold: true
+                        wrapMode: Text.Wrap; width: parent.width
                         horizontalAlignment: Text.AlignHCenter
-                        anchors.horizontalCenter: parent.horizontalCenter
                     }
                 }
-
-                // LL (GPS)
                 MouseArea {
-                    width: parent.width
-                    height: gpsLL.implicitHeight
-                    onClicked: {
-                        copyToClipboard(gpsLL.text)
-                    }
-
+                    width: parent.width; height: gpsLL.implicitHeight
+                    onClicked: copyToClipboard(gpsLL.text)
                     Label {
                         id: gpsLL
                         text: (positionSource.active && positionSource.positionInformation.latitudeValid && positionSource.positionInformation.longitudeValid)
-                            ? justLL(positionSource.projectedPosition, canvasEPSG)
-                            : ""
-                        font.pixelSize: 30
-                        wrapMode: Text.Wrap
+                            ? justLL(positionSource.projectedPosition, canvasEPSG) : ""
+                        font.pixelSize: 24
+                        wrapMode: Text.Wrap; width: parent.width
                         horizontalAlignment: Text.AlignHCenter
-                        anchors.horizontalCenter: parent.horizontalCenter
                     }
                 }
             }
@@ -2723,61 +2704,46 @@ Dialog {
         Rectangle {
             id: screenBox
             width: parent.width
-            implicitHeight: childrenRect2.height + 20
+            implicitHeight: childrenRect2.implicitHeight + 24
             color: "#f0f0f0"
             radius: 10
             border.color: "black"
             border.width: 0.5
-            anchors.horizontalCenter: parent.horizontalCenter
 
             Column {
                 id: childrenRect2
-                width: parent.width
-                spacing: 10
-                anchors.margins: 10
+                width: parent.width - 16
                 anchors.centerIn: parent
+                spacing: 8
+                topPadding: 8; bottomPadding: 8
 
                 Label {
                     text: "Screen Center"
-                    font.pixelSize: 20
-                    font.bold: true
-                    horizontalAlignment: Text.AlignHCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-
-                // IG (Screen Center)
-                MouseArea {
+                    font.pixelSize: 16; font.bold: true
                     width: parent.width
-                    height: screenIG.implicitHeight
-                    onClicked: {
-                        copyToClipboard(screenIG.text)
-                    }
-
+                    horizontalAlignment: Text.AlignHCenter
+                }
+                MouseArea {
+                    width: parent.width; height: screenIG.implicitHeight
+                    onClicked: copyToClipboard(screenIG.text)
                     Label {
                         id: screenIG
                         text: bestGridRef(canvas.center, canvasEPSG)
-                        font.pixelSize: screenIG.text.indexOf("°") >= 0 ? 24 : 35
-                        wrapMode: Text.Wrap
+                        font.pixelSize: screenIG.text.indexOf("°") >= 0 ? 20 : 28
+                        font.bold: true
+                        wrapMode: Text.Wrap; width: parent.width
                         horizontalAlignment: Text.AlignHCenter
-                        anchors.horizontalCenter: parent.horizontalCenter
                     }
                 }
-
-                // LL (Screen Center)
                 MouseArea {
-                    width: parent.width
-                    height: screenLL.implicitHeight
-                    onClicked: {
-                        copyToClipboard(screenLL.text)
-                    }
-
+                    width: parent.width; height: screenLL.implicitHeight
+                    onClicked: copyToClipboard(screenLL.text)
                     Label {
                         id: screenLL
                         text: justLL(canvas.center, canvasEPSG)
-                        font.pixelSize: 30
-                        wrapMode: Text.Wrap
+                        font.pixelSize: 24
+                        wrapMode: Text.Wrap; width: parent.width
                         horizontalAlignment: Text.AlignHCenter
-                        anchors.horizontalCenter: parent.horizontalCenter
                     }
                 }
             }
