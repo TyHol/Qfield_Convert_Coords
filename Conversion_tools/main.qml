@@ -21,6 +21,8 @@ Item {
  property var overlayFeatureFormDrawer: iface.findItemByObjectName('overlayFeatureFormDrawer')
  property var positionSource: iface.findItemByObjectName('positionSource')
  property var canvasMenu: iface.findItemByObjectName('canvasMenu')
+ property var codeReader: iface.findItemByObjectName('codeReader')
+ property bool _qrScanPending: false
  property var canvasCrs : canvas.destinationCrs ;
  property var canvasEPSG : parseInt(canvasCrs.authid.split(":")[1]); // Canvas destination CRS (not project CRS)
  property var mapCanvas: iface.mapCanvas()
@@ -29,7 +31,7 @@ Item {
 
 
 //changable stuff 
-property var filetimedate : "v2.2.1  02.04.26.4" // version date
+property var filetimedate : "v2.3.0  03.04.26" // version date
 property var mapsUrlOption: 3 // Default external map: 1=GMaps pin, 2=GMaps nav, 3=OSM, 4=OSRM route
 property var _lastX: 0; property var _lastY: 0; property var _lastEPSG: 4326 // last coords for re-render on setting change
 property string _lastWarnedEPSGs: "" // tracks last EPSG combo that triggered a Helmert warning
@@ -520,7 +522,23 @@ function handlePaste(clipboardText, createPointAndZoom, alwaysZoom) {
         pasteFormatDialog.open();
     }
 
-    // ── 0. WKT Point (POINT / POINT Z / POINT M / POINT ZM) ──────────────
+    // ── 0a. geo: URI (from QR code scan or manual paste) ─────────────────
+    // Formats: geo:lat,lon  or  geo:lat,lon,alt  (altitude ignored)
+    var geoMatch = raw.match(/^geo:([-\d.]+),([-\d.]+)(?:,([-\d.]+))?/i)
+    if (geoMatch) {
+        var gLat = parseFloat(geoMatch[1])
+        var gLon = parseFloat(geoMatch[2])
+        if (!isNaN(gLat) && !isNaN(gLon)) {
+            updateCoordinates(gLon, gLat, 4326, custom1CRS.text, custom2CRS.text)
+            if (createPointAndZoom) {
+                addPoint(gLon, gLat, 4326)
+                Qt.callLater(function() { alwaysZoom ? zoomToPoint(gLon, gLat, 4326) : doAfterAddAction(gLon, gLat, 4326) })
+            }
+            return true
+        }
+    }
+
+    // ── 0b. WKT Point (POINT / POINT Z / POINT M / POINT ZM) ──────────────
     var wktMatch = raw.match(/Point\s*(ZM|Z|M)?\s*\(\s*([-\d.]+)\s+([-\d.]+)(?:\s+([-\d.]+))?(?:\s+([-\d.]+))?\s*\)/i)
     if (wktMatch) {
         var wktType = (wktMatch[1] || "").toUpperCase()  // "", "Z", "M", or "ZM"
@@ -682,6 +700,56 @@ function diagnosePasteError(raw) {
         return qsTr("Too much text to parse. Select and copy just the coordinate part and try again.");
 
     return qsTr("The text could not be recognised as a coordinate. Edit it to match one of the examples below.");
+}
+
+// ── QR Code dialog — shows geo: URI as scannable QR code ─────────────────────
+Dialog {
+    id: qrDialog
+    property string geoUri: ""
+    parent: mainWindow.contentItem
+    title: qsTr("QR Code")
+    x: (parent.width - width) / 2
+    y: (parent.height - height) / 2
+    width: Math.min(parent.width - 40, 300)
+    modal: true
+    standardButtons: Dialog.Close
+
+    Column {
+        anchors.horizontalCenter: parent.horizontalCenter
+        spacing: 10
+        topPadding: 6
+
+        Image {
+            id: qrImage
+            property int sz: Math.min(qrDialog.width - 40, 240)
+            width: sz; height: sz
+            sourceSize.width: sz; sourceSize.height: sz
+            source: qrDialog.geoUri !== "" ? "image://barcode/?text=" + encodeURIComponent(qrDialog.geoUri) : ""
+            fillMode: Image.PreserveAspectFit
+            anchors.horizontalCenter: parent.horizontalCenter
+        }
+
+        Text {
+            width: qrDialog.width - 40
+            text: qrDialog.geoUri
+            font.pixelSize: 11
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WrapAnywhere
+            color: palette.text
+            anchors.horizontalCenter: parent.horizontalCenter
+        }
+    }
+}
+
+// Forward accepted scan results through handlePaste when triggered by Scan QR button
+Connections {
+    target: codeReader
+    function onAccepted(string) {
+        if (_qrScanPending) {
+            _qrScanPending = false
+            handlePaste(string)
+        }
+    }
 }
 
 Dialog {
@@ -1757,6 +1825,50 @@ TextField {
         ensureConverted(); copyToClipboard(wgs84Box.text)
     }
 }
+}
+
+// QR Code row — Show QR for current coords / Scan QR into plugin
+RowLayout {
+    Layout.fillWidth: true
+    spacing: 6
+
+    Button {
+        text: qsTr("Show QR")
+        font.pixelSize: 12
+        font.bold: true
+        Layout.fillWidth: true
+        Layout.preferredHeight: 36
+        background: Rectangle { color: "#B3EBF2"; radius: 8 }
+        contentItem: Text {
+            text: parent.text; font: parent.font; color: "#333333"
+            horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
+        }
+        onClicked: {
+            ensureConverted()
+            var coords = parseWgs84BoxCoords()
+            if (!coords) { mainWindow.displayToast(qsTr("Convert coordinates first")); return }
+            qrDialog.geoUri = "geo:" + coords.lat.toFixed(7) + "," + coords.lon.toFixed(7)
+            qrDialog.open()
+        }
+    }
+
+    Button {
+        text: qsTr("Scan QR")
+        font.pixelSize: 12
+        font.bold: true
+        Layout.fillWidth: true
+        Layout.preferredHeight: 36
+        background: Rectangle { color: "#B3EBF2"; radius: 8 }
+        contentItem: Text {
+            text: parent.text; font: parent.font; color: "#333333"
+            horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
+        }
+        onClicked: {
+            if (!codeReader) { mainWindow.displayToast(qsTr("QR scanner not available")); return }
+            _qrScanPending = true
+            codeReader.open()
+        }
+    }
 }
 
 RowLayout{

@@ -439,6 +439,33 @@ test('POINT empty parens',    'POINT ()',                          r => r.route!
 test('POINT letters',         'POINT (abc def)',                   r => r.route!=='wkt');
 test('POINT one number',      'POINT (123)',                       r => r.route!=='wkt');
 
+// ── geo: URI (QR code scan) ────────────────────────────────────────────────────
+// Note: geo: URIs are handled before WKT in handlePaste but simulatePaste
+// does not include that branch — test the regex directly here.
+console.log('\n── geo: URI parsing ──');
+function testGeo(label, input, expectLat, expectLon) {
+    var m = input.match(/^geo:([-\d.]+),([-\d.]+)(?:,([-\d.]+))?/i);
+    var ok = m && Math.abs(parseFloat(m[1]) - expectLat) < 0.0001 && Math.abs(parseFloat(m[2]) - expectLon) < 0.0001;
+    if (ok) { process.stdout.write(`  ✓ ${label}\n`); passed++; }
+    else     { process.stdout.write(`  ✗ ${label}\n    input:  ${JSON.stringify(input)}\n    match:  ${JSON.stringify(m)}\n`); failed++; }
+}
+function testGeoNoMatch(label, input) {
+    var m = input.match(/^geo:([-\d.]+),([-\d.]+)(?:,([-\d.]+))?/i);
+    var ok = !m;
+    if (ok) { process.stdout.write(`  ✓ ${label}\n`); passed++; }
+    else     { process.stdout.write(`  ✗ ${label}\n    input:  ${JSON.stringify(input)}\n    unexpectedly matched\n`); failed++; }
+}
+testGeo('basic geo: URI',              'geo:53.3498,-6.2603',        53.3498, -6.2603);
+testGeo('geo: with altitude',          'geo:53.3498,-6.2603,0',      53.3498, -6.2603);
+testGeo('geo: with non-zero altitude', 'geo:51.5074,-0.1278,25.3',   51.5074, -0.1278);
+testGeo('geo: south/west',             'geo:-33.8688,-70.6693',      -33.8688, -70.6693);
+testGeo('geo: null island',            'geo:0,0',                    0, 0);
+testGeo('geo: high precision',         'geo:53.34980000,-6.26030000', 53.3498, -6.2603);
+testGeo('geo: uppercase GEO:',         'GEO:53.3498,-6.2603',        53.3498, -6.2603);
+testGeoNoMatch('not a geo: URI',       '53.3498,-6.2603');
+testGeoNoMatch('geo: missing lon',     'geo:53.3498');
+testGeoNoMatch('geo: letters',         'geo:abc,def');
+
 // ── Plus Code ─────────────────────────────────────────────────────────────────
 console.log('\n── Plus Code ──');
 test('valid 10-char code',    '9C5P37C3+45',   r => r.route==='pluscode');
