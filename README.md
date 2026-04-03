@@ -2,7 +2,7 @@
 
 A plugin for the [QField](https://qfield.org/) mobile GIS app that converts between coordinate systems, creates points, and adds Irish/UK grid reference search to the QField locator bar.
 
-> **Version:** 2.3.0 | **Author:** Tyhol | **Repository:** https://github.com/TyHol/Qfield_Convert_Coords
+> **Version:** 2.4.0 | **Author:** Tyhol | **Repository:** https://github.com/TyHol/Qfield_Convert_Coords
 
 ---
 
@@ -89,12 +89,16 @@ A checkbox in Settings toggles between `N/S/E/W` directional labels and `+/−` 
 
 ### Action Buttons
 
-| Button | Tap | Long Press |
-|---|---|---|
-| **Pan/Zoom** | Pans the map canvas to the coordinate | Zooms to the coordinate |
-| **Add** | Adds a point to the selected layer | — |
-| **Navigate/Web** | Sets QField navigation destination | Opens in external map app |
-| **BIG** | Opens BIG display (GPS + screen centre) | Opens BIG display (all current values) |
+Up to six buttons appear in the "Do:" row — each can be shown or hidden in Settings. With all six visible they wrap to two rows of three.
+
+| Button | Action |
+|---|---|
+| **Pan** | Pans the map canvas to the coordinate |
+| **Zoom** | Zooms to the coordinate |
+| **Add** | Adds a point to the selected layer |
+| **Navigate** | Sets QField navigation destination |
+| **Web** | Opens in the chosen external map app |
+| **BIG** | Tap: BIG display (GPS + screen centre) / Long press: BIG display (all values) |
 
 ### BIG Display
 
@@ -199,6 +203,9 @@ Zoom extent presets: Detail (~25m), Building (~50m), Street (~500m), Town (~2km)
 
 ### Display
 Toggle visibility of each coordinate row, DMS boxes, the map crosshair, and the QR Buttons row.
+
+### Action Buttons
+Show or hide any of the six action buttons individually: Pan, Zoom, Add, Navigate, Web, BIG.
 
 ### N/S/E/W labels
 Toggle between directional labels and +/− signs on DDM/DMS output.

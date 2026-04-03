@@ -2,5 +2,5 @@
 name=Conversion_tools
 description= QField plugin for coordinate conversion and navigation — supports Irish Grid, UK Grid, MGRS, Plus Code, and custom EPSG CRS. Captures screen centre or GPS position, generates/scans geo: QR codes, and adds grid reference search to the QField locator bar.
 icon=icon2.svg
-version=2.3.0
+version=2.4.0
 homepage=https://github.com/TyHol/Qfield_Convert_Coords.git
