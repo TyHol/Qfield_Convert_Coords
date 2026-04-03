@@ -3101,18 +3101,16 @@ function degtoSeconds(decimal) {
  var igPoint = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, CoordinateReferenceSystemUtils.fromDescription("EPSG:29903"))
  var igRef = getIGFromXY(igPoint.x, igPoint.y)
  igInputBox.isProgrammaticUpdate = true
- igInputBox.text = igRef
- // Hide the row when the point is outside Irish Grid coverage (result is "")
- igridrow.visible = showIG.checked && igRef !== ""
+ igInputBox.text = igRef !== "" ? igRef : "OOB"
+ igridrow.visible = showIG.checked
  }
 
  if (inputDialog !== 2) { // Update UK
  var ukPoint = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), sourceCrs, CoordinateReferenceSystemUtils.fromDescription("EPSG:27700"))
  var ukRef = getUKFromXY(ukPoint.x, ukPoint.y)
  ukInputBox.isProgrammaticUpdate = true
- ukInputBox.text = ukRef
- // Hide the row when the point is outside UK Grid coverage (result is "")
- ukgridrow.visible = showUK.checked && ukRef !== ""
+ ukInputBox.text = ukRef !== "" ? ukRef : "OOB"
+ ukgridrow.visible = showUK.checked
  }
 
  if (inputDialog !== 3) { // Update Custom1
