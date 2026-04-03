@@ -866,7 +866,7 @@ Dialog {
                     horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
                 }
                 onClicked: {
-                    var path = StandardPaths.writableLocation(StandardPaths.TempLocation) + "/qr_geo.png"
+                    var path = StandardPaths.writableLocation(StandardPaths.TempLocation) + "/qr_geo.jpg"
                     qrImage.grabToImage(function(result) {
                         if (result.saveToFile(path)) {
                             Qt.openUrlExternally("file://" + path)
