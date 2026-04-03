@@ -526,7 +526,7 @@ function handlePaste(clipboardText, createPointAndZoom, alwaysZoom) {
 
     // ── 0a. geo: URI (from QR code scan or manual paste) ─────────────────
     // Formats: geo:lat,lon  or  geo:lat,lon,alt  (altitude ignored)
-    var geoMatch = raw.match(/^geo:([-\d.]+),([-\d.]+)(?:,([-\d.]+))?/i)
+    var geoMatch = raw.match(/^geo:\s*([-\d.]+)\s*,\s*([-\d.]+)(?:\s*,\s*([-\d.]+))?/i)
     if (geoMatch) {
         var gLat = parseFloat(geoMatch[1])
         var gLon = parseFloat(geoMatch[2])
