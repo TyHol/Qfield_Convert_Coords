@@ -35,7 +35,7 @@ Download the zip from the releases page and follow the QField plugin installatio
 
 Open the dialog by tapping the plugin button/icon in the QField toolbar.
 
-![main settingsv2 2](https://github.com/user-attachments/assets/81ce5f86-0e20-4f14-86b6-dfa54086b1c5)
+![2 4 0](https://github.com/user-attachments/assets/feb48262-fbf2-4961-a3fa-18bb587b8408)
 
 ### Grabbing Coordinates
 
