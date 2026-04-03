@@ -49,7 +49,7 @@ property var igvis: true // visibility of Irish grid
 property var ukgvis: false // visibility of UK grid
 property var custom1vis: false // visibility of custom1
 property var custom2vis: false // visibility of custom2 
-property var wgs84vis: true // visibility of wgs84 // always visible
+property var wgs84vis: false // visibility of wgs84 degrees row
 property var dmvis: true // visibility of DM
 property var dmsvis: false // visibility of DMS
 property var dmsBoxesvis: false // visibility of DMS boxes
