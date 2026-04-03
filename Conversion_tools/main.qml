@@ -738,6 +738,21 @@ Dialog {
             color: palette.text
             anchors.horizontalCenter: parent.horizontalCenter
         }
+
+        Button {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: qsTr("Copy URI")
+            font.pixelSize: 12
+            font.bold: true
+            width: qrDialog.width - 40
+            height: 36
+            background: Rectangle { color: "#B3EBF2"; radius: 8 }
+            contentItem: Text {
+                text: parent.text; font: parent.font; color: "#333333"
+                horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
+            }
+            onClicked: copyToClipboard(qrDialog.geoUri)
+        }
     }
 }
 
