@@ -458,6 +458,28 @@ Component.onCompleted: {
         mapCanvas.mapSettings.setExtent(extent, true);
     }
 
+    function panToPoint(pointX, pointY, crsEpsg) {
+        var transformedPoint = GeometryUtils.reprojectPoint(
+            GeometryUtils.point(pointX, pointY),
+            CoordinateReferenceSystemUtils.fromDescription("EPSG:" + crsEpsg),
+            CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG));
+        iface.mapCanvas().mapSettings.center.x = transformedPoint.x;
+        iface.mapCanvas().mapSettings.center.y = transformedPoint.y;
+        mainWindow.displayToast(transformedPoint.x + ", " + transformedPoint.y)
+    }
+
+    function navigateToPoint(pointX, pointY, crsEpsg) {
+        var transformedPoint = GeometryUtils.reprojectPoint(
+            GeometryUtils.point(pointX, pointY),
+            CoordinateReferenceSystemUtils.fromDescription("EPSG:" + crsEpsg),
+            CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG));
+        iface.mapCanvas().mapSettings.center.x = transformedPoint.x;
+        iface.mapCanvas().mapSettings.center.y = transformedPoint.y;
+        mainWindow.displayToast("navigating to:" + transformedPoint.x + ", " + transformedPoint.y);
+        let navigation = iface.findItemByObjectName('navigation');
+        navigation.destination = transformedPoint;
+    }
+
     // Pan or zoom to a point after adding it, based on the afterAddAction setting.
     // x, y are in the CRS given by crsEpsg.
     function doAfterAddAction(x, y, crsEpsg) {
@@ -2319,14 +2341,12 @@ Flow {
         onClicked: {
             var coords = parseWgs84BoxCoords()
             if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
-            var transformedPoint = GeometryUtils.reprojectPoint(
-                GeometryUtils.point(coords.lon, coords.lat),
-                CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"),
-                CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG));
-            iface.mapCanvas().mapSettings.center.x = transformedPoint.x;
-            iface.mapCanvas().mapSettings.center.y = transformedPoint.y;
-            mainWindow.displayToast(transformedPoint.x + ", " + transformedPoint.y)
-            mainDialog.close()
+            panToPoint(coords.lon, coords.lat, 4326); mainDialog.close()
+        }
+        onPressAndHold: {
+            var coords = parseWgs84BoxCoords()
+            if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
+            zoomToPoint(coords.lon, coords.lat, 4326); mainDialog.close()
         }
     }
 
@@ -2339,8 +2359,12 @@ Flow {
         onClicked: {
             var coords = parseWgs84BoxCoords()
             if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
-            zoomToPoint(coords.lon, coords.lat, 4326)
-            mainDialog.close()
+            zoomToPoint(coords.lon, coords.lat, 4326); mainDialog.close()
+        }
+        onPressAndHold: {
+            var coords = parseWgs84BoxCoords()
+            if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
+            panToPoint(coords.lon, coords.lat, 4326); mainDialog.close()
         }
     }
 
@@ -2374,16 +2398,12 @@ Flow {
         onClicked: {
             var coords = parseWgs84BoxCoords()
             if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
-            var transformedPoint = GeometryUtils.reprojectPoint(
-                GeometryUtils.point(coords.lon, coords.lat),
-                CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"),
-                CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG));
-            iface.mapCanvas().mapSettings.center.x = transformedPoint.x;
-            iface.mapCanvas().mapSettings.center.y = transformedPoint.y;
-            mainWindow.displayToast("navigating to:" + transformedPoint.x + ", " + transformedPoint.y);
-            let navigation = iface.findItemByObjectName('navigation');
-            navigation.destination = transformedPoint;
-            mainDialog.close()
+            navigateToPoint(coords.lon, coords.lat, 4326); mainDialog.close()
+        }
+        onPressAndHold: {
+            var coords = parseWgs84BoxCoords()
+            if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
+            Qt.openUrlExternally(buildMapsUrl(coords.lat, coords.lon)); mainDialog.close()
         }
     }
 
@@ -2396,8 +2416,12 @@ Flow {
         onClicked: {
             var coords = parseWgs84BoxCoords()
             if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
-            Qt.openUrlExternally(buildMapsUrl(coords.lat, coords.lon));
-            mainDialog.close()
+            Qt.openUrlExternally(buildMapsUrl(coords.lat, coords.lon)); mainDialog.close()
+        }
+        onPressAndHold: {
+            var coords = parseWgs84BoxCoords()
+            if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
+            navigateToPoint(coords.lon, coords.lat, 4326); mainDialog.close()
         }
     }
 
