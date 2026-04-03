@@ -2,7 +2,7 @@
 
 A plugin for the [QField](https://qfield.org/) mobile GIS app that converts between coordinate systems, creates points, and adds Irish/UK grid reference search to the QField locator bar.
 
-> **Version:** 2.2.1 | **Author:** Tyhol | **Repository:** https://github.com/TyHol/Qfield_Convert_Coords
+> **Version:** 2.3.0 | **Author:** Tyhol | **Repository:** https://github.com/TyHol/Qfield_Convert_Coords
 
 ---
 
@@ -17,6 +17,7 @@ A plugin for the [QField](https://qfield.org/) mobile GIS app that converts betw
   - [DMS Input Boxes](#dms-input-boxes)
   - [Action Buttons](#action-buttons)
   - [BIG Display](#big-display)
+- [QR Code](#qr-code)
 - [Canvas Menu Tools](#canvas-menu-tools)
 - [Paste from Clipboard](#paste-from-clipboard)
 - [Grid Reference Search](#grid-reference-search)
@@ -106,6 +107,26 @@ Tap any value in either BIG dialog to copy it to the clipboard.
 
 ---
 
+## QR Code
+
+Two buttons appear below the WGS84 row (can be hidden in Settings):
+
+| Button | Function |
+|---|---|
+| **Show QR** | Generates a `geo:lat,lon` QR code from the current coordinates |
+| **Scan QR** | Opens the device camera to scan a QR code containing a coordinate |
+
+Inside the QR dialog:
+
+| Button | Function |
+|---|---|
+| **Copy URI** | Copies the `geo:lat,lon` URI to the clipboard |
+| **Share Image** | Saves the QR code as an image and opens the system share sheet |
+
+Scanned QR codes containing `geo:` URIs are automatically parsed and loaded into the main dialog — the same confirm dialog as a normal paste applies.
+
+---
+
 ## Canvas Menu Tools
 
 Long-press on the map canvas to access:
@@ -134,6 +155,7 @@ Accepts a wide range of coordinate formats:
 | Plus Code | `9C5P37C3+45J` |
 | WKT Point | `POINT (84092.667 53131.478)` or a full feature info block containing a Point geometry (pastes point only - not attributes) |
 | Projected coordinates | `313621, 234156` |
+| geo: URI | `geo:53.3498,-6.2603` |
 
 A **Confirm coordinate format** dialog appears before anything is committed, showing the parsed text and the resulting coordinates. Tap **Apply** to accept or **Cancel** to abort.
 
@@ -176,7 +198,7 @@ Selects the target layer — lists all editable point layers in the current proj
 Zoom extent presets: Detail (~25m), Building (~50m), Street (~500m), Town (~2km), Region (~20km), Country (~200km).
 
 ### Display
-Toggle visibility of each coordinate row, DMS boxes, and the map crosshair.
+Toggle visibility of each coordinate row, DMS boxes, the map crosshair, and the QR Buttons row.
 
 ### N/S/E/W labels
 Toggle between directional labels and +/− signs on DDM/DMS output.
