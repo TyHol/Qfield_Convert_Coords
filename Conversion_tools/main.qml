@@ -86,6 +86,12 @@ Settings {
     property bool   showMGRS:       false
     property bool   showPlusCode:   false
     property bool   showQR:         true
+    property bool   showBtnPan:     true
+    property bool   showBtnZoom:    true
+    property bool   showBtnAdd:     true
+    property bool   showBtnNavigate: true
+    property bool   showBtnWeb:     true
+    property bool   showBtnBIG:     true
     property bool   showCrosshair:  true
     property bool   showDMSboxes:   false
     property bool   showCustomisation: false
@@ -192,6 +198,12 @@ Component.onCompleted: {
     showMGRS.checked       = appSettings.showMGRS
     showPlusCode.checked   = appSettings.showPlusCode
     showQR.checked         = appSettings.showQR
+    showBtnPan.checked     = appSettings.showBtnPan
+    showBtnZoom.checked    = appSettings.showBtnZoom
+    showBtnAdd.checked     = appSettings.showBtnAdd
+    showBtnNavigate.checked = appSettings.showBtnNavigate
+    showBtnWeb.checked     = appSettings.showBtnWeb
+    showBtnBIG.checked     = appSettings.showBtnBIG
     showCrosshair.checked  = appSettings.showCrosshair
     showDMSboxes.checked   = appSettings.showDMSboxes
     showCustomisation.checked = appSettings.showCustomisation
@@ -1871,51 +1883,6 @@ TextField {
 }
 }
 
-// QR Code row — Show QR for current coords / Scan QR into plugin
-RowLayout {
-    id: qrrow
-    visible: appSettings.showQR
-    Layout.fillWidth: true
-    spacing: 6
-
-    Button {
-        text: qsTr("Show QR")
-        font.pixelSize: 12
-        font.bold: true
-        Layout.fillWidth: true
-        Layout.preferredHeight: 36
-        background: Rectangle { color: "#B3EBF2"; radius: 8 }
-        contentItem: Text {
-            text: parent.text; font: parent.font; color: "#333333"
-            horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
-        }
-        onClicked: {
-            ensureConverted()
-            var coords = parseWgs84BoxCoords()
-            if (!coords) { mainWindow.displayToast(qsTr("Convert coordinates first")); return }
-            qrDialog.geoUri = "geo:" + coords.lat.toFixed(7) + "," + coords.lon.toFixed(7)
-            qrDialog.open()
-        }
-    }
-
-    Button {
-        text: qsTr("Scan QR")
-        font.pixelSize: 12
-        font.bold: true
-        Layout.fillWidth: true
-        Layout.preferredHeight: 36
-        background: Rectangle { color: "#B3EBF2"; radius: 8 }
-        contentItem: Text {
-            text: parent.text; font: parent.font; color: "#333333"
-            horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
-        }
-        onClicked: {
-            if (!codeReader) { mainWindow.displayToast(qsTr("QR scanner not available")); return }
-            _qrScanPending = true
-            codeReader.open()
-        }
-    }
-}
 
 RowLayout{
     id: dmrow
@@ -2244,7 +2211,51 @@ onTextChanged: {
 onTextChanged: { lonSecClampTimer.restart(); lastEditedBox = "dms_boxes"; coordinatesDirty = true }
 
  }
+// QR Code row — Show QR for current coords / Scan QR into plugin
+RowLayout {
+    id: qrrow
+    visible: appSettings.showQR
+    Layout.fillWidth: true
+    spacing: 6
 
+    Button {
+        text: qsTr("Show QR")
+        font.pixelSize: 12
+        font.bold: true
+        Layout.fillWidth: true
+        Layout.preferredHeight: 36
+        background: Rectangle { color: "#B3EBF2"; radius: 8 }
+        contentItem: Text {
+            text: parent.text; font: parent.font; color: "#333333"
+            horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
+        }
+        onClicked: {
+            ensureConverted()
+            var coords = parseWgs84BoxCoords()
+            if (!coords) { mainWindow.displayToast(qsTr("Convert coordinates first")); return }
+            qrDialog.geoUri = "geo:" + coords.lat.toFixed(7) + "," + coords.lon.toFixed(7)
+            qrDialog.open()
+        }
+    }
+
+    Button {
+        text: qsTr("Scan QR")
+        font.pixelSize: 12
+        font.bold: true
+        Layout.fillWidth: true
+        Layout.preferredHeight: 36
+        background: Rectangle { color: "#B3EBF2"; radius: 8 }
+        contentItem: Text {
+            text: parent.text; font: parent.font; color: "#333333"
+            horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
+        }
+        onClicked: {
+            if (!codeReader) { mainWindow.displayToast(qsTr("QR scanner not available")); return }
+            _qrScanPending = true
+            codeReader.open()
+        }
+    }
+}
 
  }
  // Convert / Refresh Button
@@ -2294,101 +2305,116 @@ RowLayout{
  } 
  
  Button {
- 
- text: qsTr("Zoom/\nPan")
- font.bold: true
-  Layout.fillWidth: true
- font.pixelSize: font_Size.text  -3
- Layout.preferredHeight: 60 
-onPressAndHold: { //pan to point
- var coords = parseWgs84BoxCoords()
- if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
- var customcrsIN = CoordinateReferenceSystemUtils.fromDescription("EPSG:4326");
- var customcrsOUT = CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG);
- var transformedPoint = GeometryUtils.reprojectPoint(GeometryUtils.point(coords.lon, coords.lat), customcrsIN, customcrsOUT);
- iface.mapCanvas().mapSettings.center.x = transformedPoint.x;
- iface.mapCanvas().mapSettings.center.y = transformedPoint.y;
- mainWindow.displayToast(transformedPoint.x + ", " + transformedPoint.y)
- mainDialog.close()
- }
-  onClicked:{ // zoom to point
- var coords = parseWgs84BoxCoords()
- if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
- zoomToPoint(coords.lon, coords.lat, 4326)
- mainDialog.close()
- }
- }
- 
-Button {
- text: qsTr("Add")
- font.bold: true
-  Layout.fillWidth: true
- font.pixelSize: font_Size.text 
- Layout.preferredHeight: 60 
-
- onClicked: {
-    var coords = parseWgs84BoxCoords()
-    if (!coords) {
-        mainWindow.displayToast(qsTr("Input some coordinates first!"))
-        return
+    id: btnPan
+    visible: appSettings.showBtnPan
+    text: qsTr("Pan")
+    font.bold: true
+    Layout.fillWidth: true
+    font.pixelSize: font_Size.text - 3
+    Layout.preferredHeight: 60
+    onClicked: {
+        var coords = parseWgs84BoxCoords()
+        if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
+        var transformedPoint = GeometryUtils.reprojectPoint(
+            GeometryUtils.point(coords.lon, coords.lat),
+            CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"),
+            CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG));
+        iface.mapCanvas().mapSettings.center.x = transformedPoint.x;
+        iface.mapCanvas().mapSettings.center.y = transformedPoint.y;
+        mainWindow.displayToast(transformedPoint.x + ", " + transformedPoint.y)
+        mainDialog.close()
     }
-    var pt = GeometryUtils.reprojectPoint(
-        GeometryUtils.point(coords.lon, coords.lat),
-        CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"),
-        CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG))
-    addPointToActiveLayer(
-        GeometryUtils.createGeometryFromWkt(`POINT(${pt.x} ${pt.y})`),
-        formOnAdd)
-    doAfterAddAction(pt.x, pt.y, canvasEPSG)
-    mainDialog.close();
  }
-}
 
-
-Button {
- visible: true
- text: "Navigate/\nWeb"
-  Layout.fillWidth: true
- font.bold: true
- font.pixelSize: font_Size.text -3
- Layout.preferredHeight: 60 
- onClicked: {
- let navigation = iface.findItemByObjectName('navigation');
- var coords = parseWgs84BoxCoords()
- if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
- var transformedPoint = GeometryUtils.reprojectPoint(
-     GeometryUtils.point(coords.lon, coords.lat),
-     CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"),
-     CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG));
- iface.mapCanvas().mapSettings.center.x = transformedPoint.x;
- iface.mapCanvas().mapSettings.center.y = transformedPoint.y;
- mainWindow.displayToast("navigating to:" + transformedPoint.x + ", " + transformedPoint.y);
- navigation.destination = transformedPoint;
- mainDialog.close()
- }
-  onPressAndHold: {
-    var coords = parseWgs84BoxCoords()
-    if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
-    Qt.openUrlExternally(buildMapsUrl(coords.lat, coords.lon));
-    mainDialog.close()
-}
-
-
-}
-Button {
- text: qsTr("BIG")
- 
- font.bold: true
-  Layout.fillWidth: true
- font.pixelSize: font_Size.text 
- Layout.preferredHeight: 60 
- onClicked: { 
-    ensureConverted(); bigDialog.open() 
+ Button {
+    id: btnZoom
+    visible: appSettings.showBtnZoom
+    text: qsTr("Zoom")
+    font.bold: true
+    Layout.fillWidth: true
+    font.pixelSize: font_Size.text - 3
+    Layout.preferredHeight: 60
+    onClicked: {
+        var coords = parseWgs84BoxCoords()
+        if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
+        zoomToPoint(coords.lon, coords.lat, 4326)
+        mainDialog.close()
     }
+ }
 
- onPressAndHold: {
-     ensureConverted(); bigDialog2.open() 
-     }
+ Button {
+    id: btnAdd
+    visible: appSettings.showBtnAdd
+    text: qsTr("Add")
+    font.bold: true
+    Layout.fillWidth: true
+    font.pixelSize: font_Size.text
+    Layout.preferredHeight: 60
+    onClicked: {
+        var coords = parseWgs84BoxCoords()
+        if (!coords) { mainWindow.displayToast(qsTr("Input some coordinates first!")); return }
+        var pt = GeometryUtils.reprojectPoint(
+            GeometryUtils.point(coords.lon, coords.lat),
+            CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"),
+            CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG))
+        addPointToActiveLayer(
+            GeometryUtils.createGeometryFromWkt(`POINT(${pt.x} ${pt.y})`),
+            formOnAdd)
+        doAfterAddAction(pt.x, pt.y, canvasEPSG)
+        mainDialog.close()
+    }
+ }
+
+ Button {
+    id: btnNavigate
+    visible: appSettings.showBtnNavigate
+    text: qsTr("Navigate")
+    font.bold: true
+    Layout.fillWidth: true
+    font.pixelSize: font_Size.text - 3
+    Layout.preferredHeight: 60
+    onClicked: {
+        var coords = parseWgs84BoxCoords()
+        if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
+        var transformedPoint = GeometryUtils.reprojectPoint(
+            GeometryUtils.point(coords.lon, coords.lat),
+            CoordinateReferenceSystemUtils.fromDescription("EPSG:4326"),
+            CoordinateReferenceSystemUtils.fromDescription("EPSG:" + canvasEPSG));
+        iface.mapCanvas().mapSettings.center.x = transformedPoint.x;
+        iface.mapCanvas().mapSettings.center.y = transformedPoint.y;
+        mainWindow.displayToast("navigating to:" + transformedPoint.x + ", " + transformedPoint.y);
+        let navigation = iface.findItemByObjectName('navigation');
+        navigation.destination = transformedPoint;
+        mainDialog.close()
+    }
+ }
+
+ Button {
+    id: btnWeb
+    visible: appSettings.showBtnWeb
+    text: qsTr("Web")
+    font.bold: true
+    Layout.fillWidth: true
+    font.pixelSize: font_Size.text - 3
+    Layout.preferredHeight: 60
+    onClicked: {
+        var coords = parseWgs84BoxCoords()
+        if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
+        Qt.openUrlExternally(buildMapsUrl(coords.lat, coords.lon));
+        mainDialog.close()
+    }
+ }
+
+ Button {
+    id: btnBIG
+    visible: appSettings.showBtnBIG
+    text: qsTr("BIG")
+    font.bold: true
+    Layout.fillWidth: true
+    font.pixelSize: font_Size.text
+    Layout.preferredHeight: 60
+    onClicked: { ensureConverted(); bigDialog.open() }
+    onPressAndHold: { ensureConverted(); bigDialog2.open() }
  }
  } 
  
@@ -2497,6 +2523,20 @@ Column {
       }
     Rectangle { width: parent.width; height: 1; color: "#cccccc" }
     Item { width: 1; height: 3 }
+    Label { text: qsTr("Action Buttons"); font.pixelSize: 10; font.bold: true }
+    Item  { width: 1; height: 2 }
+    GridLayout {
+        width: parent.width
+        columns: 3; columnSpacing: 0; rowSpacing: 0
+        CheckBox { id: showBtnPan;      text: "Pan";      font.pixelSize: 9; implicitHeight: 26; checked: true; onCheckedChanged: { btnPan.visible = checked;      appSettings.showBtnPan = checked } }
+        CheckBox { id: showBtnZoom;     text: "Zoom";     font.pixelSize: 9; implicitHeight: 26; checked: true; onCheckedChanged: { btnZoom.visible = checked;     appSettings.showBtnZoom = checked } }
+        CheckBox { id: showBtnAdd;      text: "Add";      font.pixelSize: 9; implicitHeight: 26; checked: true; onCheckedChanged: { btnAdd.visible = checked;      appSettings.showBtnAdd = checked } }
+        CheckBox { id: showBtnNavigate; text: "Navigate"; font.pixelSize: 9; implicitHeight: 26; checked: true; onCheckedChanged: { btnNavigate.visible = checked; appSettings.showBtnNavigate = checked } }
+        CheckBox { id: showBtnWeb;      text: "Web";      font.pixelSize: 9; implicitHeight: 26; checked: true; onCheckedChanged: { btnWeb.visible = checked;      appSettings.showBtnWeb = checked } }
+        CheckBox { id: showBtnBIG;      text: "BIG";      font.pixelSize: 9; implicitHeight: 26; checked: true; onCheckedChanged: { btnBIG.visible = checked;      appSettings.showBtnBIG = checked } }
+    }
+    Rectangle { width: parent.width; height: 1; color: "#cccccc" }
+    Item { width: 1; height: 3 }
     ButtonGroup { id: mapsUrlGroup }
     Label { text: qsTr("External map"); font.pixelSize: 10; font.bold: true }
     Item  { width: 1; height: 2 }
@@ -2557,6 +2597,10 @@ Column {
             showDM.checked      = dmvis;    showDMS.checked       = dmsvis
             showDMSboxes.checked = dmsBoxesvis; showCrosshair.checked = crosshairvis
             showMGRS.checked = mgrsvis; showPlusCode.checked = pluscodevis; showQR.checked = true; appSettings.showQR = true
+            showBtnPan.checked = true; showBtnZoom.checked = true; showBtnAdd.checked = true
+            showBtnNavigate.checked = true; showBtnWeb.checked = true; showBtnBIG.checked = true
+            appSettings.showBtnPan = true; appSettings.showBtnZoom = true; appSettings.showBtnAdd = true
+            appSettings.showBtnNavigate = true; appSettings.showBtnWeb = true; appSettings.showBtnBIG = true
             formOnAdd = showFeatureFormDefault; showFormOnAdd.checked = showFeatureFormDefault; appSettings.showFeatureForm = showFeatureFormDefault
             appSettings.afterAddAction = afterAddDefault; afterAddGroup.checkedButton = [afterAddNothing, afterAddPan, afterAddZoom][afterAddDefault]
             mapsUrlOption = 3;              appSettings.mapsUrlOption = 3
