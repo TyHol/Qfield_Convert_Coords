@@ -2292,22 +2292,23 @@ RowLayout {
  
  
  
-Label {
-    id: label_2
-    font.bold: true
-    font.italic: true
-    font.family: "Arial"
-    font.pixelSize: font_Size.text
-    text: qsTr("Do:")
-}
-
 Flow {
     id: doFlow
     Layout.fillWidth: true
     spacing: 4
-    property int btnW: Math.floor((width - 2 * spacing) / 3)
+    property int lblW: 32
+    property int btnW: Math.floor((width - lblW - 4 * spacing) / 4)
     property int btnH: 60
     property int btnFs: font_Size.text - 3
+
+    Label {
+        id: label_2
+        font.bold: true; font.italic: true; font.family: "Arial"
+        font.pixelSize: font_Size.text
+        text: qsTr("Do:")
+        width: doFlow.lblW; height: doFlow.btnH
+        verticalAlignment: Text.AlignVCenter
+    }
 
     Button {
         id: btnPan
