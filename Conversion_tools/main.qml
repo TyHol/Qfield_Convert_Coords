@@ -100,6 +100,11 @@ Settings {
     property bool   useNSEW:        false
     property string crs1:           ""
     property string crs2:           "4326"
+    property bool   showCanvasNav:     true
+    property bool   showCanvasAdd:     true
+    property bool   showCanvasConvert: true
+    property bool   showCanvasPaste:   true
+    property bool   showLocatorFilter: true
 }
 
 ListModel { id: pointLayerPickerModel }
@@ -177,11 +182,11 @@ function populatePointLayerPicker() {
 
 Component.onCompleted: {
     iface.addItemToPluginsToolbar(mainPluginButton)
-    igukGridsFilter2.locatorBridge.registerQFieldLocatorFilter(igukGridsFilter2);
-    canvasMenu.addItem(navButton)
-    canvasMenu.addItem(addPointButton)
-    canvasMenu.addItem(convertButton)
-    canvasMenu.addItem(pasteButton)
+    if (appSettings.showLocatorFilter) igukGridsFilter2.locatorBridge.registerQFieldLocatorFilter(igukGridsFilter2);
+    if (appSettings.showCanvasNav)     canvasMenu.addItem(navButton)
+    if (appSettings.showCanvasAdd)     canvasMenu.addItem(addPointButton)
+    if (appSettings.showCanvasConvert) canvasMenu.addItem(convertButton)
+    if (appSettings.showCanvasPaste)   canvasMenu.addItem(pasteButton)
     // Restore saved settings into UI
     mapsUrlOption      = appSettings.mapsUrlOption
     font_Size.text     = appSettings.fontSize
@@ -212,9 +217,9 @@ Component.onCompleted: {
     afterAddGroup.checkedButton = [afterAddNothing, afterAddPan, afterAddZoom][appSettings.afterAddAction]
 }
 
- Component.onDestruction: { 
-    igukGridsFilter2.locatorBridge.deregisterQFieldLocatorFilter(igukGridsFilter2);
-    }   
+ Component.onDestruction: {
+    if (appSettings.showLocatorFilter) igukGridsFilter2.locatorBridge.deregisterQFieldLocatorFilter(igukGridsFilter2);
+    }
 
     // --- Refactored Functions ---
 
@@ -753,20 +758,6 @@ Dialog {
         width: parent.width
         spacing: 10
         topPadding: 6
-
-        TextField {
-            id: textQrTitle
-            width: parent.width
-            placeholderText: qsTr("Title (optional)")
-        }
-
-        TextField {
-            id: textQrInput
-            width: parent.width
-            placeholderText: qsTr("Paste URL or text here")
-            wrapMode: Text.WrapAnywhere
-        }
-
         Button {
             text: qsTr("Generate QR")
             font.bold: true
@@ -785,6 +776,20 @@ Dialog {
                 qrDialog.open()
             }
         }
+        TextField {
+            id: textQrTitle
+            width: parent.width
+            placeholderText: qsTr("Title (optional)")
+        }
+
+        TextField {
+            id: textQrInput
+            width: parent.width
+            placeholderText: qsTr("Paste URL or text here")
+            wrapMode: Text.WrapAnywhere
+        }
+
+
     }
 }
 
@@ -866,7 +871,7 @@ Dialog {
                     horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
                 }
                 onClicked: {
-                    var path = StandardPaths.writableLocation(StandardPaths.TempLocation) + "/qr_geo.jpg"
+                    var path = StandardPaths.writableLocation(StandardPaths.TempLocation) + "/qr_geo.png"
                     qrImage.grabToImage(function(result) {
                         if (result.saveToFile(path)) {
                             Qt.openUrlExternally("file://" + path)
@@ -2382,6 +2387,8 @@ Flow {
     id: doFlow
     Layout.fillWidth: true
     spacing: 4
+    visible: appSettings.showBtnPan || appSettings.showBtnZoom || appSettings.showBtnAdd ||
+             appSettings.showBtnNavigate || appSettings.showBtnWeb || appSettings.showBtnBIG
     property int lblW: 32
     property int btnW: Math.floor((width - lblW - 4 * spacing) / 4)
     property int btnH: 60
@@ -2510,15 +2517,32 @@ Dialog {
     modal: true
     header: null
     width: Math.min(300, mainWindow.width - 16)
-    height: Math.min(implicitHeight, mainWindow.height * 0.80)
+    height: Math.min(mainWindow.height * 0.85, 580)
     anchors.centerIn: parent
     onOpened: {
         populatePointLayerPicker()
         showFormOnAdd.checked = formOnAdd
     }
 
-ScrollView {
+Column {
     anchors.fill: parent
+    spacing: 0
+
+    TabBar {
+        id: settingsTabBar
+        width: parent.width
+        height: 34
+        TabButton { text: qsTr("Settings"); font.pixelSize: 10; height: 34 }
+        TabButton { text: qsTr("Load");     font.pixelSize: 10; height: 34 }
+    }
+
+    StackLayout {
+        width: parent.width
+        height: parent.height - settingsTabBar.height
+        currentIndex: settingsTabBar.currentIndex
+
+// ── Tab 1: existing settings ──────────────────────────────────────────────────
+ScrollView {
     clip: true
     contentWidth: availableWidth
 
@@ -2705,8 +2729,70 @@ Column {
         font.pixelSize: 9; font.italic: true
         horizontalAlignment: Text.AlignRight
     }
-} // end of column
-} // end of ScrollView
+} // end of settings column
+} // end of Tab 1 ScrollView
+
+// ── Tab 2: Load options ───────────────────────────────────────────────────────
+ScrollView {
+    clip: true
+    contentWidth: availableWidth
+
+    Column {
+        width: parent.width
+        spacing: 4
+        topPadding: 8; bottomPadding: 8
+
+        Label { text: qsTr("Canvas Menu Items"); font.pixelSize: 10; font.bold: true }
+        Label { text: qsTr("(takes effect on next load)"); font.pixelSize: 8; font.italic: true; color: "#666666" }
+        Item  { width: 1; height: 2 }
+
+        CheckBox {
+            id: loadNavButton
+            text: qsTr("Navigate-to button")
+            font.pixelSize: 9; implicitHeight: 28
+            checked: appSettings.showCanvasNav
+            onCheckedChanged: appSettings.showCanvasNav = checked
+        }
+        CheckBox {
+            id: loadAddButton
+            text: qsTr("Add-point button")
+            font.pixelSize: 9; implicitHeight: 28
+            checked: appSettings.showCanvasAdd
+            onCheckedChanged: appSettings.showCanvasAdd = checked
+        }
+        CheckBox {
+            id: loadConvertButton
+            text: qsTr("Convert-coords button")
+            font.pixelSize: 9; implicitHeight: 28
+            checked: appSettings.showCanvasConvert
+            onCheckedChanged: appSettings.showCanvasConvert = checked
+        }
+        CheckBox {
+            id: loadPasteButton
+            text: qsTr("Paste-coords button")
+            font.pixelSize: 9; implicitHeight: 28
+            checked: appSettings.showCanvasPaste
+            onCheckedChanged: appSettings.showCanvasPaste = checked
+        }
+
+        Rectangle { width: parent.width; height: 1; color: "#cccccc" }
+        Item { width: 1; height: 2 }
+
+        Label { text: qsTr("Locator Filter"); font.pixelSize: 10; font.bold: true }
+        Item  { width: 1; height: 2 }
+
+        CheckBox {
+            id: loadLocatorFilter
+            text: qsTr("Grid Ref / Coord locator")
+            font.pixelSize: 9; implicitHeight: 28
+            checked: appSettings.showLocatorFilter
+            onCheckedChanged: appSettings.showLocatorFilter = checked
+        }
+    }
+}
+
+    } // end of StackLayout
+} // end of outer Column
 } // end of settingsDialog
 Dialog {
     id: bigDialog
