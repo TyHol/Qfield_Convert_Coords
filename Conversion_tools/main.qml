@@ -2018,7 +2018,6 @@ TextField {
     if (isProgrammaticUpdate) { isProgrammaticUpdate = false; return }
     hasError = false
     lastEditedBox = "ig"; coordinatesDirty = true
-    formatGridInput(igInputBox, igletterMatrix, 1)
  }
 
  // Accept L dN dN where N is 1–5 and both groups have equal digit count
@@ -2072,7 +2071,6 @@ TextField {
     if (isProgrammaticUpdate) { isProgrammaticUpdate = false; return }
     hasError = false
     lastEditedBox = "uk"; coordinatesDirty = true
-    formatGridInput(ukInputBox, ukletterMatrix, 2)
  }
 
  // Accept LL dN dN where N is 1–5 and both groups have equal digit count
