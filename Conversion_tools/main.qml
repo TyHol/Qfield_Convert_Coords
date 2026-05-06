@@ -4026,6 +4026,7 @@ function convertFromLastEdited() {
                 else                            updateCoordinates(p.lon, p.lat, 4326, custom1CRS.text, custom2CRS.text, 6)
             } else _setError(wgs84DMSBox, "Cannot parse DMS input")
         } else if (lastEditedBox === "ig") {
+            formatGridInput(igInputBox, igletterMatrix, 1)
             var igm = igInputBox.text.match(/^([A-Za-z])\s(\d{1,5})\s(\d{1,5})$/)
             if (igm && igm[2].length === igm[3].length && igletterMatrix[igm[1].toUpperCase()]) {
                 var letter = igm[1].toUpperCase()
@@ -4035,6 +4036,7 @@ function convertFromLastEdited() {
                 updateCoordinates(X5 + me.first*100000, Y5 + me.second*100000, 29903, custom1CRS.text, custom2CRS.text, 1)
             } else _setError(igInputBox, "Incomplete Irish Grid reference")
         } else if (lastEditedBox === "uk") {
+            formatGridInput(ukInputBox, ukletterMatrix, 2)
             var ukm = ukInputBox.text.match(/^([A-Za-z]{2})\s(\d{1,5})\s(\d{1,5})$/)
             if (ukm && ukm[2].length === ukm[3].length && ukletterMatrix[ukm[1].toUpperCase()]) {
                 var letter = ukm[1].toUpperCase()
