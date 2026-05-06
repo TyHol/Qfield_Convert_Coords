@@ -175,7 +175,7 @@ For **WKT Point** pastes, a **Select CRS** step appears first — choose from Pr
 
 ## Snap Photo
 
-The Snap Photo feature adds a dedicated camera toolbar button that instantly captures a GPS-positioned photo and saves it as a new point feature — without having to open the main plugin dialog.
+The Snap Photo feature adds a dedicated camera toolbar button that instantly captures a GPS-positioned photo and saves it as a new point feature — without having to open the main plugin dialog. It is based almost entirely on https://github.com/opengisch/qfield-snap
 
 ### Enabling
 
