@@ -31,7 +31,8 @@ A plugin for the [QField](https://qfield.org/) mobile GIS app that converts betw
 
 Download the zip from the releases page and follow the QField plugin installation guide to install it.
 Or scan this:
-<img width="415" height="420" alt="Screenshot 2026-04-03 125157" src="https://github.com/user-attachments/assets/9bd6b878-f0a9-49f6-8164-5bffd8230ab9" />
+<img width="364" height="406" alt="image" src="https://github.com/user-attachments/assets/2eb70bfe-554f-4070-803a-19ebbfe3ff45" />
+
 
 ---
 
