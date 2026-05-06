@@ -2,7 +2,7 @@
 
 A plugin for the [QField](https://qfield.org/) mobile GIS app that converts between coordinate systems, creates points, and adds Irish/UK grid reference search to the QField locator bar.
 
-> **Version:** 2.4.0 | **Author:** Tyhol | **Repository:** https://github.com/TyHol/Qfield_Convert_Coords
+> **Version:** 2.5.1 — 23 Apr 2026 | **Author:** Tyhol | **Repository:** https://github.com/TyHol/Qfield_Convert_Coords
 
 ---
 
@@ -21,7 +21,9 @@ A plugin for the [QField](https://qfield.org/) mobile GIS app that converts betw
 - [Canvas Menu Tools](#canvas-menu-tools)
 - [Paste from Clipboard](#paste-from-clipboard)
 - [Grid Reference Search](#grid-reference-search)
+- [Snap Photo](#snap-photo)
 - [Settings](#settings)
+- [What's New in 2.5](#whats-new-in-25)
 
 ---
 
@@ -137,12 +139,14 @@ Scanned QR codes containing `geo:` URIs are automatically parsed and loaded into
 
 Long-press on the map canvas to access:
 
-| Item | Function |
-|---|---|
-| **Add point** | Adds a point at the tapped location |
-| **Navigate/Web** | Opens tapped location in external map app |
-| **Convert coordinates** | Opens main dialog pre-loaded with tapped location |
-| **Paste location from clipboard** | Parses clipboard as a coordinate, creates a point and zooms to it |
+| Item | Tap | Long press |
+|---|---|---|
+| **Copy link / hold to open map** | Copies a shareable map link to the clipboard (paste into WhatsApp, SMS, etc.) | Opens tapped location in external map app |
+| **Add point** | Adds a point at the tapped location | — |
+| **Convert coordinates** | Opens main dialog pre-loaded with tapped location | — |
+| **Paste location from clipboard** | Parses clipboard as a coordinate, creates a point and zooms to it | — |
+
+The **Web** button in the main dialog follows the same tap/hold behaviour: tap to copy the link, long-press to open in the external map app.
 
 ---
 
@@ -166,6 +170,37 @@ Accepts a wide range of coordinate formats:
 A **Confirm coordinate format** dialog appears before anything is committed, showing the parsed text and the resulting coordinates. Tap **Apply** to accept or **Cancel** to abort.
 
 For **WKT Point** pastes, a **Select CRS** step appears first — choose from Project CRS, Layer CRS, Custom 1, or Custom 2. The coordinates are then reprojected to WGS84 and passed through the normal confirm dialog.
+
+---
+
+## Snap Photo
+
+The Snap Photo feature adds a dedicated camera toolbar button that instantly captures a GPS-positioned photo and saves it as a new point feature — without having to open the main plugin dialog.
+
+### Enabling
+
+Go to **Settings → Load tab** and tick **Snap photo button**, then restart QField. A camera icon will appear in the toolbar alongside the main plugin button.
+
+### Using
+
+**Tap** the snap button to open the device camera immediately (GPS must be active and returning a valid position). On completing the photo:
+
+- The image is saved to a `DCIM/` folder inside the project directory with a timestamp filename.
+- A new point feature is created at the current GPS position on the configured target layer.
+- The photo path is written to the configured photo field.
+- The feature form opens so you can fill in any other attributes.
+
+**Long-press** the snap button at any time to open the **Snap settings tab** directly.
+
+### Setup (Snap tab in Settings)
+
+| Setting | Description |
+|---|---|
+| **Target layer** | Which point layer to add features to. Defaults to the active layer. |
+| **Photo field** | Which text field to write the photo path into. Auto-detected from common names (`photo`, `picture`, `image`, `media`, `camera`). |
+| **Reset to defaults** | Restores the layer and field selections to the factory defaults. |
+
+If no layer or field is explicitly selected the plugin falls back to the active layer and searches field names in the order: `photo`, `picture`, `image`, `media`, `camera`.
 
 ---
 
@@ -224,3 +259,13 @@ Restores all settings and CRS codes to defaults (Custom 1 → project CRS, Custo
 ---
 
 *All settings and CRS selections are persisted between sessions.*
+
+---
+
+## What's New in 2.5
+
+### Snap Photo (new feature)
+Integrated the standalone `qfield-snap` plugin directly into Convert Coordinates. A camera toolbar button captures a GPS-positioned photo and creates a point feature in one tap. Enable it on the **Load** tab; configure layer and field on the new **Snap** tab in Settings.
+
+### Copy link from canvas / Web button
+The **Copy link / hold to open map** canvas menu item and the **Web** button in the main dialog now have split tap/hold behaviour: a short tap copies a shareable map URL to the clipboard (ready to paste into WhatsApp, SMS, email, etc.), while a long press opens the location in the external map app as before.

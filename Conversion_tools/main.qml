@@ -22,6 +22,7 @@ Item {
  property var positionSource: iface.findItemByObjectName('positionSource')
  property var canvasMenu: iface.findItemByObjectName('canvasMenu')
  property var codeReader: iface.findItemByObjectName('codeReader')
+ property var featureListForm: iface.findItemByObjectName('featureForm')
  property bool _qrScanPending: false
  property var canvasCrs : canvas.destinationCrs ;
  property var canvasEPSG : parseInt(canvasCrs.authid.split(":")[1]); // Canvas destination CRS (not project CRS)
@@ -31,7 +32,7 @@ Item {
 
 
 //changable stuff 
-property var filetimedate : "v2.5  17.04.26..1" // version date
+property var filetimedate : "v2.5 5.5.26.1" // version date
 property var mapsUrlOption: 3 // Default external map: 1=GMaps pin, 2=GMaps nav, 3=OSM, 4=OSRM route
 property var _lastX: 0; property var _lastY: 0; property var _lastEPSG: 4326 // last coords for re-render on setting change
 property string _lastWarnedEPSGs: "" // tracks last EPSG combo that triggered a Helmert warning
@@ -86,12 +87,13 @@ Settings {
     property bool   showMGRS:       false
     property bool   showPlusCode:   false
     property bool   showQR:         true
-    property bool   showBtnPan:     true
+    property bool   showBtnPan:     false
     property bool   showBtnZoom:    true
     property bool   showBtnAdd:     true
-    property bool   showBtnNavigate: true
+    property bool   showBtnNavigate: false
+    property bool   showBtnShare:   true
     property bool   showBtnWeb:     true
-    property bool   showBtnBIG:     true
+    property bool   showBtnBIG:     false
     property bool   showCrosshair:  true
     property bool   showDMSboxes:   false
     property bool   showCustomisation: false
@@ -105,9 +107,21 @@ Settings {
     property bool   showCanvasConvert: true
     property bool   showCanvasPaste:   true
     property bool   showLocatorFilter: true
+    property bool   showSnap:      false
+    property string snapLayerName: ""
+    property string snapFieldName: ""
+    property bool   showGeomless:  false
+    property string geomlessLayerName: ""
+    property bool   geomlessLongPressSettings: true
+    property int    geomlessShortPressAction:  0  // 0=geomless, 1=GPS, 2=screen centre
 }
 
 ListModel { id: pointLayerPickerModel }
+ListModel { id: snapLayerPickerModel }
+ListModel { id: snapFieldPickerModel }
+ListModel { id: geomlessLayerPickerModel }
+
+property var snapCandidates: ["photo", "picture", "image", "media", "camera"]
 
 function populatePointLayerPicker() {
     pointLayerPickerModel.clear()
@@ -182,6 +196,8 @@ function populatePointLayerPicker() {
 
 Component.onCompleted: {
     iface.addItemToPluginsToolbar(mainPluginButton)
+    if (appSettings.showSnap)          iface.addItemToPluginsToolbar(snapButton)
+    if (appSettings.showGeomless)      iface.addItemToPluginsToolbar(geomlessButton)
     if (appSettings.showLocatorFilter) igukGridsFilter2.locatorBridge.registerQFieldLocatorFilter(igukGridsFilter2);
     if (appSettings.showCanvasNav)     canvasMenu.addItem(navButton)
     if (appSettings.showCanvasAdd)     canvasMenu.addItem(addPointButton)
@@ -207,11 +223,15 @@ Component.onCompleted: {
     showBtnZoom.checked    = appSettings.showBtnZoom
     showBtnAdd.checked     = appSettings.showBtnAdd
     showBtnNavigate.checked = appSettings.showBtnNavigate
+    showBtnShare.checked   = appSettings.showBtnShare
     showBtnWeb.checked     = appSettings.showBtnWeb
     showBtnBIG.checked     = appSettings.showBtnBIG
     showCrosshair.checked  = appSettings.showCrosshair
     showDMSboxes.checked   = appSettings.showDMSboxes
     showCustomisation.checked = appSettings.showCustomisation
+    showGeomlessBtn.checked = appSettings.showGeomless
+    geomlessLongPressSettingsChk.checked = appSettings.geomlessLongPressSettings
+    geomlessActionGroup.checkedButton = [geomlessActionGeomless, geomlessActionGPS, geomlessActionScreen][appSettings.geomlessShortPressAction]
     formOnAdd = appSettings.showFeatureForm
     showFormOnAdd.checked = formOnAdd
     afterAddGroup.checkedButton = [afterAddNothing, afterAddPan, afterAddZoom][appSettings.afterAddAction]
@@ -653,11 +673,13 @@ function handlePaste(clipboardText, createPointAndZoom, alwaysZoom) {
     else {
         // Normalise degree/minute/second symbols to plain spaces,
         // then split on the comma that separates the two coordinates.
-        let norm = raw.replace(/°/g, ' ').replace(/'/g, ' ').replace(/"/g, ' ')
+        // Also normalise Unicode prime ′ (U+2032) and double-prime ″ (U+2033)
+        // so that "52°3.3538′" is treated the same as "52° 3.3538'".
+        let norm = raw.replace(/[°′″]/g, ' ').replace(/['"]/g, ' ')
                       .replace(/\s+/g, ' ').trim();
 
         // DMS/hemisphere markers mean it's clearly lat/lon; plain decimals are ambiguous.
-        let hasDmsHemi = /[°'"NSEWnsew]/.test(raw);
+        let hasDmsHemi = /[°'"′″NSEWnsew]/.test(raw);
 
         let commaIdx = norm.indexOf(',');
         if (commaIdx > 0) {
@@ -670,11 +692,13 @@ function handlePaste(clipboardText, createPointAndZoom, alwaysZoom) {
             }
         }
 
-        // Plain space-separated decimal pair — e.g. "53.3498 -6.2603"
+        // Space-separated pair — plain decimals "53.3498 -6.2603" or compact DDM "52°3.354′ -9°29.038′"
         let sp = raw.trim().split(/\s+/);
         if (sp.length === 2) {
-            let a = parseFloat(sp[0]), b = parseFloat(sp[1]);
-            if (!isNaN(a) && !isNaN(b)) {
+            let normPart = function(p) { return p.replace(/[°′″'"]/g, ' ').replace(/\s+/g, ' ').trim(); };
+            let a = parseCoordPart(normPart(sp[0]));
+            let b = parseCoordPart(normPart(sp[1]));
+            if (a !== null && b !== null) {
                 let defIdx = (hasDmsHemi || (Math.abs(a) <= 90 && Math.abs(b) <= 180)) ? 0 : 4;
                 showFormatDialog(raw, a, b, defIdx);
                 return true;
@@ -1114,7 +1138,366 @@ Dialog {
 
 
 
-MenuItem{ 
+// ── Snap functions ────────────────────────────────────────────────────────────
+
+// ── Add geometryless feature button ──────────────────────────────────────────
+QfToolButton {
+    id: geomlessButton
+    bgcolor: Theme.darkGray
+    iconSource: Qt.resolvedUrl('plugin_stuff/icon3.svg')
+    round: true
+    ToolTip.text: qsTr("Add geometryless feature")
+    ToolTip.visible: hovered
+    ToolTip.delay: 500
+
+    onClicked: {
+        var layer = resolveGeomlessLayer()
+        if (!layer) {
+            mainWindow.displayToast(qsTr('No editable layer found — opening setup'))
+            settingsTabBar.currentIndex = 3; settingsDialog.open()
+            return
+        }
+        var action = appSettings.geomlessShortPressAction
+        var isPoint = layer.geometryType && layer.geometryType() === Qgis.GeometryType.Point
+
+        if (action === 1) {
+            // GPS location — point layers only
+            if (!isPoint) {
+                mainWindow.displayToast(qsTr('GPS location requires a point layer — using geometryless'))
+                action = 0
+            } else if (!positionSource.active ||
+                       !positionSource.positionInformation.latitudeValid ||
+                       !positionSource.positionInformation.longitudeValid) {
+                gpsInactiveDialog.pendingLayer = layer
+                gpsInactiveDialog.open()
+                return
+            }
+        }
+        if (action === 2) {
+            // Screen centre — point layers only
+            if (!isPoint) {
+                mainWindow.displayToast(qsTr('Screen location requires a point layer — using geometryless'))
+                action = 0
+            }
+        }
+
+        var geometry
+        if (action === 1) {
+            var wgs84 = CoordinateReferenceSystemUtils.fromDescription("EPSG:4326")
+            var gpsPoint = GeometryUtils.point(
+                positionSource.positionInformation.longitude,
+                positionSource.positionInformation.latitude)
+            var layerPt = GeometryUtils.reprojectPoint(gpsPoint, wgs84, layer.crs)
+            geometry = GeometryUtils.createGeometryFromWkt('POINT(' + layerPt.x + ' ' + layerPt.y + ')')
+        } else if (action === 2) {
+            var canvasPt = GeometryUtils.reprojectPoint(canvas.center,
+                               mapCanvas.mapSettings.destinationCrs, layer.crs)
+            geometry = GeometryUtils.createGeometryFromWkt('POINT(' + canvasPt.x + ' ' + canvasPt.y + ')')
+        } else {
+            geometry = GeometryUtils.createGeometryFromWkt('')
+        }
+
+        var feature = FeatureUtils.createFeature(layer, geometry)
+        overlayFeatureFormDrawer.featureModel.currentLayer = layer
+        overlayFeatureFormDrawer.featureModel.feature = feature
+        overlayFeatureFormDrawer.state = "Add"
+        overlayFeatureFormDrawer.open()
+    }
+
+    onPressAndHold: {
+        if (appSettings.geomlessLongPressSettings) {
+            settingsTabBar.currentIndex = 3
+            settingsDialog.open()
+        } else {
+            var layer = resolveGeomlessLayer()
+            if (!layer) { mainWindow.displayToast(qsTr('No editable layer found')); return }
+            openGeomlessRecords(layer)
+        }
+    }
+}
+
+function openGeomlessRecords(layer) {
+    if (!featureListForm) {
+        mainWindow.displayToast(qsTr("Feature form not available — try reloading the project."))
+        return
+    }
+    featureListForm.model.setFeatures(layer, '')
+    Qt.callLater(function() {
+        if (featureListForm.model.count === 0) {
+            mainWindow.displayToast(qsTr("No records in layer."))
+        } else if (featureListForm.model.count === 1) {
+            featureListForm.selection.focusedItem = 0
+            featureListForm.state = "FeatureFormEdit"
+        } else {
+            featureListForm.selection.focusedItem = 0
+            featureListForm.state = "FeatureForm"
+        }
+    })
+}
+
+function resolveGeomlessLayer() {
+    var saved = appSettings.geomlessLayerName
+    if (saved && saved !== "") {
+        var found = qgisProject.mapLayersByName(saved)
+        if (found && found.length > 0) return found[0]
+        appSettings.geomlessLayerName = ""
+    }
+    return dashBoard.activeLayer
+}
+
+function populateGeomlessLayerModel() {
+    geomlessLayerPickerModel.clear()
+    var normal = [], priv = []
+    try {
+        var all = ProjectUtils.mapLayers(qgisProject)
+        for (var id in all) {
+            var lyr = all[id]
+            try {
+                if (lyr && lyr.supportsEditing === true) {
+                    var isPrivate = false
+                    try { isPrivate = (lyr.flags & 8) !== 0 } catch (e2) {}
+                    if (isPrivate) priv.push(lyr)
+                    else normal.push(lyr)
+                }
+            } catch (e) {}
+        }
+    } catch (e) {}
+    normal.sort(function(a, b) { return a.name.localeCompare(b.name) })
+    priv.sort(function(a, b) { return a.name.localeCompare(b.name) })
+    geomlessLayerPickerModel.append({ "name": qsTr("Active Layer"), "isHeader": false })
+    for (var i = 0; i < normal.length; i++) geomlessLayerPickerModel.append({ "name": normal[i].name, "isHeader": false })
+    if (priv.length > 0) {
+        geomlessLayerPickerModel.append({ "name": qsTr("— Private Layers —"), "isHeader": true })
+        for (var j = 0; j < priv.length; j++) geomlessLayerPickerModel.append({ "name": priv[j].name, "isHeader": false })
+    }
+    var saved = appSettings.geomlessLayerName
+    for (var k = 1; k < geomlessLayerPickerModel.count; k++) {
+        var item = geomlessLayerPickerModel.get(k)
+        if (!item.isHeader && item.name === saved) { geomlessLayerDropdown.currentIndex = k; return }
+    }
+    geomlessLayerDropdown.currentIndex = 0
+}
+
+function resolveSnapLayer() {
+    var saved = appSettings.snapLayerName
+    if (saved && saved !== "") {
+        var found = qgisProject.mapLayersByName(saved)
+        if (found && found.length > 0) return found[0]
+        appSettings.snapLayerName = ""
+    }
+    return dashBoard.activeLayer
+}
+
+function resolveSnapField(layer) {
+    if (!layer) return null
+    var names = layer.fields.names
+    var configured = appSettings.snapFieldName
+    if (configured && configured !== "" && names.indexOf(configured) >= 0) return configured
+    for (var i = 0; i < snapCandidates.length; i++) {
+        if (names.indexOf(snapCandidates[i]) >= 0) return snapCandidates[i]
+    }
+    return null
+}
+
+function populateSnapLayerModel() {
+    snapLayerPickerModel.clear()
+    var normal = [], priv = []
+    try {
+        var all = ProjectUtils.mapLayers(qgisProject)
+        for (var id in all) {
+            var lyr = all[id]
+            try {
+                if (lyr && lyr.geometryType && lyr.geometryType() === Qgis.GeometryType.Point && lyr.supportsEditing === true) {
+                    var isPrivate = false
+                    try { isPrivate = (lyr.flags & 8) !== 0 } catch (e2) {}
+                    if (isPrivate) priv.push(lyr)
+                    else normal.push(lyr)
+                }
+            } catch (e) {}
+        }
+    } catch (e) {}
+    normal.sort(function(a, b) { return a.name.localeCompare(b.name) })
+    priv.sort(function(a, b) { return a.name.localeCompare(b.name) })
+    if (normal.length === 0 && priv.length === 0) {
+        snapLayerPickerModel.append({ "name": qsTr("— no editable point layers —"), "isHeader": true })
+        snapLayerDropdown.currentIndex = 0
+        return
+    }
+    snapLayerPickerModel.append({ "name": qsTr("Active Layer"), "isHeader": false })
+    for (var i = 0; i < normal.length; i++) snapLayerPickerModel.append({ "name": normal[i].name, "isHeader": false })
+    if (priv.length > 0) {
+        snapLayerPickerModel.append({ "name": qsTr("— Private Layers —"), "isHeader": true })
+        for (var j = 0; j < priv.length; j++) snapLayerPickerModel.append({ "name": priv[j].name, "isHeader": false })
+    }
+    var saved = appSettings.snapLayerName
+    for (var k = 1; k < snapLayerPickerModel.count; k++) {
+        var item = snapLayerPickerModel.get(k)
+        if (!item.isHeader && item.name === saved) { snapLayerDropdown.currentIndex = k; return }
+    }
+    snapLayerDropdown.currentIndex = 0
+}
+
+function populateSnapFieldModel(layerName) {
+    snapFieldPickerModel.clear()
+    var lyr = null
+    if (!layerName || layerName === qsTr("Active Layer")) {
+        lyr = dashBoard.activeLayer
+    } else {
+        var found = qgisProject.mapLayersByName(layerName)
+        if (found && found.length > 0) lyr = found[0]
+    }
+    if (!lyr) {
+        snapFieldPickerModel.append({ "name": qsTr("— no layer selected —"), "isHeader": true })
+        snapFieldDropdown.currentIndex = 0
+        return
+    }
+    var fieldNames = lyr.fields.names
+    if (fieldNames.length === 0) {
+        snapFieldPickerModel.append({ "name": qsTr("— no fields available —"), "isHeader": true })
+        snapFieldDropdown.currentIndex = 0
+        return
+    }
+    for (var i = 0; i < fieldNames.length; i++) snapFieldPickerModel.append({ "name": fieldNames[i], "isHeader": false })
+    var saved = appSettings.snapFieldName
+    for (var k = 0; k < snapFieldPickerModel.count; k++) {
+        if (snapFieldPickerModel.get(k).name === saved) { snapFieldDropdown.currentIndex = k; return }
+    }
+    for (var c = 0; c < snapCandidates.length; c++) {
+        for (var m = 0; m < snapFieldPickerModel.count; m++) {
+            if (snapFieldPickerModel.get(m).name === snapCandidates[c]) {
+                snapFieldDropdown.currentIndex = m
+                appSettings.snapFieldName = snapCandidates[c]
+                return
+            }
+        }
+    }
+    snapFieldDropdown.currentIndex = 0
+}
+
+function snapToForm() {
+    var layer = resolveSnapLayer()
+    const pos = GeometryUtils.reprojectPoint(
+        positionSource.projectedPosition,
+        positionSource.coordinateTransformer.destinationCrs,
+        layer.crs
+    )
+    const elevation = positionSource.positionInformation.elevation
+    let wkt = ''
+    switch (layer.wkbType()) {
+        case Qgis.WkbType.MultiPointZ:  wkt = 'MULTIPOINTZ((' + pos.x + ' ' + pos.y + ' ' + elevation + '))'; break
+        case Qgis.WkbType.MultiPointM:  wkt = 'MULTIPOINTM((' + pos.x + ' ' + pos.y + ' 0 ))'; break
+        case Qgis.WkbType.MultiPointZM: wkt = 'MULTIPOINTZM((' + pos.x + ' ' + pos.y + ' ' + elevation + ' 0))'; break
+        case Qgis.WkbType.MultiPoint:   wkt = 'MULTIPOINT((' + pos.x + ' ' + pos.y + '))'; break
+        case Qgis.WkbType.PointZ:       wkt = 'POINTZ(' + pos.x + ' ' + pos.y + ' ' + elevation + ')'; break
+        case Qgis.WkbType.PointM:       wkt = 'POINTM(' + pos.x + ' ' + pos.y + ' 0 )'; break
+        case Qgis.WkbType.PointZM:      wkt = 'POINTZM(' + pos.x + ' ' + pos.y + ' ' + elevation + ' 0)'; break
+        case Qgis.WkbType.Point:        wkt = 'POINT(' + pos.x + ' ' + pos.y + ')'; break
+    }
+    let geometry = GeometryUtils.createGeometryFromWkt(wkt)
+    let feature = FeatureUtils.createBlankFeature(layer.fields, geometry)
+    overlayFeatureFormDrawer.featureModel.currentLayer = layer
+    overlayFeatureFormDrawer.featureModel.feature = feature
+    overlayFeatureFormDrawer.featureModel.resetAttributes(true)
+    overlayFeatureFormDrawer.state = 'Add'
+    overlayFeatureFormDrawer.open()
+}
+
+function snapPhoto(path) {
+    let today = new Date()
+    let relativePath = 'DCIM/' + today.getFullYear()
+                               + (today.getMonth() + 1).toString().padStart(2, 0)
+                               + today.getDate().toString().padStart(2, 0)
+                               + today.getHours().toString().padStart(2, 0)
+                               + today.getMinutes().toString().padStart(2, 0)
+                               + today.getSeconds().toString().padStart(2, 0)
+                               + '.' + FileUtils.fileSuffix(path)
+    platformUtilities.renameFile(path, qgisProject.homePath + '/' + relativePath)
+    var layer = resolveSnapLayer()
+    const pos = GeometryUtils.reprojectPoint(
+        positionSource.projectedPosition,
+        positionSource.coordinateTransformer.destinationCrs,
+        layer.crs
+    )
+    const elevation = positionSource.positionInformation.elevation
+    let wkt = ''
+    switch (layer.wkbType()) {
+        case Qgis.WkbType.MultiPointZ:  wkt = 'MULTIPOINTZ((' + pos.x + ' ' + pos.y + ' ' + elevation + '))'; break
+        case Qgis.WkbType.MultiPointM:  wkt = 'MULTIPOINTM((' + pos.x + ' ' + pos.y + ' 0 ))'; break
+        case Qgis.WkbType.MultiPointZM: wkt = 'MULTIPOINTZM((' + pos.x + ' ' + pos.y + ' ' + elevation + ' 0))'; break
+        case Qgis.WkbType.MultiPoint:   wkt = 'MULTIPOINT((' + pos.x + ' ' + pos.y + '))'; break
+        case Qgis.WkbType.PointZ:       wkt = 'POINTZ(' + pos.x + ' ' + pos.y + ' ' + elevation + ')'; break
+        case Qgis.WkbType.PointM:       wkt = 'POINTM(' + pos.x + ' ' + pos.y + ' 0 )'; break
+        case Qgis.WkbType.PointZM:      wkt = 'POINTZM(' + pos.x + ' ' + pos.y + ' ' + elevation + ' 0)'; break
+        case Qgis.WkbType.Point:        wkt = 'POINT(' + pos.x + ' ' + pos.y + ')'; break
+    }
+    let geometry = GeometryUtils.createGeometryFromWkt(wkt)
+    let feature = FeatureUtils.createBlankFeature(layer.fields, geometry)
+    var fieldName = resolveSnapField(layer)
+    if (fieldName) {
+        let fieldNames = feature.fields.names
+        feature.setAttribute(fieldNames.indexOf(fieldName), relativePath)
+    }
+    overlayFeatureFormDrawer.featureModel.currentLayer = layer
+    overlayFeatureFormDrawer.featureModel.feature = feature
+    overlayFeatureFormDrawer.featureModel.resetAttributes(true)
+    overlayFeatureFormDrawer.state = 'Add'
+    overlayFeatureFormDrawer.open()
+}
+
+// ── Snap camera loader ────────────────────────────────────────────────────────
+
+Loader {
+    id: cameraLoader
+    active: false
+    sourceComponent: Component {
+        QFieldItems.QFieldCamera {
+            visible: false
+            Component.onCompleted: { open() }
+            onFinished: (path) => { close(); snapPhoto(path) }
+            onCanceled: { close() }
+            onClosed: { cameraLoader.active = false }
+        }
+    }
+}
+
+// ── Snap toolbar button ───────────────────────────────────────────────────────
+
+QfToolButton {
+    id: snapButton
+    bgcolor: Theme.darkGray
+    iconSource: Theme.getThemeVectorIcon('ic_camera_photo_black_24dp')
+    iconColor: Theme.mainColor
+    round: true
+
+    onClicked: {
+        if (!positionSource.active ||
+            !positionSource.positionInformation.latitudeValid ||
+            !positionSource.positionInformation.longitudeValid) {
+            mainWindow.displayToast(qsTr('Snap requires positioning to be active and returning a valid position'))
+            return
+        }
+        var layer = resolveSnapLayer()
+        if (!layer || layer.geometryType() !== Qgis.GeometryType.Point) {
+            mainWindow.displayToast(qsTr('Active layer is not a point layer — opening setup'))
+            settingsTabBar.currentIndex = 2; settingsDialog.open()
+            return
+        }
+        if (!resolveSnapField(layer)) {
+            mainWindow.displayToast(qsTr('No suitable photo field found — opening setup'))
+            settingsTabBar.currentIndex = 2; settingsDialog.open()
+            return
+        }
+        platformUtilities.createDir(qgisProject.homePath, 'DCIM')
+        cameraLoader.active = true
+    }
+
+    onPressAndHold: {
+        settingsTabBar.currentIndex = 2
+        settingsDialog.open()
+    }
+}
+
+MenuItem{
     id: addPointButton
     text: qsTr("Add point")
     icon.source: 'plugin_stuff/new.svg'
@@ -1132,7 +1515,7 @@ MenuItem{
 
 MenuItem {
     id: navButton
-    text: qsTr("Open externally")
+    text: qsTr("Copy link / hold to open map")
     icon.source: 'plugin_stuff/car.svg'
     enabled: true
     height: 48
@@ -1140,6 +1523,16 @@ MenuItem {
     font: Theme.defaultFont
 
     onClicked: {
+        var transformedPoint = GeometryUtils.reprojectPoint(
+            GeometryUtils.point(canvasMenu.point.x, canvasMenu.point.y),
+            mapCanvas.mapSettings.destinationCrs,
+            CoordinateReferenceSystemUtils.fromDescription("EPSG:4326")
+        )
+        copyToClipboard(buildMapsUrl(transformedPoint.y, transformedPoint.x))
+        mainWindow.displayToast(qsTr("Location link copied to clipboard"))
+    }
+
+    onPressAndHold: {
         var transformedPoint = GeometryUtils.reprojectPoint(
             GeometryUtils.point(canvasMenu.point.x, canvasMenu.point.y),
             mapCanvas.mapSettings.destinationCrs,
@@ -1460,6 +1853,38 @@ Dialog {
             model: ListModel { id: wktCrsModel }
             textRole: "label"
         }
+    }
+}
+
+Dialog {
+    id: gpsInactiveDialog
+    parent: mainWindow.contentItem
+    modal: true
+    width: Math.min(320, mainWindow.width - 32)
+    font: Theme.defaultFont
+    x: (mainWindow.width - width) / 2
+    y: (mainWindow.height - height) * 0.25
+
+    property var pendingLayer: null
+
+    title: qsTr("GPS Inactive")
+    standardButtons: Dialog.Yes | Dialog.No
+
+    Label {
+        width: parent.width
+        text: qsTr("GPS is not active or has no valid position.\nAdd a geometryless feature instead?")
+        wrapMode: Text.WordWrap
+        font: Theme.defaultFont
+    }
+
+    onAccepted: {
+        if (!pendingLayer) return
+        var geometry = GeometryUtils.createGeometryFromWkt('')
+        var feature  = FeatureUtils.createFeature(pendingLayer, geometry)
+        overlayFeatureFormDrawer.featureModel.currentLayer = pendingLayer
+        overlayFeatureFormDrawer.featureModel.feature = feature
+        overlayFeatureFormDrawer.state = "Add"
+        overlayFeatureFormDrawer.open()
     }
 }
 
@@ -2388,7 +2813,7 @@ Flow {
     Layout.fillWidth: true
     spacing: 4
     visible: appSettings.showBtnPan || appSettings.showBtnZoom || appSettings.showBtnAdd ||
-             appSettings.showBtnNavigate || appSettings.showBtnWeb || appSettings.showBtnBIG
+             appSettings.showBtnNavigate || appSettings.showBtnShare || appSettings.showBtnWeb || appSettings.showBtnBIG
     property int lblW: 32
     property int btnW: Math.floor((width - lblW - 4 * spacing) / 4)
     property int btnH: 60
@@ -2479,6 +2904,21 @@ Flow {
     }
 
     Button {
+        id: btnShare
+        visible: appSettings.showBtnShare
+        text: qsTr("Share")
+        font.bold: true; font.pixelSize: doFlow.btnFs
+        width: doFlow.btnW; height: doFlow.btnH
+        onClicked: {
+            var coords = parseWgs84BoxCoords()
+            if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
+            copyToClipboard(buildMapsUrl(coords.lat, coords.lon))
+            mainWindow.displayToast(qsTr("Location link copied to clipboard"))
+            mainDialog.close()
+        }
+    }
+
+    Button {
         id: btnWeb
         visible: appSettings.showBtnWeb
         text: qsTr("Web")
@@ -2488,11 +2928,6 @@ Flow {
             var coords = parseWgs84BoxCoords()
             if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
             Qt.openUrlExternally(buildMapsUrl(coords.lat, coords.lon)); mainDialog.close()
-        }
-        onPressAndHold: {
-            var coords = parseWgs84BoxCoords()
-            if (!coords) { mainWindow.displayToast(qsTr("Invalid coordinates")); return }
-            navigateToPoint(coords.lon, coords.lat, 4326); mainDialog.close()
         }
     }
 
@@ -2522,6 +2957,10 @@ Dialog {
     onOpened: {
         populatePointLayerPicker()
         showFormOnAdd.checked = formOnAdd
+        populateSnapLayerModel()
+        var snapIdx = snapLayerDropdown.currentIndex
+        populateSnapFieldModel(snapIdx === 0 ? "" : snapLayerPickerModel.get(snapIdx).name)
+        populateGeomlessLayerModel()
     }
 
 Column {
@@ -2534,6 +2973,8 @@ Column {
         height: 34
         TabButton { text: qsTr("Settings"); font.pixelSize: 10; height: 34 }
         TabButton { text: qsTr("Load");     font.pixelSize: 10; height: 34 }
+        TabButton { text: qsTr("Snap");     font.pixelSize: 10; height: 34; visible: appSettings.showSnap }
+        TabButton { text: qsTr("G-less");   font.pixelSize: 10; height: 34; visible: appSettings.showGeomless }
     }
 
     StackLayout {
@@ -2634,17 +3075,18 @@ Column {
     GridLayout {
         width: parent.width
         columns: 3; columnSpacing: 0; rowSpacing: 0
-        CheckBox { id: showBtnPan;      text: "Pan";      font.pixelSize: 9; implicitHeight: 26; checked: true; onCheckedChanged: { btnPan.visible = checked;      appSettings.showBtnPan = checked } }
-        CheckBox { id: showBtnZoom;     text: "Zoom";     font.pixelSize: 9; implicitHeight: 26; checked: true; onCheckedChanged: { btnZoom.visible = checked;     appSettings.showBtnZoom = checked } }
-        CheckBox { id: showBtnAdd;      text: "Add";      font.pixelSize: 9; implicitHeight: 26; checked: true; onCheckedChanged: { btnAdd.visible = checked;      appSettings.showBtnAdd = checked } }
-        CheckBox { id: showBtnNavigate; text: "Navigate"; font.pixelSize: 9; implicitHeight: 26; checked: true; onCheckedChanged: { btnNavigate.visible = checked; appSettings.showBtnNavigate = checked } }
-        CheckBox { id: showBtnWeb;      text: "Web";      font.pixelSize: 9; implicitHeight: 26; checked: true; onCheckedChanged: { btnWeb.visible = checked;      appSettings.showBtnWeb = checked } }
-        CheckBox { id: showBtnBIG;      text: "BIG";      font.pixelSize: 9; implicitHeight: 26; checked: true; onCheckedChanged: { btnBIG.visible = checked;      appSettings.showBtnBIG = checked } }
+        CheckBox { id: showBtnPan;      text: "Pan";      font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { btnPan.visible = checked;      appSettings.showBtnPan = checked } }
+        CheckBox { id: showBtnZoom;     text: "Zoom";     font.pixelSize: 9; implicitHeight: 26; checked: true;  onCheckedChanged: { btnZoom.visible = checked;     appSettings.showBtnZoom = checked } }
+        CheckBox { id: showBtnAdd;      text: "Add";      font.pixelSize: 9; implicitHeight: 26; checked: true;  onCheckedChanged: { btnAdd.visible = checked;      appSettings.showBtnAdd = checked } }
+        CheckBox { id: showBtnNavigate; text: "Navigate"; font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { btnNavigate.visible = checked; appSettings.showBtnNavigate = checked } }
+        CheckBox { id: showBtnShare;    text: "Share";    font.pixelSize: 9; implicitHeight: 26; checked: true;  onCheckedChanged: { btnShare.visible = checked;    appSettings.showBtnShare = checked } }
+        CheckBox { id: showBtnWeb;      text: "Web";      font.pixelSize: 9; implicitHeight: 26; checked: true;  onCheckedChanged: { btnWeb.visible = checked;      appSettings.showBtnWeb = checked } }
+        CheckBox { id: showBtnBIG;      text: "BIG";      font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { btnBIG.visible = checked;      appSettings.showBtnBIG = checked } }
     }
     Rectangle { width: parent.width; height: 1; color: "#cccccc" }
     Item { width: 1; height: 3 }
     ButtonGroup { id: mapsUrlGroup }
-    Label { text: qsTr("External map"); font.pixelSize: 10; font.bold: true }
+    Label { text: qsTr("External map for navigating and sharing pins"); font.pixelSize: 10; font.bold: true }
     Item  { width: 1; height: 2 }
     GridLayout {
         width: parent.width
@@ -2703,10 +3145,10 @@ Column {
             showDM.checked      = dmvis;    showDMS.checked       = dmsvis
             showDMSboxes.checked = dmsBoxesvis; showCrosshair.checked = crosshairvis
             showMGRS.checked = mgrsvis; showPlusCode.checked = pluscodevis; showQR.checked = true; appSettings.showQR = true
-            showBtnPan.checked = true; showBtnZoom.checked = true; showBtnAdd.checked = true
-            showBtnNavigate.checked = true; showBtnWeb.checked = true; showBtnBIG.checked = true
-            appSettings.showBtnPan = true; appSettings.showBtnZoom = true; appSettings.showBtnAdd = true
-            appSettings.showBtnNavigate = true; appSettings.showBtnWeb = true; appSettings.showBtnBIG = true
+            showBtnPan.checked = false;      showBtnZoom.checked = true;  showBtnAdd.checked = true
+            showBtnNavigate.checked = false; showBtnShare.checked = true; showBtnWeb.checked = true; showBtnBIG.checked = false
+            appSettings.showBtnPan = false;      appSettings.showBtnZoom = true;  appSettings.showBtnAdd = true
+            appSettings.showBtnNavigate = false; appSettings.showBtnShare = true; appSettings.showBtnWeb = true; appSettings.showBtnBIG = false
             formOnAdd = showFeatureFormDefault; showFormOnAdd.checked = showFeatureFormDefault; appSettings.showFeatureForm = showFeatureFormDefault
             appSettings.afterAddAction = afterAddDefault; afterAddGroup.checkedButton = [afterAddNothing, afterAddPan, afterAddZoom][afterAddDefault]
             mapsUrlOption = 3;              appSettings.mapsUrlOption = 3
@@ -2748,28 +3190,28 @@ ScrollView {
 
         CheckBox {
             id: loadNavButton
-            text: qsTr("Navigate-to button")
+            text: qsTr("Copy link / hold to open map")
             font.pixelSize: 9; implicitHeight: 28
             checked: appSettings.showCanvasNav
             onCheckedChanged: appSettings.showCanvasNav = checked
         }
         CheckBox {
             id: loadAddButton
-            text: qsTr("Add-point button")
+            text: qsTr("Add point")
             font.pixelSize: 9; implicitHeight: 28
             checked: appSettings.showCanvasAdd
             onCheckedChanged: appSettings.showCanvasAdd = checked
         }
         CheckBox {
             id: loadConvertButton
-            text: qsTr("Convert-coords button")
+            text: qsTr("Convert/Show coordinates")
             font.pixelSize: 9; implicitHeight: 28
             checked: appSettings.showCanvasConvert
             onCheckedChanged: appSettings.showCanvasConvert = checked
         }
         CheckBox {
             id: loadPasteButton
-            text: qsTr("Paste-coords button")
+            text: qsTr("Paste location from clipboard")
             font.pixelSize: 9; implicitHeight: 28
             checked: appSettings.showCanvasPaste
             onCheckedChanged: appSettings.showCanvasPaste = checked
@@ -2787,6 +3229,242 @@ ScrollView {
             font.pixelSize: 9; implicitHeight: 28
             checked: appSettings.showLocatorFilter
             onCheckedChanged: appSettings.showLocatorFilter = checked
+        }
+
+        Rectangle { width: parent.width; height: 1; color: "#cccccc" }
+        Item { width: 1; height: 2 }
+
+        Label { text: qsTr("Snap Photo"); font.pixelSize: 10; font.bold: true }
+        Item  { width: 1; height: 2 }
+
+        CheckBox {
+            id: loadSnapButton
+            text: qsTr("Snap photo button")
+            font.pixelSize: 9; implicitHeight: 28
+            checked: appSettings.showSnap
+            onCheckedChanged: appSettings.showSnap = checked
+        }
+
+        Rectangle { width: parent.width; height: 1; color: "#cccccc" }
+        Item { width: 1; height: 2 }
+
+        Label { text: qsTr("Add Geometryless Feature"); font.pixelSize: 10; font.bold: true }
+        Item  { width: 1; height: 2 }
+
+        CheckBox {
+            id: showGeomlessBtn
+            text: qsTr("Add geometryless feature button")
+            font.pixelSize: 9; implicitHeight: 28
+            checked: appSettings.showGeomless
+            onCheckedChanged: appSettings.showGeomless = checked
+        }
+    }
+}
+
+// ── Tab 3: Snap settings ──────────────────────────────────────────────────────
+ScrollView {
+    clip: true
+    contentWidth: availableWidth
+
+    Column {
+        width: parent.width
+        padding: 8
+        spacing: 6
+
+        Label { text: qsTr("Snap Photo Setup"); font.pixelSize: 11; font.bold: true }
+        Item  { width: 1; height: 2 }
+
+        Label { text: qsTr("Target layer:"); font.pixelSize: 10 }
+        ComboBox {
+            id: snapLayerDropdown
+            width: parent.width - 16
+            model: snapLayerPickerModel
+            textRole: "name"
+            onActivated: {
+                var item = snapLayerPickerModel.get(currentIndex)
+                if (item.isHeader) { currentIndex = Math.max(0, currentIndex - 1); return }
+                appSettings.snapLayerName = (currentIndex === 0) ? "" : item.name
+                populateSnapFieldModel(currentIndex === 0 ? "" : item.name)
+            }
+            delegate: ItemDelegate {
+                width: snapLayerDropdown.width
+                enabled: !model.isHeader
+                contentItem: Text {
+                    text: model.name
+                    font.italic: model.isHeader
+                    color: model.isHeader ? "#888888" : (highlighted ? "#ffffff" : "#000000")
+                    verticalAlignment: Text.AlignVCenter
+                    leftPadding: model.isHeader ? 4 : 12
+                }
+                highlighted: snapLayerDropdown.highlightedIndex === index
+            }
+        }
+
+        Label { text: qsTr("Photo field (text/string):"); font.pixelSize: 10 }
+        ComboBox {
+            id: snapFieldDropdown
+            width: parent.width - 16
+            model: snapFieldPickerModel
+            textRole: "name"
+            onActivated: {
+                var item = snapFieldPickerModel.get(currentIndex)
+                if (item.isHeader) { currentIndex = 0; return }
+                appSettings.snapFieldName = item.name
+            }
+            delegate: ItemDelegate {
+                width: snapFieldDropdown.width
+                enabled: !model.isHeader
+                contentItem: Text {
+                    text: model.name
+                    font.italic: model.isHeader
+                    color: model.isHeader ? "#888888" : (highlighted ? "#ffffff" : "#000000")
+                    verticalAlignment: Text.AlignVCenter
+                    leftPadding: model.isHeader ? 4 : 12
+                }
+                highlighted: snapFieldDropdown.highlightedIndex === index
+            }
+        }
+
+        Button {
+            text: qsTr("Reset to defaults")
+            font.pixelSize: 9
+            onClicked: {
+                appSettings.snapLayerName = ""
+                appSettings.snapFieldName = ""
+                populateSnapLayerModel()
+                populateSnapFieldModel("")
+            }
+        }
+
+        Label {
+            visible: snapLayerDropdown.currentIndex === 0 || snapFieldDropdown.currentIndex === 0
+            width: parent.width - 16
+            text: qsTr("Without an explicit selection the plugin will use the active layer and search for a field named: %1").arg(snapCandidates.join(', '))
+            wrapMode: Text.WordWrap
+            font.pixelSize: 9
+            color: "#666666"
+        }
+    }
+}
+
+// ── Tab 4: Add geometryless feature settings ──────────────────────────────────
+ScrollView {
+    clip: true
+    contentWidth: availableWidth
+
+    Column {
+        width: parent.width
+        padding: 8
+        spacing: 6
+
+        Label { text: qsTr("Add Geometryless Feature"); font.pixelSize: 11; font.bold: true }
+        Item  { width: 1; height: 2 }
+
+        Label { text: qsTr("Target layer:"); font.pixelSize: 10 }
+        ComboBox {
+            id: geomlessLayerDropdown
+            width: parent.width - 16
+            model: geomlessLayerPickerModel
+            textRole: "name"
+            onActivated: {
+                var item = geomlessLayerPickerModel.get(currentIndex)
+                if (item.isHeader) { currentIndex = Math.max(0, currentIndex - 1); return }
+                appSettings.geomlessLayerName = (currentIndex === 0) ? "" : item.name
+            }
+            delegate: ItemDelegate {
+                width: geomlessLayerDropdown.width
+                enabled: !model.isHeader
+                contentItem: Text {
+                    text: model.name
+                    font.italic: model.isHeader
+                    color: model.isHeader ? "#888888" : (highlighted ? "#ffffff" : "#000000")
+                    verticalAlignment: Text.AlignVCenter
+                    leftPadding: model.isHeader ? 4 : 12
+                }
+                highlighted: geomlessLayerDropdown.highlightedIndex === index
+            }
+        }
+
+        Button {
+            text: qsTr("Reset to default")
+            font.pixelSize: 9
+            onClicked: {
+                appSettings.geomlessLayerName = ""
+                populateGeomlessLayerModel()
+            }
+        }
+
+        Label {
+            visible: geomlessLayerDropdown.currentIndex === 0
+            width: parent.width - 16
+            text: qsTr("Without an explicit selection the active layer will be used.")
+            wrapMode: Text.WordWrap
+            font.pixelSize: 9
+            color: "#666666"
+        }
+
+        Rectangle { width: parent.width; height: 1; color: "#cccccc" }
+        Item { width: 1; height: 4 }
+
+        Label { text: qsTr("Short-press action"); font.pixelSize: 10; font.bold: true }
+        Item  { width: 1; height: 2 }
+
+        ButtonGroup { id: geomlessActionGroup }
+        RadioButton {
+            id: geomlessActionGeomless
+            text: qsTr("Create geometryless feature (all layers)")
+            font.pixelSize: 9; implicitHeight: 28
+            ButtonGroup.group: geomlessActionGroup
+            checked: appSettings.geomlessShortPressAction === 0
+            onCheckedChanged: if (checked) appSettings.geomlessShortPressAction = 0
+        }
+        RadioButton {
+            id: geomlessActionGPS
+            text: qsTr("Create feature at GPS location (point layers)")
+            font.pixelSize: 9; implicitHeight: 28
+            ButtonGroup.group: geomlessActionGroup
+            checked: appSettings.geomlessShortPressAction === 1
+            onCheckedChanged: if (checked) appSettings.geomlessShortPressAction = 1
+        }
+        RadioButton {
+            id: geomlessActionScreen
+            text: qsTr("Create feature at screen centre (point layers)")
+            font.pixelSize: 9; implicitHeight: 28
+            ButtonGroup.group: geomlessActionGroup
+            checked: appSettings.geomlessShortPressAction === 2
+            onCheckedChanged: if (checked) appSettings.geomlessShortPressAction = 2
+        }
+
+        Label {
+            width: parent.width - 16
+            text: qsTr("GPS and screen options fall back to geometryless if the layer is not a point layer.")
+            wrapMode: Text.WordWrap
+            font.pixelSize: 9
+            color: "#666666"
+        }
+
+        Rectangle { width: parent.width; height: 1; color: "#cccccc" }
+        Item { width: 1; height: 4 }
+
+        Label { text: qsTr("Long-press action"); font.pixelSize: 10; font.bold: true }
+        Item  { width: 1; height: 2 }
+
+        CheckBox {
+            id: geomlessLongPressSettingsChk
+            text: qsTr("Open settings on long press")
+            font.pixelSize: 9; implicitHeight: 28
+            checked: appSettings.geomlessLongPressSettings
+            onCheckedChanged: appSettings.geomlessLongPressSettings = checked
+        }
+
+        Label {
+            width: parent.width - 16
+            text: checked ? qsTr("Long press opens this settings tab.")
+                          : qsTr("Long press opens the first record, or the feature list if there are multiple.")
+            property bool checked: geomlessLongPressSettingsChk.checked
+            wrapMode: Text.WordWrap
+            font.pixelSize: 9
+            color: "#666666"
         }
     }
 }
@@ -3409,7 +4087,7 @@ function parseCoordPart(s) {
 
 // Parses a "lat, lon" string in any degree format. Returns {lat, lon} or null.
 function parseDegreeCoordPair(raw) {
-    var norm = raw.replace(/°/g, ' ').replace(/'/g, ' ').replace(/"/g, ' ').replace(/\s+/g, ' ').trim();
+    var norm = raw.replace(/[°′″]/g, ' ').replace(/['"]/g, ' ').replace(/\s+/g, ' ').trim();
     var commaIdx = norm.indexOf(',');
     if (commaIdx > 0) {
         var a = parseCoordPart(norm.substring(0, commaIdx));
