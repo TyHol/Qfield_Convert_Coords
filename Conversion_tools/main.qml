@@ -299,7 +299,13 @@ Component.onCompleted: {
         } else {
             cleanedText = prefix + ' ' + digits.substring(0, 5) + ' ' + digits.substring(5)
         }
-        if (inputBox.text !== cleanedText) { inputBox.isProgrammaticUpdate = true; inputBox.text = cleanedText }
+        if (inputBox.text !== cleanedText) {
+            var savedCursor = inputBox.cursorPosition
+            var diff = cleanedText.length - inputBox.text.length
+            inputBox.isProgrammaticUpdate = true
+            inputBox.text = cleanedText
+            inputBox.cursorPosition = Math.max(0, Math.min(cleanedText.length, savedCursor + diff))
+        }
     }
 
     // Updates DMS box visibility based on whether degrees/minutes contain decimals.
