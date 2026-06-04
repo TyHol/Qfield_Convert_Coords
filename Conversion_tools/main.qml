@@ -3249,7 +3249,7 @@ Column {
         CheckBox { id: showMGRS;      text: "MGRS";       font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { mgrsrow.visible = checked;         appSettings.showMGRS = checked } }
         CheckBox { id: showPlusCode;  text: "Plus Code";  font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { pluscoderow.visible = checked;     appSettings.showPlusCode = checked } }
         CheckBox { id: showGeohash;   text: "Geohash";    font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { geohashrow.visible = checked;      appSettings.showGeohash = checked } }
-        CheckBox { id: showW3W;       text: "What3Words"; font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { w3wrow.visible = checked;          appSettings.showW3W = checked } }
+        CheckBox { id: showW3W;       text: "W3W"; font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { w3wrow.visible = checked;          appSettings.showW3W = checked } }
         CheckBox { id: showQR;        text: "QR Buttons"; font.pixelSize: 9; implicitHeight: 26; checked: true;  onCheckedChanged: { qrrow.visible = checked;           appSettings.showQR = checked } }
         CheckBox { id: showDMSboxes;  text: "DMS Boxes";  font.pixelSize: 9; implicitHeight: 26; checked: true;  onCheckedChanged: { latlongboxesDMS.visible = checked; appSettings.showDMSboxes = checked } }
     }
