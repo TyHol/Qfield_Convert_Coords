@@ -34,7 +34,7 @@ Item {
 
 
 //changable stuff 
-property var filetimedate : "v2.5 5.5.26.1" // version date
+property var filetimedate : "v2.6 4.6.26.1" // version date
 property var mapsUrlOption: 3 // Default external map: 1=GMaps pin, 2=GMaps nav, 3=OSM, 4=OSRM route
 property var _lastX: 0; property var _lastY: 0; property var _lastEPSG: 4326 // last coords for re-render on setting change
 property string _lastWarnedEPSGs: "" // tracks last EPSG combo that triggered a Helmert warning
