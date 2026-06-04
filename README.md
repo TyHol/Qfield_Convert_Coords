@@ -66,6 +66,8 @@ Each row can be shown or hidden in Settings.
 | **WGS84 DMS** | Degrees, Minutes, Decimal Seconds | `53° 20' 59.28" N, 6° 15' 37.11" W` | Yes |
 | **MGRS** | Military Grid Reference System | `29U MV 12345 67890` | Yes |
 | **Plus Code** | Open Location Code (Google Plus Codes) | `9C5P37C3+45J` | Yes |
+| **Geohash** | 8-character base-32 grid code (≈19 m precision) | `gc7x3r9e` | Yes |
+| **What3Words** | Three-word address (requires API key & internet) | `///daring.race.lion` | Yes |
 
 Each row has a **copy** button that copies the displayed value to the clipboard.
 
@@ -164,6 +166,8 @@ Accepts a wide range of coordinate formats:
 | WGS84 DMS | `53° 20' 59" N, 6° 15' 37" W` |
 | MGRS | `29U MV 12345 67890` |
 | Plus Code | `9C5P37C3+45J` |
+| Geohash | `gc7x3r9e` |
+| What3Words | `///daring.race.lion` or `daring.race.lion` |
 | WKT Point | `POINT (84092.667 53131.478)` or a full feature info block containing a Point geometry (pastes point only - not attributes) |
 | Projected coordinates | `313621, 234156` |
 | geo: URI | `geo:53.3498,-6.2603` |
@@ -240,7 +244,7 @@ Selects the target layer — lists all editable point layers in the current proj
 Zoom extent presets: Detail (~25m), Building (~50m), Street (~500m), Town (~2km), Region (~20km), Country (~200km).
 
 ### Display
-Toggle visibility of each coordinate row, DMS boxes, the map crosshair, and the QR Buttons row.
+Toggle visibility of each coordinate row, DMS boxes, the map crosshair, and the QR Buttons row. The **What3Words** row also exposes a **W3W key** field — enter your API key here once; it is stored on-device and never included in the plugin source.
 
 ### Action Buttons
 Show or hide any of the six action buttons individually: Pan, Zoom, Add, Navigate, Web, BIG.
@@ -270,3 +274,13 @@ Integrated the standalone `qfield-snap` plugin directly into Convert Coordinates
 
 ### Copy link from canvas / Web button
 The **Copy link / hold to open map** canvas menu item and the **Web** button in the main dialog now have split tap/hold behaviour: a short tap copies a shareable map URL to the clipboard (ready to paste into WhatsApp, SMS, email, etc.), while a long press opens the location in the external map app as before.
+
+### Geohash (new row)
+Displays an 8-character [Geohash](https://en.wikipedia.org/wiki/Geohash) for the current position (≈19 m × 19 m precision). Works fully offline — pure local computation. Enable in **Settings → Display**. You can also type or paste a Geohash directly into the box and tap **Convert**.
+
+### What3Words (new row)
+Displays and looks up [What3Words](https://what3words.com/) three-word addresses. Requires a What3Words API key (enter once in **Settings → W3W key**) and an internet connection.
+
+- **↓ button** — fetches the three-word address for the current coordinates.
+- **Type in** — type or paste `///word.word.word` (or just `word.word.word`) then tap **Convert** to look up coordinates.
+- Enable in **Settings → Display → What3Words**.
