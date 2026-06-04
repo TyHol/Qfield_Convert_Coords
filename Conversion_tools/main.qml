@@ -2042,13 +2042,13 @@ Button {
  }
  }
      Button {
-        text: "⚙"
+        text: "🔧"
         font.pixelSize: 18
         Layout.preferredHeight: 32
         Layout.preferredWidth: 32
         onClicked: settingsDialog.open()
         contentItem: Text {
-            text: "⚙"
+            text: "🔧"
             font.pixelSize: 18
             color: "#000000"
             horizontalAlignment: Text.AlignHCenter
