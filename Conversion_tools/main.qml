@@ -4352,7 +4352,7 @@ function w3wToWords(lat, lon, callback) {
 function w3wToCoords(words, callback) {
     if (!appSettings.w3wApiKey || appSettings.w3wApiKey.trim() === '')
         { callback(null, 'No W3W API key set'); return }
-    words = words.replace(/^\/\/\//, '').trim().toLowerCase()
+    words = words.replace(/^\/\/\//, '').trim().toLowerCase().replace(/\s+/g, '.')
     var url = 'https://api.what3words.com/v3/convert-to-coordinates?words='
               + encodeURIComponent(words) + '&key=' + appSettings.w3wApiKey.trim()
     w3wFetchGet(url,
