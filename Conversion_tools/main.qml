@@ -9,8 +9,10 @@ import Theme
 
 import "qrc:/qml" as QFieldItems
 import "plugin_stuff"
-import "plugin_stuff/mgrs.js" as Mgrs
-import "plugin_stuff/olc.js"  as OLC
+import "plugin_stuff/mgrs.js"    as Mgrs
+import "plugin_stuff/olc.js"     as OLC
+import "plugin_stuff/geohash.js" as Geohash
+import "plugin_stuff/w3w.js"     as W3W
 
 Item {
  id: plugin
@@ -58,6 +60,8 @@ property var customisationvis: false // visibility of customisation
 property var crosshairvis: true // visibility of crosshair
 property var mgrsvis:     false // visibility of MGRS row
 property var pluscodevis: false // visibility of Plus Code row
+property var geohashvis:  false // visibility of Geohash row
+property var w3wvis:      false // visibility of What3Words row
 property var  showFeatureFormDefault: true // whether Add opens attribute form
 property bool formOnAdd: true             // live mirror of showFeatureForm setting
 property var afterAddDefault: 1           // 0=nothing, 1=pan to, 2=zoom to
@@ -86,6 +90,9 @@ Settings {
     property bool   showCustom2:    false
     property bool   showMGRS:       false
     property bool   showPlusCode:   false
+    property bool   showGeohash:    false
+    property bool   showW3W:        false
+    property string w3wApiKey:      ""   // enter your What3Words API key in Settings
     property bool   showQR:         true
     property bool   showBtnPan:     false
     property bool   showBtnZoom:    true
@@ -218,6 +225,9 @@ Component.onCompleted: {
     showCustom2.checked    = appSettings.showCustom2
     showMGRS.checked       = appSettings.showMGRS
     showPlusCode.checked   = appSettings.showPlusCode
+    showGeohash.checked    = appSettings.showGeohash
+    showW3W.checked        = appSettings.showW3W
+    w3wKeyField.text       = appSettings.w3wApiKey
     showQR.checked         = appSettings.showQR
     showBtnPan.checked     = appSettings.showBtnPan
     showBtnZoom.checked    = appSettings.showBtnZoom
@@ -262,6 +272,8 @@ Component.onCompleted: {
         wgs84DMSBox.hasError   = false
         mgrsBox.hasError       = false
         pluscodeBox.hasError   = false
+        geohashBox.hasError    = false
+        w3wBox.hasError        = false
     }
 
     // Marks a box as invalid and shows a toast
@@ -651,6 +663,36 @@ function handlePaste(clipboardText, createPointAndZoom, alwaysZoom) {
         }
     }
 
+    // ── 0c. What3Words: ///word.word.word or word.word.word ──────────────
+    if (W3W.isValidWords(raw.trim())) {
+        if (!appSettings.w3wApiKey || appSettings.w3wApiKey.trim() === '') {
+            mainWindow.displayToast(qsTr("Enter a What3Words API key in Settings"))
+            return true
+        }
+        var w3wRawCapture = raw.trim()
+        mainWindow.displayToast(qsTr("Looking up What3Words address…"))
+        w3wToCoords(w3wRawCapture, function(result, err) {
+            if (err) {
+                mainWindow.displayToast(qsTr("W3W lookup failed: ") + err)
+            } else {
+                var disp = w3wRawCapture + "  → " + result.lat.toFixed(5) + ", " + result.lon.toFixed(5)
+                showFormatDialog(disp, result.lat, result.lon, 0)
+            }
+        })
+        return true
+    }
+
+    // ── 0d. Geohash: 6–12 base-32 chars (checked after grid refs) ────────
+    var ghTest = raw.trim()
+    if (Geohash.isValid(ghTest)) {
+        var ghDec = Geohash.decode(ghTest)
+        if (ghDec !== null && Math.abs(ghDec.lat) <= 90 && Math.abs(ghDec.lon) <= 180) {
+            var ghDisp = "Geohash: " + ghTest + "  → " + ghDec.lat.toFixed(5) + ", " + ghDec.lon.toFixed(5)
+            showFormatDialog(ghDisp, ghDec.lat, ghDec.lon, 0)
+            return true
+        }
+    }
+
     // ── 1. UK Grid: two letters + 2/4/6/8/10 digits ─────────────────────
     if (/^[A-Z]{2}\d{2,10}$/i.test(compact) && compact.substring(2).length % 2 === 0) {
         let letters = compact.substring(0,2).toUpperCase();
@@ -677,15 +719,21 @@ function handlePaste(clipboardText, createPointAndZoom, alwaysZoom) {
     }
     // ── 3. Degree-based formats: DMS / DDM / decimal / projected ─────────
     else {
-        // Normalise degree/minute/second symbols to plain spaces,
-        // then split on the comma that separates the two coordinates.
-        // Also normalise Unicode prime ′ (U+2032) and double-prime ″ (U+2033)
-        // so that "52°3.3538′" is treated the same as "52° 3.3538'".
-        let norm = raw.replace(/[°′″]/g, ' ').replace(/['"]/g, ' ')
-                      .replace(/\s+/g, ' ').trim();
+        // Pre-normalise letter-based unit markers (d = degrees, m = minutes, s = seconds)
+        // only when followed by space, comma, hemisphere letter, or end-of-string.
+        let dmsLetterPresent = /\d[dDmMsS](?=[\s,NSEWnsew]|$)/.test(raw);
+        let rawForNorm = dmsLetterPresent
+            ? raw.replace(/(\d)([dDmMsS])(?=[\s,NSEWnsew]|$)/g, '$1')
+            : raw;
+
+        // Normalise degree/minute/second symbols to plain spaces.
+        // Also normalise Unicode prime ′ (U+2032) and double-prime ″ (U+2033).
+        let norm = rawForNorm.replace(/[°′″]/g, ' ').replace(/['"]/g, ' ')
+                             .replace(/\s+/g, ' ').trim();
 
         // DMS/hemisphere markers mean it's clearly lat/lon; plain decimals are ambiguous.
-        let hasDmsHemi = /[°'"′″NSEWnsew]/.test(raw);
+        // Include letter-based unit markers (d/m/s) in this test, checked on original raw.
+        let hasDmsHemi = /[°'"′″NSEWnsew]/.test(raw) || dmsLetterPresent;
 
         let commaIdx = norm.indexOf(',');
         if (commaIdx > 0) {
@@ -699,7 +747,8 @@ function handlePaste(clipboardText, createPointAndZoom, alwaysZoom) {
         }
 
         // Space-separated pair — plain decimals "53.3498 -6.2603" or compact DDM "52°3.354′ -9°29.038′"
-        let sp = raw.trim().split(/\s+/);
+        // Use rawForNorm so letter-stripped input (e.g. "51d 56.583m") splits correctly.
+        let sp = rawForNorm.trim().split(/\s+/);
         if (sp.length === 2) {
             let normPart = function(p) { return p.replace(/[°′″'"]/g, ' ').replace(/\s+/g, ' ').trim(); };
             let a = parseCoordPart(normPart(sp[0]));
@@ -708,6 +757,32 @@ function handlePaste(clipboardText, createPointAndZoom, alwaysZoom) {
                 let defIdx = (hasDmsHemi || (Math.abs(a) <= 90 && Math.abs(b) <= 180)) ? 0 : 4;
                 showFormatDialog(raw, a, b, defIdx);
                 return true;
+            }
+        }
+
+        // No-comma, negative-sign longitude: "51 56.2 -1 1.5" or "51d 56.2m -1d 1.5m"
+        let negSplit = norm.match(/^(.+)\s+(-\d.*)$/);
+        if (negSplit) {
+            let a = parseCoordPart(negSplit[1]);
+            let b = parseCoordPart(negSplit[2]);
+            if (a !== null && b !== null) {
+                let defIdx = (hasDmsHemi || (Math.abs(a) <= 90 && Math.abs(b) <= 180)) ? 0 : 4;
+                showFormatDialog(raw, a, b, defIdx);
+                return true;
+            }
+        }
+
+        // No-comma, trailing-hemisphere DDM/DMS: "51° 56.583' N  9° 36.259' W"
+        // \s* (not \s+) allows N/S to be immediately adjacent to next digit.
+        if (hasDmsHemi) {
+            let hemiSplit = norm.match(/^(.+?[NSns])\s*(.+)$/);
+            if (hemiSplit) {
+                let a = parseCoordPart(hemiSplit[1]);
+                let b = parseCoordPart(hemiSplit[2]);
+                if (a !== null && b !== null) {
+                    showFormatDialog(raw, a, b, 0);
+                    return true;
+                }
             }
         }
     }
@@ -765,6 +840,15 @@ function diagnosePasteError(raw) {
     let sp = raw.trim().split(/\s+/);
     if (sp.length === 1 && !isNaN(parseFloat(sp[0])))
         return qsTr("Only one number found. Two values are needed — paste easting + northing, or latitude + longitude, separated by a comma or space.");
+
+    // Compact letter-unit markers with no space (51d56.583m) — unit letters run into numbers
+    if (/\d[dDmMsS]\d/.test(raw))
+        return qsTr("Looks like degrees/minutes/seconds notation but the unit letters are run together with the numbers. Add a space after each letter: \"51d 56.583m N\" not \"51d56.583m\".");
+
+    // DMS/DDM-shaped but missing hemisphere letters and comma — ambiguous
+    let numericTokens = raw.trim().split(/\s+/).filter(function(t) { return !isNaN(parseFloat(t)) && isFinite(t); });
+    if (numericTokens.length >= 4 && !/[NSEWnsew]/.test(raw))
+        return qsTr("This looks like coordinates in degrees-minutes format, but hemisphere letters (N/S and E/W) are missing. Try: \"51° 56.583' N, 9° 36.259' W\" or \"51d 56.583m N, 9d 36.259m W\".");
 
     // Lots of text — probably copied more than just the coordinate
     if (raw.length > 40)
@@ -2167,6 +2251,107 @@ Button {
 }
 }
 
+// Geohash Row
+RowLayout {
+    id: geohashrow
+    visible: geohashvis
+TextField {
+    id: geohashBox
+    Layout.fillWidth: true
+    Layout.preferredHeight: 35
+    font.pixelSize: font_Size.text
+    font.family: "Arial"
+    font.bold: true
+    font.italic: true
+    placeholderText: "Geohash  e.g. gc7x3r9e"
+    property bool isProgrammaticUpdate: false
+    property bool hasError: false
+    color: hasError ? "#cc0000" : palette.text
+    onTextChanged: {
+        if (isProgrammaticUpdate) { isProgrammaticUpdate = false; return }
+        hasError = false
+        lastEditedBox = "geohash"; coordinatesDirty = true
+    }
+}
+Button {
+    text: ""
+    icon.source: "plugin_stuff/copy.svg"
+    icon.width: 18; icon.height: 18
+    font.bold: true
+    width: 10; height: 10
+    background: Rectangle { color: "#B3EBF2"; radius: width / 2 }
+    onClicked: { ensureConverted(); copyToClipboard(geohashBox.text) }
+}
+}
+
+// What3Words Row
+RowLayout {
+    id: w3wrow
+    visible: w3wvis
+TextField {
+    id: w3wBox
+    Layout.fillWidth: true
+    Layout.preferredHeight: 35
+    font.pixelSize: font_Size.text
+    font.family: "Arial"
+    font.bold: true
+    font.italic: true
+    placeholderText: "///word.word.word  (tap ↓ to fetch)"
+    property bool isProgrammaticUpdate: false
+    property bool hasError: false
+    color: hasError ? "#cc0000" : palette.text
+    onTextChanged: {
+        if (isProgrammaticUpdate) { isProgrammaticUpdate = false; return }
+        hasError = false
+        lastEditedBox = "w3w"; coordinatesDirty = true
+    }
+}
+Button {
+    text: "↓"
+    font.pixelSize: 14; font.bold: true
+    width: 35; height: 35
+    background: Rectangle { color: "#90EE90"; radius: width / 2 }
+    onClicked: {
+        if (_lastX === 0 && _lastY === 0) {
+            mainWindow.displayToast(qsTr("No coordinates — set a position first"))
+            return
+        }
+        if (!appSettings.w3wApiKey || appSettings.w3wApiKey.trim() === '') {
+            mainWindow.displayToast(qsTr("Enter a What3Words API key in Settings"))
+            return
+        }
+        var srcCrs  = CoordinateReferenceSystemUtils.fromDescription("EPSG:" + parseInt(_lastEPSG))
+        var wgs84Cr = CoordinateReferenceSystemUtils.fromDescription("EPSG:4326")
+        var wPt     = GeometryUtils.reprojectPoint(GeometryUtils.point(_lastX, _lastY), srcCrs, wgs84Cr)
+        if (!wPt || isNaN(wPt.y) || isNaN(wPt.x)) {
+            mainWindow.displayToast(qsTr("Cannot determine WGS84 position"))
+            return
+        }
+        w3wBox.isProgrammaticUpdate = true
+        w3wBox.text = "…"
+        w3wToWords(wPt.y, wPt.x, function(words, err) {
+            w3wBox.isProgrammaticUpdate = true
+            if (err) {
+                w3wBox.text = ""
+                w3wBox.hasError = true
+                mainWindow.displayToast(qsTr("W3W lookup failed: ") + err)
+            } else {
+                w3wBox.text = words
+            }
+        })
+    }
+}
+Button {
+    text: ""
+    icon.source: "plugin_stuff/copy.svg"
+    icon.width: 18; icon.height: 18
+    font.bold: true
+    width: 10; height: 10
+    background: Rectangle { color: "#B3EBF2"; radius: width / 2 }
+    onClicked: { ensureConverted(); copyToClipboard(w3wBox.text) }
+}
+}
+
 // Custom1 Row
 RowLayout {
     id: custom1row
@@ -3063,8 +3248,22 @@ Column {
         CheckBox { id: showCustom2;   text: "Custom 2";   font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { custom2row.visible = checked;      appSettings.showCustom2 = checked } }
         CheckBox { id: showMGRS;      text: "MGRS";       font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { mgrsrow.visible = checked;         appSettings.showMGRS = checked } }
         CheckBox { id: showPlusCode;  text: "Plus Code";  font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { pluscoderow.visible = checked;     appSettings.showPlusCode = checked } }
+        CheckBox { id: showGeohash;   text: "Geohash";    font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { geohashrow.visible = checked;      appSettings.showGeohash = checked } }
+        CheckBox { id: showW3W;       text: "What3Words"; font.pixelSize: 9; implicitHeight: 26; checked: false; onCheckedChanged: { w3wrow.visible = checked;          appSettings.showW3W = checked } }
         CheckBox { id: showQR;        text: "QR Buttons"; font.pixelSize: 9; implicitHeight: 26; checked: true;  onCheckedChanged: { qrrow.visible = checked;           appSettings.showQR = checked } }
         CheckBox { id: showDMSboxes;  text: "DMS Boxes";  font.pixelSize: 9; implicitHeight: 26; checked: true;  onCheckedChanged: { latlongboxesDMS.visible = checked; appSettings.showDMSboxes = checked } }
+    }
+    RowLayout {
+        width: parent.width; spacing: 4
+        Label { text: "W3W key:"; font.pixelSize: 9 }
+        TextField {
+            id: w3wKeyField
+            Layout.fillWidth: true
+            font.pixelSize: 9; implicitHeight: 24
+            placeholderText: "What3Words API key"
+            text: appSettings.w3wApiKey
+            onTextChanged: appSettings.w3wApiKey = text
+        }
     }
       GridLayout {
         width: parent.width
@@ -3149,6 +3348,8 @@ Column {
             showDM.checked      = dmvis;    showDMS.checked       = dmsvis
             showDMSboxes.checked = dmsBoxesvis; showCrosshair.checked = crosshairvis
             showMGRS.checked = mgrsvis; showPlusCode.checked = pluscodevis; showQR.checked = true; appSettings.showQR = true
+            showGeohash.checked = false; appSettings.showGeohash = false
+            showW3W.checked = false; appSettings.showW3W = false
             showBtnPan.checked = false;      showBtnZoom.checked = true;  showBtnAdd.checked = true
             showBtnNavigate.checked = false; showBtnShare.checked = true; showBtnWeb.checked = true; showBtnBIG.checked = false
             appSettings.showBtnPan = false;      appSettings.showBtnZoom = true;  appSettings.showBtnAdd = true
@@ -3934,21 +4135,23 @@ function degtoSeconds(decimal) {
  }
  }
 
- if (inputDialog !== 6) { // Update WGS84 DDM
- wgs84DMBox.isProgrammaticUpdate = true
- wgs84DMBox.text = decimalToDDM(wgs84Point.y, true) + ",  " + decimalToDDM(wgs84Point.x, false)
+ if (inputDialog !== 6) { // Update DDM text box (skip only when DDM was the source)
+     wgs84DMBox.isProgrammaticUpdate = true
+     wgs84DMBox.text = decimalToDDM(wgs84Point.y, true) + ",  " + decimalToDDM(wgs84Point.x, false)
+ }
 
- wgs84DMSBox.text = decimalToDMss(wgs84Point.y, true) + ",  " + decimalToDMss(wgs84Point.x, false)
+ if (inputDialog !== 9) { // Update DMS text box (skip only when DMS was the source)
+     wgs84DMSBox.isProgrammaticUpdate = true
+     wgs84DMSBox.text = decimalToDMss(wgs84Point.y, true) + ",  " + decimalToDMss(wgs84Point.x, false)
+ }
 
- // Update d m s boxes
+ // Update individual d/m/s boxes (always — they show the normalised breakdown)
  latDegrees.text = decTODeg(wgs84Point.y)
  latMinutes.text = decimalToMinutes(wgs84Point.y)
  latSeconds.text = degtoSeconds(wgs84Point.y)
  lonDegrees.text = decTODeg(wgs84Point.x)
  lonMinutes.text = decimalToMinutes(wgs84Point.x)
  lonSeconds.text = degtoSeconds(wgs84Point.x)
-
- }
 
  if (inputDialog !== 7) { // Update MGRS
      var mgrsStr = latLonToMgrs(wgs84Point.y, wgs84Point.x, 5)
@@ -3961,6 +4164,17 @@ function degtoSeconds(decimal) {
      var olcStr = OLC.encode(wgs84Point.y, wgs84Point.x, 11)
      pluscodeBox.isProgrammaticUpdate = true
      pluscodeBox.text = olcStr
+ }
+
+ if (inputDialog !== 10) { // Update Geohash (8 chars ≈ ±19 m)
+     geohashBox.isProgrammaticUpdate = true
+     geohashBox.text = Geohash.encode(wgs84Point.y, wgs84Point.x, 8)
+ }
+
+ // W3W is on-demand — clear stale address when coords change from another source
+ if (inputDialog !== 11) {
+     w3wBox.isProgrammaticUpdate = true
+     w3wBox.text = ""
  }
 
  // Helmert accuracy warning — shown once per unique EPSG combination
@@ -3983,6 +4197,9 @@ function degtoSeconds(decimal) {
      if (!_helmertWarnings[_epsgList[0]] && !_helmertWarnings[_epsgList[1]] && !_helmertWarnings[_epsgList[2]])
          _lastWarnedEPSGs = _epsgKey  // no warning needed — still update so we don't recheck
  }
+ // Reset dirty flag: individual d/m/s boxes fire onTextChanged during update,
+ // which sets coordinatesDirty=true. Resetting here prevents spurious re-conversion.
+ coordinatesDirty = false
  }
 
 // Auto-converts from last edited box if coordinates are dirty
@@ -4017,14 +4234,14 @@ function convertFromLastEdited() {
                 if      (Math.abs(p.lat) > 90)  _setError(wgs84DMBox, "Latitude must be between -90 and 90")
                 else if (Math.abs(p.lon) > 180) _setError(wgs84DMBox, "Longitude must be between -180 and 180")
                 else                            updateCoordinates(p.lon, p.lat, 4326, custom1CRS.text, custom2CRS.text, 6)
-            } else _setError(wgs84DMBox, "Cannot parse DDM input")
+            } else handlePaste(wgs84DMBox.text, false)     // rich error dialog with hints and retry
         } else if (lastEditedBox === "dms") {
             var p = parseDegreeCoordPair(wgs84DMSBox.text)
             if (p !== null) {
                 if      (Math.abs(p.lat) > 90)  _setError(wgs84DMSBox, "Latitude must be between -90 and 90")
                 else if (Math.abs(p.lon) > 180) _setError(wgs84DMSBox, "Longitude must be between -180 and 180")
-                else                            updateCoordinates(p.lon, p.lat, 4326, custom1CRS.text, custom2CRS.text, 6)
-            } else _setError(wgs84DMSBox, "Cannot parse DMS input")
+                else                            updateCoordinates(p.lon, p.lat, 4326, custom1CRS.text, custom2CRS.text, 9)
+            } else handlePaste(wgs84DMSBox.text, false)    // rich error dialog with hints and retry
         } else if (lastEditedBox === "ig") {
             formatGridInput(igInputBox, igletterMatrix, 1)
             var igm = igInputBox.text.match(/^([A-Za-z])\s(\d{1,5})\s(\d{1,5})$/)
@@ -4069,9 +4286,83 @@ function convertFromLastEdited() {
             var decoded = OLC.decode(pluscodeBox.text.trim().toUpperCase())
             if (decoded !== null) updateCoordinates(decoded.longitudeCenter, decoded.latitudeCenter, 4326, custom1CRS.text, custom2CRS.text, 8)
             else _setError(pluscodeBox, "Cannot parse Plus Code")
+        } else if (lastEditedBox === "geohash") {
+            var ghResult = Geohash.decode(geohashBox.text.trim())
+            if (ghResult !== null) updateCoordinates(ghResult.lon, ghResult.lat, 4326, custom1CRS.text, custom2CRS.text, 10)
+            else _setError(geohashBox, "Cannot parse Geohash")
+        } else if (lastEditedBox === "w3w") {
+            var w3wText = w3wBox.text.trim()
+            if (!W3W.isValidWords(w3wText)) {
+                _setError(w3wBox, "Not a valid What3Words address (three words separated by dots)")
+            } else if (!appSettings.w3wApiKey || appSettings.w3wApiKey.trim() === '') {
+                _setError(w3wBox, "Enter a What3Words API key in Settings")
+            } else {
+                mainWindow.displayToast(qsTr("Looking up What3Words address…"))
+                var w3wCapture = w3wText
+                w3wToCoords(w3wCapture, function(result, err) {
+                    if (err) {
+                        _setError(w3wBox, "W3W lookup failed: " + err)
+                    } else {
+                        updateCoordinates(result.lon, result.lat, 4326, custom1CRS.text, custom2CRS.text, 11)
+                        w3wBox.isProgrammaticUpdate = true
+                        w3wBox.text = w3wCapture
+                    }
+                })
+            }
         }
     }
 function ensureConverted() { if (coordinatesDirty) convertFromLastEdited() }
+
+// ── What3Words inline HTTP helpers ───────────────────────────────────────────
+function w3wFetchGet(url, onSuccess, onError) {
+    var xhr = new XMLHttpRequest()
+    xhr.open('GET', url, true)
+    xhr.setRequestHeader('X-W3W-Wrapper', 'qfield-kmrt')
+    xhr.timeout = 10000
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState !== 4) return
+        if (xhr.status === 200) {
+            try   { onSuccess(JSON.parse(xhr.responseText)) }
+            catch (e) { onError('JSON parse error') }
+        } else if (xhr.status === 0) {
+            onError('No response — check internet connection')
+        } else {
+            try {
+                var body = JSON.parse(xhr.responseText)
+                onError(body.error ? body.error.message : ('HTTP ' + xhr.status))
+            } catch (e2) { onError('HTTP ' + xhr.status) }
+        }
+    }
+    xhr.ontimeout = function() { onError('Request timed out (10 s)') }
+    xhr.send()
+}
+
+function w3wToWords(lat, lon, callback) {
+    if (!appSettings.w3wApiKey || appSettings.w3wApiKey.trim() === '')
+        { callback(null, 'No W3W API key set'); return }
+    var url = 'https://api.what3words.com/v3/convert-to-3wa?coordinates='
+              + lat.toFixed(6) + ',' + lon.toFixed(6)
+              + '&language=en&key=' + appSettings.w3wApiKey.trim()
+    w3wFetchGet(url,
+        function(data) { data.words ? callback('///' + data.words, null)
+                                    : callback(null, 'Unexpected W3W response') },
+        function(err)  { callback(null, err) })
+}
+
+function w3wToCoords(words, callback) {
+    if (!appSettings.w3wApiKey || appSettings.w3wApiKey.trim() === '')
+        { callback(null, 'No W3W API key set'); return }
+    words = words.replace(/^\/\/\//, '').trim().toLowerCase()
+    var url = 'https://api.what3words.com/v3/convert-to-coordinates?words='
+              + encodeURIComponent(words) + '&key=' + appSettings.w3wApiKey.trim()
+    w3wFetchGet(url,
+        function(data) {
+            data.coordinates
+                ? callback({ lat: data.coordinates.lat, lon: data.coordinates.lng }, null)
+                : callback(null, data.error ? data.error.message : 'Unexpected W3W response')
+        },
+        function(err)  { callback(null, err) })
+}
 
 // Parses a single lat or lon value from any of: decimal, DDM, DMS, with optional N/S/E/W.
 // Call after normalising °'" to spaces. Returns decimal degrees, or null if unparseable.
@@ -4092,14 +4383,42 @@ function parseCoordPart(s) {
 }
 
 // Parses a "lat, lon" string in any degree format. Returns {lat, lon} or null.
+// Accepts °/'/", Unicode primes, letter markers (d/m/s), comma or no-comma with hemispheres.
 function parseDegreeCoordPair(raw) {
-    var norm = raw.replace(/[°′″]/g, ' ').replace(/['"]/g, ' ').replace(/\s+/g, ' ').trim();
+    var dmsLetterPresent = /\d[dDmMsS](?=[\s,NSEWnsew]|$)/.test(raw);
+    var rawForNorm = dmsLetterPresent
+        ? raw.replace(/(\d)([dDmMsS])(?=[\s,NSEWnsew]|$)/g, '$1')
+        : raw;
+    var norm = rawForNorm.replace(/[°′″]/g, ' ').replace(/['"]/g, ' ').replace(/\s+/g, ' ').trim();
+
+    // Comma-separated pair (most common)
     var commaIdx = norm.indexOf(',');
     if (commaIdx > 0) {
         var a = parseCoordPart(norm.substring(0, commaIdx));
         var b = parseCoordPart(norm.substring(commaIdx + 1));
         if (a !== null && b !== null) return { lat: a, lon: b };
     }
+
+    // No-comma, negative-sign longitude: "51 56.2 -1 1.5"
+    var negSplit = norm.match(/^(.+)\s+(-\d.*)$/);
+    if (negSplit) {
+        var na = parseCoordPart(negSplit[1]);
+        var nb = parseCoordPart(negSplit[2]);
+        if (na !== null && nb !== null) return { lat: na, lon: nb };
+    }
+
+    // No-comma, trailing-hemisphere: "51° 56.583' N  9° 36.259' W"
+    // \s* allows N/S to be immediately adjacent to the next digit.
+    var hasDmsHemi = /[°'"′″NSEWnsew]/.test(raw) || dmsLetterPresent;
+    if (hasDmsHemi) {
+        var hemiSplit = norm.match(/^(.+?[NSns])\s*(.+)$/);
+        if (hemiSplit) {
+            var ha = parseCoordPart(hemiSplit[1]);
+            var hb = parseCoordPart(hemiSplit[2]);
+            if (ha !== null && hb !== null) return { lat: ha, lon: hb };
+        }
+    }
+
     return null;
 }
 
